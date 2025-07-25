@@ -7,6 +7,7 @@ import NavbarComponent from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
+import Link from 'next/link';
 import Modal from 'react-bootstrap/Modal';
 import { getUserPurchases, clearUserPurchases, getUserFavourites, removeFavourite } from '../services/purchaseService';
 import { useRef } from 'react';
@@ -26,7 +27,7 @@ const ProfilePage = () => {
   const [loadError, setLoadError] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [avatar, setAvatar] = useState(user?.photoURL || '/images/avatar.svg');
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [favourites, setFavourites] = useState<any[]>([]);
   const [loadingFavourites, setLoadingFavourites] = useState(false);
 
@@ -147,7 +148,7 @@ const ProfilePage = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setAvatar(ev.target.result as string);
+        setAvatar(ev.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -160,9 +161,7 @@ const ProfilePage = () => {
       if (user && name && user.displayName !== name) {
         await updateProfile(user, { displayName: name });
       }
-      if (user && email && user.email !== email) {
-        await updateProfile(user, { email: email });
-      }
+      // Note: updateProfile doesn't support email updates directly
       setSuccess(true);
       setError('');
       setTimeout(() => setSuccess(false), 3000);
@@ -195,8 +194,6 @@ const ProfilePage = () => {
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
-      
       <main>
         <Container className="py-5">
           <h1 className="fw-bold text-center mb-5">Mi Cuenta</h1>
@@ -259,13 +256,13 @@ const ProfilePage = () => {
                       <h5 className="fw-bold mb-3">Información personal</h5>
                       <div className="text-center mb-4">
                         <div style={{ position: 'relative', display: 'inline-block' }}>
-                          <img src={avatar} alt="Avatar" width={96} height={96} className="rounded-circle border" style={{ objectFit: 'cover' }} />
+                          <Image src={avatar} alt="Avatar" width={96} height={96} className="rounded-circle border" style={{ objectFit: 'cover' }} />
                           <Button 
                             variant="light" 
                             size="sm" 
                             className="position-absolute bottom-0 end-0 border shadow-sm" 
                             style={{ borderRadius: '50%' }}
-                            onClick={() => fileInputRef.current.click()}
+                            onClick={() => fileInputRef.current?.click()}
                           >
                             <i className="bi bi-camera"></i>
                           </Button>
@@ -326,7 +323,7 @@ const ProfilePage = () => {
                         <div className="text-center py-5">
                           <i className="bi bi-box2 fs-1"></i>
                           <h5 className="fw-bold mb-2">No tienes compras recientes</h5>
-                          <Button variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Button>
+                          <Link variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Link>
                         </div>
                       ) : (
                         <>
@@ -338,7 +335,7 @@ const ProfilePage = () => {
                                     <h6 className="fw-bold mb-1">Pedido #{purchase.id}</h6>
                                     <div className="small text-muted mb-2">{purchase.date}</div>
                                     <div>
-                                      {purchase.items.map((item, i) => (
+                                      {purchase.items.map((item: any, i: number) => (
                                         <span key={i} className="me-3">
                                           <Image src={item.image} alt={item.name} width={40} height={40} className="me-2 rounded-1" />
                                           {item.name} x{item.quantity}
@@ -373,11 +370,11 @@ const ProfilePage = () => {
                         <>
                           <i className="bi bi-heart fs-1 text-danger mb-3"></i>
                           <p className="text-muted">Aún no tienes productos favoritos.</p>
-                          <Button variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Button>
+                          <Link variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Link>
                         </>
                       ) : (
                         <Row className="g-4 justify-content-center">
-                          {favourites.map((fav, idx) => (
+                          {favourites.map((fav: any) => (
                             <Col xs={12} md={6} lg={4} key={fav.id}>
                               <Card className="mb-4 border-0 shadow-sm text-start">
                                 <Card.Body>
@@ -411,11 +408,11 @@ const ProfilePage = () => {
             <Col md={6} className="mb-4 mb-md-0">
               <h5 className="fw-bold mb-3">Comprar</h5>
               <ul className="list-unstyled">
-                <li className="mb-2"><a href="/products/mujer" className="text-dark text-decoration-none">Mujer</a></li>
-                <li className="mb-2"><a href="/products/hombre" className="text-dark text-decoration-none">Hombre</a></li>
-                <li className="mb-2"><a href="/products/ninos" className="text-dark text-decoration-none">Niños</a></li>
-                <li className="mb-2"><a href="/products/bebe" className="text-dark text-decoration-none">Bebé</a></li>
-                <li className="mb-2"><a href="/products/sport" className="text-dark text-decoration-none">Sport</a></li>
+                <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
+                <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
+                <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
+                <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
+                <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
               </ul>
             </Col>
             <Col md={6}>

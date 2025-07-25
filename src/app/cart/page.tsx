@@ -7,6 +7,7 @@ import NavbarComponent from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
+import Link from 'next/link';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { savePurchase } from '../services/purchaseService';
 
@@ -295,11 +296,11 @@ const CartPage = () => {
             <Col md={6} className="mb-4 mb-md-0">
               <h5 className="fw-bold mb-3">Comprar</h5>
               <ul className="list-unstyled">
-                <li className="mb-2"><a href="/products/mujer" className="text-dark text-decoration-none">Mujer</a></li>
-                <li className="mb-2"><a href="/products/hombre" className="text-dark text-decoration-none">Hombre</a></li>
-                <li className="mb-2"><a href="/products/ninos" className="text-dark text-decoration-none">Niños</a></li>
-                <li className="mb-2"><a href="/products/bebe" className="text-dark text-decoration-none">Bebé</a></li>
-                <li className="mb-2"><a href="/products/sport" className="text-dark text-decoration-none">Sport</a></li>
+                <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
+                <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
+                <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
+                <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
+                <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
               </ul>
             </Col>
             <Col md={6}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { db } from '../utils/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 // Definición de tipos
 export interface PurchaseItem {
@@ -124,7 +124,7 @@ export const clearUserPurchases = async (userId: string): Promise<void> => {
 /**
  * Agrega un producto a favoritos del usuario en Firestore
  */
-export const addFavourite = async (userId: string, product: any) => {
+export const addFavourite = async (userId: string, product: { id: string; name: string; price: number; image: string; description?: string }) => {
   if (!userId || !product?.id) throw new Error('userId y product.id requeridos');
   const favRef = doc(db, `users/${userId}/favourites/${product.id}`);
   await setDoc(favRef, product);

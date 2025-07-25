@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
+  // Disable static generation to avoid Firebase prerendering issues
+  output: 'standalone',
+  experimental: {
+    // Disable static optimization for pages that use Firebase
+    forceSwcTransforms: true,
+  },
 };
 
 export default nextConfig;

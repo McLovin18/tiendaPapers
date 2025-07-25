@@ -1,0 +1,428 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* Reset y base */
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: #f8f9fa;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+  color: #181818;
+}
+
+a {
+  color: #1a1a1a;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  color: #e63946;
+}
+
+/* Tarjetas y contenedores */
+.card, .Card, .border-0, .shadow-sm {
+  border-radius: 1.1rem !important;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+  border: none !important;
+}
+
+.container, .Container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Botones */
+.btn, .Button, button {
+  border-radius: 0.7rem !important;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+}
+.btn-dark, .Button-dark {
+  background: #181818 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.btn-dark:hover, .Button-dark:hover, .btn-dark:focus, .Button-dark:focus {
+  background: #2563eb !important;
+  color: #fff !important;
+  border: none !important;
+}
+.btn:hover, .Button:hover, button:hover {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+.btn-outline-dark {
+  border: 2px solid #181818 !important;
+  color: #181818 !important;
+  background: #fff !important;
+}
+.btn-outline-dark:hover {
+  background: #181818 !important;
+  color: #fff !important;
+}
+
+/* Inputs y formularios */
+input, textarea, select, .form-control {
+  border-radius: 0.7rem !important;
+  border: 1.5px solid #e0e0e0 !important;
+  padding: 0.7rem 1rem !important;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 0.2s;
+}
+input:focus, textarea:focus, select:focus, .form-control:focus {
+  border-color: #e63946 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px #e6394622;
+}
+
+/* Navbar y Sidebar */
+.navbar, .Navbar {
+  border-bottom: 1.5px solid #ececec;
+  background: #fff !important;
+  z-index: 100;
+}
+@media (max-width: 991px) {
+  .navbar, .Navbar {
+    position: sticky;
+    top: 0;
+  }
+}
+/* Sidebar para pantallas grandes */
+.sidebar-desktop {
+  background: #fff;
+  border-right: 1.5px solid #ececec;
+  min-height: 100vh;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  overflow-y: auto;
+}
+
+/* Topbar para pantallas medianas y pequeñas */
+.topbar-mobile {
+  background: #fff;
+  border-bottom: 1.5px solid #ececec;
+}
+
+.topbar-mobile .nav-link {
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.topbar-mobile .nav-link:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.topbar-mobile .nav-link.active {
+  background-color: #007bff;
+  color: white !important;
+}
+
+.topbar-mobile .nav-link.active i,
+.topbar-mobile .nav-link.active span {
+  color: white !important;
+}
+
+/* Layout responsive: Pantallas grandes (Desktop) */
+@media (min-width: 992px) {
+  /* Main content con sidebar en desktop */
+  main.flex-grow-1.w-100 {
+    padding: 1.5rem;
+  }
+}
+
+/* Layout responsive: Pantallas medianas y pequeñas (Mobile/Tablet) */
+@media (max-width: 991px) {
+  /* Eliminar padding del main en móviles - el topbar ya proporciona separación */
+  main.flex-grow-1.w-100 {
+    padding: 0 !important;
+  }
+  
+  /* Container dentro del main - padding mínimo */
+  main.flex-grow-1.w-100 .container {
+    padding-top: 0.5rem !important;
+    padding-bottom: 1rem !important;
+  }
+  
+  /* Ajustar el topbar para que no tenga espacio extra */
+  .sidebar-mobile {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Asegurar que no hay padding extra en el layout flex */
+  .d-flex.flex-grow-1 {
+    padding-top: 0 !important;
+  }
+}
+
+/* Estilos legacy para compatibilidad */
+.sidebar, .Sidebar, aside {
+  background: #fff;
+  border-right: 1.5px solid #ececec;
+  min-height: 100vh;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  overflow-y: auto;
+}
+
+/* Grids y responsividad */
+.row, .Row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.col, .Col {
+  padding-left: 0.7rem !important;
+  padding-right: 0.7rem !important;
+}
+@media (max-width: 767px) {
+  .row, .Row {
+    gap: 1.5rem 0 !important;
+  }
+  .col, .Col {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-left: 0.3rem !important;
+    padding-right: 0.3rem !important;
+  }
+  .container, .Container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  h1, h2, h3 {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Comentarios y tarjetas de usuario */
+.card .card-body, .Card .Card.Body {
+  padding: 1.2rem 1.2rem 1rem 1.2rem !important;
+}
+.card .card-title, .Card .Card.Title {
+  font-size: 1.1rem !important;
+}
+
+/* Feedback visual */
+.alert-success {
+  background: #eafaf1 !important;
+  color: #1a7f37 !important;
+  border: none !important;
+  border-radius: 0.7rem !important;
+}
+.alert-danger, .alert-warning {
+  border-radius: 0.7rem !important;
+}
+
+/* Mejorar scroll en sidebar */
+.sidebar, .Sidebar, aside {
+  scrollbar-width: thin;
+  scrollbar-color: #e63946 #fff;
+}
+.sidebar::-webkit-scrollbar, .Sidebar::-webkit-scrollbar, aside::-webkit-scrollbar {
+  width: 7px;
+  background: #fff;
+}
+.sidebar::-webkit-scrollbar-thumb, .Sidebar::-webkit-scrollbar-thumb, aside::-webkit-scrollbar-thumb {
+  background: #e63946;
+  border-radius: 6px;
+}
+
+/* Otros detalles */
+.form-label {
+  font-weight: 600;
+  color: #222;
+}
+
+/* Responsive para botones grandes */
+@media (max-width: 575px) {
+  .btn, .Button, button {
+    font-size: 1rem !important;
+    padding: 0.7rem 1.1rem !important;
+  }
+}
+
+/* Animaciones y transiciones */
+.card, .Card, .border-0, .shadow-sm {
+  transition: box-shadow 0.25s, transform 0.18s;
+}
+.card:hover, .Card:hover {
+  box-shadow: 0 8px 32px 0 rgba(230,57,70,0.13);
+  transform: translateY(-4px) scale(1.025);
+}
+.btn, .Button, button {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.18s, background 0.18s, color 0.18s, transform 0.13s;
+}
+.btn:active, .Button:active, button:active {
+  transform: scale(0.97);
+}
+.btn:focus-visible {
+  outline: 2px solid #e63946 !important;
+}
+
+/* Ripple effect for buttons */
+.btn, .Button, button {
+  --ripple-color: #fff3;
+}
+.btn:after, .Button:after, button:after {
+  content: '';
+  display: block;
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  width: 100px;
+  height: 100px;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.1);
+  background: var(--ripple-color);
+  transition: opacity 0.4s, transform 0.4s;
+  z-index: 1;
+}
+.btn:active:after, .Button:active:after, button:active:after {
+  opacity: 0.3;
+  transform: translate(-50%, -50%) scale(1.2);
+  transition: 0s;
+}
+
+/* Badge destacado/nuevo */
+.badge-featured, .badge-nuevo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #e63946;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 0.7rem;
+  padding: 0.3em 0.9em;
+  z-index: 2;
+  box-shadow: 0 2px 8px 0 rgba(230,57,70,0.13);
+  letter-spacing: 0.03em;
+}
+
+/* Feedback de validación */
+input:invalid, textarea:invalid, select:invalid, .form-control:invalid {
+  border-color: #e63946 !important;
+}
+input:valid, textarea:valid, select:valid, .form-control:valid {
+  border-color: #1a7f37 !important;
+}
+
+/* Navbar blur y sticky */
+.navbar, .Navbar {
+  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+}
+
+/* Avatares en comentarios */
+.avatar-comment {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #e63946;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+}
+
+/* Separadores sutiles entre comentarios */
+.card.mb-3.border-0.shadow-sm:not(:last-child) {
+  border-bottom: 1.5px solid #f0f0f0 !important;
+}
+
+/* Footer apilado en mobile */
+@media (max-width: 767px) {
+  footer .row {
+    flex-direction: column !important;
+    gap: 2rem 0 !important;
+  }
+  footer .col, footer .Col {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    text-align: center;
+  }
+  footer ul {
+    margin-bottom: 1.5rem !important;
+  }
+}
+
+/* Quick add to cart (ejemplo, puedes usarlo en el componente) */
+.quick-add-cart {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  background: #181818;
+  color: #fff;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.13);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+  z-index: 3;
+}
+.card:hover .quick-add-cart {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Badge de añadido al carrito */
+.badge-cart-added {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #1a7f37;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 0.7rem;
+  padding: 0.2em 0.7em;
+  z-index: 2;
+  box-shadow: 0 2px 8px 0 rgba(26,127,55,0.13);
+  letter-spacing: 0.03em;
+  animation: cartAdded 1.2s cubic-bezier(.4,1.4,.6,1) both;
+}
+@keyframes cartAdded {
+  0% { opacity: 0; transform: scale(0.7) translateY(-10px); }
+  30% { opacity: 1; transform: scale(1.1) translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.7) translateY(-10px); }
+}

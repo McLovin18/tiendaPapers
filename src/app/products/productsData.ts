@@ -1,0 +1,347 @@
+// src/app/products/productsData.ts
+
+const allProducts = [
+  {
+    id: 1,
+    name: 'Vestido Suplex',
+    price: 9.99,
+    images: ['/vestidoSuplex.png', '/colores1.png'],
+    category: 'Vestido',
+    categoryLink: '/mujer',
+    description: 'Vestido elegante y cómodo para cualquier ocasión.',
+    inStock: true,
+    sizes: ['M'],
+    colors: ['Blanco', 'Azul', 'Negro', 'Rojo', 'Verde', 'piel', 'plomo'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte regular',
+      'Cuello clásico',
+      'Cierre con botones',
+      'Lavable a máquina'
+    ],
+    featured: true
+  },
+  {
+    id: 2,
+    name: 'Jeans Slim Fit',
+    price: 49.99,
+    images: ['/images/product2.svg'],
+    category: 'jeans',
+    categoryLink: '/hombre',
+    description: 'Jeans slim fit de alta calidad con estilo moderno.',
+    inStock: true,
+    sizes: ['28', '30', '32', '34', '36'],
+    colors: ['Azul Claro', 'Azul Oscuro', 'Negro'],
+    details: [
+      'Tejido 98% algodón, 2% elastano',
+      'Corte slim fit',
+      'Cintura media',
+      'Cierre con botón y cremallera',
+      'Lavable a máquina'
+    ],
+    featured: true
+  },
+  {
+    id: 3,
+    name: 'Camiseta Estampada',
+    price: 19.99,
+    images: ['/images/product3.svg'],
+    category: 'camisas',
+    categoryLink: '/hombre',
+    description: 'Camiseta con estampado gráfico moderno y tejido suave.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Blanco', 'Gris', 'Negro'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte regular',
+      'Cuello redondo',
+      'Estampado de alta calidad',
+      'Lavable a máquina'
+    ],
+    featured: true
+  },
+  {
+    id: 4,
+    name: 'Pantalón Chino',
+    price: 39.99,
+    images: ['/images/product4.svg'],
+    category: 'pantalones',
+    categoryLink: '/hombre',
+    description: 'Pantalón chino elegante y cómodo para cualquier ocasión.',
+    inStock: true,
+    sizes: ['28', '30', '32', '34', '36'],
+    colors: ['Beige', 'Azul Marino', 'Verde Oliva'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte regular',
+      'Cintura media',
+      'Cierre con botón y cremallera',
+      'Bolsillos laterales y traseros',
+      'Lavable a máquina'
+    ],
+    featured: true
+  },
+  {
+    id: 5,
+    name: 'Camisa Formal',
+    price: 34.99,
+    images: ['/images/product1.svg'],
+    category: 'camisas',
+    categoryLink: '/hombre',
+    description: 'Camisa formal para ocasiones especiales con acabado premium.',
+    inStock: false,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Blanco', 'Celeste', 'Negro'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte clásico',
+      'Cuello italiano',
+      'Puños dobles',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 6,
+    name: 'Jeans Regular',
+    price: 44.99,
+    images: ['/images/product2.svg'],
+    category: 'jeans',
+    categoryLink: '/hombre',
+    description: 'Jeans de corte regular con gran durabilidad y comodidad.',
+    inStock: true,
+    sizes: ['28', '30', '32', '34', '36'],
+    colors: ['Azul', 'Negro'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte regular',
+      'Cintura media',
+      'Cierre con botón y cremallera',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 7,
+    name: 'Camiseta Básica',
+    price: 14.99,
+    images: ['/images/product3.svg'],
+    category: 'camisas',
+    categoryLink: '/hombre',
+    description: 'Camiseta básica de algodón disponible en varios colores.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Blanco', 'Negro', 'Azul', 'Rojo'],
+    details: [
+      'Tejido 100% algodón',
+      'Corte regular',
+      'Cuello redondo',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 8,
+    name: 'Pantalón Deportivo',
+    price: 29.99,
+    images: ['/images/product4.svg'],
+    category: 'pantalones',
+    categoryLink: '/hombre',
+    description: 'Pantalón deportivo cómodo y ligero para actividades físicas.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Gris', 'Negro', 'Azul'],
+    details: [
+      'Tejido sintético transpirable',
+      'Cintura elástica',
+      'Bolsillos laterales',
+      'Lavable a máquina'
+    ]
+  },
+  // Nuevos productos
+  {
+    id: 9,
+    name: 'Vestido Floral',
+    price: 59.99,
+    images: ['/images/product1.svg'],
+    category: 'vestidos',
+    categoryLink: '/mujer',
+    description: 'Vestido con estampado floral y diseño elegante para ocasiones especiales.',
+    inStock: true,
+    sizes: ['XS', 'S', 'M', 'L'],
+    colors: ['Rosa', 'Verde', 'Azul'],
+    details: [
+      'Tejido 100% poliéster',
+      'Corte regular',
+      'Largo midi',
+      'Cierre con cremallera trasera',
+      'Lavado en seco recomendado'
+    ]
+  },
+  {
+    id: 10,
+    name: 'Sudadera Oversize',
+    price: 34.99,
+    images: ['/images/product2.svg'],
+    category: 'sudaderas',
+    categoryLink: '/mujer',
+    description: 'Sudadera oversize de algodón suave, ideal para looks casuales.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Gris', 'Negro', 'Beige'],
+    details: [
+      'Tejido 80% algodón, 20% poliéster',
+      'Corte oversize',
+      'Capucha ajustable',
+      'Bolsillo canguro',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 11,
+    name: 'Falda Plisada',
+    price: 24.99,
+    images: ['/images/product3.svg'],
+    category: 'faldas',
+    categoryLink: '/mujer',
+    description: 'Falda plisada midi, perfecta para primavera y verano.',
+    inStock: true,
+    sizes: ['XS', 'S', 'M', 'L'],
+    colors: ['Rosa', 'Negro', 'Azul Marino'],
+    details: [
+      'Tejido 100% poliéster',
+      'Cintura elástica',
+      'Corte midi',
+      'Plisado permanente',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 12,
+    name: 'Blazer Clásico',
+    price: 69.99,
+    images: ['/images/product4.svg'],
+    category: 'blazers',
+    categoryLink: '/mujer',
+    description: 'Blazer clásico entallado, ideal para oficina o eventos formales.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Negro', 'Azul Marino', 'Beige'],
+    details: [
+      'Tejido mezcla de poliéster y viscosa',
+      'Corte entallado',
+      'Solapa clásica',
+      'Cierre con botón',
+      'Bolsillos frontales'
+    ]
+  },
+  {
+    id: 13,
+    name: 'Short Deportivo',
+    price: 19.99,
+    images: ['/images/product1.svg'],
+    category: 'shorts',
+    categoryLink: '/sport',
+    description: 'Short deportivo transpirable para entrenamiento y running.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Negro', 'Azul', 'Verde'],
+    details: [
+      'Tejido sintético ligero',
+      'Cintura elástica',
+      'Secado rápido',
+      'Bolsillos laterales'
+    ]
+  },
+  {
+    id: 14,
+    name: 'Chaqueta Rompevientos',
+    price: 54.99,
+    images: ['/images/product2.svg'],
+    category: 'chaquetas',
+    categoryLink: '/sport',
+    description: 'Chaqueta rompevientos ligera y resistente al agua.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Negro', 'Rojo', 'Azul'],
+    details: [
+      'Tejido sintético resistente al agua',
+      'Cierre con cremallera',
+      'Capucha ajustable',
+      'Bolsillos laterales',
+      'Ligera y compacta'
+    ]
+  },
+  {
+    id: 15,
+    name: 'Body para Bebé',
+    price: 12.99,
+    images: ['/images/product3.svg'],
+    category: 'bebe',
+    categoryLink: '/bebe',
+    description: 'Body de algodón suave para bebé, fácil de poner y quitar.',
+    inStock: true,
+    sizes: ['0-3M', '3-6M', '6-9M', '9-12M'],
+    colors: ['Blanco', 'Celeste', 'Rosa'],
+    details: [
+      'Tejido 100% algodón',
+      'Cierres a presión',
+      'Cuello americano',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 16,
+    name: 'Conjunto Infantil',
+    price: 29.99,
+    images: ['/images/product4.svg'],
+    category: 'ninos',
+    categoryLink: '/ninos',
+    description: 'Conjunto de camiseta y pantalón corto para niños.',
+    inStock: true,
+    sizes: ['2', '4', '6', '8', '10'],
+    colors: ['Azul', 'Rojo', 'Verde'],
+    details: [
+      'Camiseta 100% algodón',
+      'Pantalón corto de felpa',
+      'Diseño divertido',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 17,
+    name: 'Pijama de Algodón',
+    price: 22.99,
+    images: ['/images/product1.svg'],
+    category: 'pijamas',
+    categoryLink: '/ninos',
+    description: 'Pijama de algodón transpirable para noches cómodas.',
+    inStock: true,
+    sizes: ['2', '4', '6', '8', '10'],
+    colors: ['Azul', 'Gris', 'Rosa'],
+    details: [
+      'Tejido 100% algodón',
+      'Cintura elástica',
+      'Diseño infantil',
+      'Lavable a máquina'
+    ]
+  },
+  {
+    id: 18,
+    name: 'Leggings Deportivos',
+    price: 27.99,
+    images: ['/images/product2.svg'],
+    category: 'leggings',
+    categoryLink: '/sport',
+    description: 'Leggings deportivos elásticos y de secado rápido.',
+    inStock: true,
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Negro', 'Gris', 'Azul'],
+    details: [
+      'Tejido elástico de alto rendimiento',
+      'Cintura alta',
+      'Secado rápido',
+      'Costuras planas antirozaduras'
+    ]
+  },
+];
+
+export default allProducts; 

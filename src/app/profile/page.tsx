@@ -9,10 +9,18 @@ import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
 import Link from 'next/link';
 import Modal from 'react-bootstrap/Modal';
-import { getUserPurchases, clearUserPurchases, getUserFavourites, removeFavourite } from '../services/purchaseService';
+import { getUserPurchases, clearUserPurchases, getUserFavourites, removeFavourite, Purchase } from '../services/purchaseService';
 import { useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { updateProfile } from 'firebase/auth';
+
+interface Favourite {
+  id: string | number;
+  name: string;
+  price: number;
+  image: string;
+  description?: string;
+}
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
@@ -20,19 +28,15 @@ const ProfilePage = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [purchases, setPurchases] = useState<any[]>([]);
-  const [showDetail, setShowDetail] = useState(false);
-  const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [avatar, setAvatar] = useState(user?.photoURL || '/images/avatar.svg');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [favourites, setFavourites] = useState<any[]>([]);
+  const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [loadingFavourites, setLoadingFavourites] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Cargar historial de compras desde Firestore y detectar parámetro de consulta 'tab'
   useEffect(() => {
@@ -40,7 +44,6 @@ const ProfilePage = () => {
       if (!user?.uid) return;
       
       setLoading(true);
-      setLoadError('');
       
       try {
         
@@ -50,7 +53,7 @@ const ProfilePage = () => {
         setPurchases(userPurchases);
       } catch (error) {
         console.error('Error al cargar compras:', error);
-        setLoadError('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
+        console.error('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
       } finally {
         setLoading(false);
       }
@@ -76,39 +79,6 @@ const ProfilePage = () => {
 
   // Efecto para sincronizar el tab con la URL
   const [activeTab, setActiveTab] = useState('personal');
-  
-  const handleTabChange = (key: string | null) => {
-    if (key) {
-      setActiveTab(key);
-      
-      // Si se selecciona la pestaña de compras, actualizar los datos desde Firestore
-      if (key === 'purchases' && user?.uid) {
-        setLoading(true);
-        setLoadError('');
-        
-        getUserPurchases(user.uid)
-          .then(userPurchases => {
-            console.log('Actualizando compras desde Firestore:', userPurchases);
-            setPurchases(userPurchases);
-          })
-          .catch(error => {
-            console.error('Error al actualizar compras:', error);
-            setLoadError('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica para actualizar el perfil del usuario
-    setSuccess(true);
-    setError('');
-    setTimeout(() => setSuccess(false), 3000);
-  };
 
   const handleLogout = async () => {
     try {
@@ -127,21 +97,13 @@ const ProfilePage = () => {
       setPurchases([]);
     } catch (error) {
       console.error('Error al limpiar historial de compras:', error);
-      setLoadError('No se pudo limpiar el historial. Intenta de nuevo más tarde.');
+      console.error('No se pudo limpiar el historial. Intenta de nuevo más tarde.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleShowDetail = (purchase: any) => {
-    setSelectedPurchase(purchase);
-    setShowDetail(true);
-  };
 
-  const handleCloseDetail = () => {
-    setShowDetail(false);
-    setSelectedPurchase(null);
-  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -165,7 +127,7 @@ const ProfilePage = () => {
       setSuccess(true);
       setError('');
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
+    } catch {
       setError('No se pudo actualizar el perfil. Intenta de nuevo.');
     }
   };
@@ -176,7 +138,7 @@ const ProfilePage = () => {
       if (!user?.uid || activeTab !== 'favorites') return;
       setLoadingFavourites(true);
       const favs = await getUserFavourites(user.uid);
-      setFavourites(favs);
+      setFavourites(favs as Favourite[]);
       setLoadingFavourites(false);
     };
     fetchFavourites();
@@ -335,7 +297,7 @@ const ProfilePage = () => {
                                     <h6 className="fw-bold mb-1">Pedido #{purchase.id}</h6>
                                     <div className="small text-muted mb-2">{purchase.date}</div>
                                     <div>
-                                      {purchase.items.map((item: any, i: number) => (
+                                      {purchase.items.map((item: { id: string; name: string; image: string; quantity: number }, i: number) => (
                                         <span key={i} className="me-3">
                                           <Image src={item.image} alt={item.name} width={40} height={40} className="me-2 rounded-1" />
                                           {item.name} x{item.quantity}
@@ -374,7 +336,7 @@ const ProfilePage = () => {
                         </>
                       ) : (
                         <Row className="g-4 justify-content-center">
-                          {favourites.map((fav: any) => (
+                          {favourites.map((fav: Favourite) => (
                             <Col xs={12} md={6} lg={4} key={fav.id}>
                               <Card className="mb-4 border-0 shadow-sm text-start">
                                 <Card.Body>

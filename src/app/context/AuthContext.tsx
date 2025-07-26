@@ -52,7 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
+    // Limpia favoritos en memoria
+    localStorage.removeItem("favourites_temp"); 
     return signOut(auth);
   };
 

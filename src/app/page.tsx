@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from './context/AuthContext';
@@ -9,29 +9,22 @@ import NavbarComponent from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import TopbarMobile from './components/TopbarMobile';
 import allProducts from './products/productsData';
+import FavouriteButton from "./components/FavouriteButton";
+
+
 const featuredProducts = allProducts.filter(p => p.featured);
 
 export default function Home() {
   const { user } = useAuth();
   const [favSuccess, setFavSuccess] = useState<string | null>(null);
+  const [favsUpdate, setFavsUpdate] = useState(0);
 
-  const handleAddToFavourites = (product) => {
-    const favourites = JSON.parse(localStorage.getItem('favourites') || '[]');
-    const exists = favourites.some((item) => item.id === product.id);
-    if (!exists) {
-      favourites.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        description: product.description
-      });
-      localStorage.setItem('favourites', JSON.stringify(favourites));
-      window.dispatchEvent(new Event('favourites-updated'));
-      setFavSuccess(product.name);
-      setTimeout(() => setFavSuccess(null), 2000);
-    }
-  };
+  useEffect(() => {
+    const handleFavUpdate = () => setFavsUpdate(prev => prev + 1);
+    window.addEventListener("favourites-updated", handleFavUpdate);
+
+    return () => window.removeEventListener("favourites-updated", handleFavUpdate);
+  }, []);
 
   // Página para usuarios no autenticados (similar a la imagen de referencia)
   const UnauthenticatedHome = () => (
@@ -228,7 +221,7 @@ export default function Home() {
             <h1 className="fw-bold text-center mb-5">Bienvenido a Fashion Store</h1>
             <Row className="g-4">
               {featuredProducts.map((product) => (
-                <Col key={product.id} xs={12} sm={6} md={3}>
+                <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>
                   <Card className="h-100 border-0 shadow-sm position-relative">
                     <div
                       className="position-relative"
@@ -262,21 +255,37 @@ export default function Home() {
                     <Card.Body className="d-flex flex-column justify-content-between">
                       <div>
                         <Card.Title className="fw-bold">{product.name}</Card.Title>
-                        <Card.Text className="text-primary fw-bold fs-5 mb-2">${product.price.toFixed(2)}</Card.Text>
+                        <Card.Text className="text-primary fw-bold fs-5 mb-2">
+                          ${product.price.toFixed(2)}
+                        </Card.Text>
                       </div>
-                      <Button 
-                        as={Link} 
-                        href={`/products/${product.id}`} 
-                        variant="dark" 
-                        className="w-100 mt-2 rounded-1"
-                      >
-                        Ver Detalles
-                      </Button>
+                      
+                      <div className="d-flex gap-2">
+                        <Button
+                          as={Link}
+                          href={`/products/${product.id}`}
+                          variant="dark"
+                          className="flex-grow-1 rounded-1"
+                        >
+                          Ver Detalles
+                        </Button>
+
+                        <FavouriteButton
+                          product={{
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            images: product.images,
+                            description: product.description,
+                          }}
+                        />
+                      </div>
                     </Card.Body>
                   </Card>
                 </Col>
               ))}
             </Row>
+
           </Container>
         </main>
       </div>

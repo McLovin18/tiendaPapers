@@ -15,7 +15,7 @@ const ProductsSportPage = () => {
 
   // Filtrar productos para la categoría sport
   const products = allProducts.filter(
-    (product) => product.categoryLink === "/hombre"
+    (product) => product.categoryLink === "/niños"
   );
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())

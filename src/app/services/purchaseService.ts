@@ -1,7 +1,7 @@
 'use client';
 
 import { db } from '../utils/firebase';
-import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc} from 'firebase/firestore';
 
 // Definición de tipos
 export interface PurchaseItem {
@@ -124,29 +124,33 @@ export const clearUserPurchases = async (userId: string): Promise<void> => {
 /**
  * Agrega un producto a favoritos del usuario en Firestore
  */
-export const addFavourite = async (userId: string, product: { id: string; name: string; price: number; image: string; description?: string }) => {
-  if (!userId || !product?.id) throw new Error('userId y product.id requeridos');
+export const addFavourite = async (userId: string, product: {
+  id: string | number;
+  name: string;
+  price: number;
+  image: string;
+  description?: string;
+}) => {
+  if (!userId) return;
+  if (!product.image) {
+    product.image = "/images/product1.svg"; // imagen fallback
+  }
   const favRef = doc(db, `users/${userId}/favourites/${product.id}`);
   await setDoc(favRef, product);
 };
 
-/**
- * Elimina un producto de favoritos del usuario en Firestore
- */
+
 export const removeFavourite = async (userId: string, productId: string | number) => {
-  if (!userId || !productId) throw new Error('userId y productId requeridos');
+  if (!userId || !productId) return;
   const favRef = doc(db, `users/${userId}/favourites/${productId}`);
   await deleteDoc(favRef);
 };
 
-/**
- * Obtiene todos los productos favoritos del usuario desde Firestore
- */
 export const getUserFavourites = async (userId: string) => {
   if (!userId) return [];
   const favsCol = collection(db, `users/${userId}/favourites`);
-  const snapshot = await getDocs(favsCol);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const snapshot = await getDocs(favsCol); // 🔥 siempre lee del servidor
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
 // --- COMENTARIOS DE PRODUCTO EN FIRESTORE ---
@@ -154,11 +158,16 @@ export const getUserFavourites = async (userId: string) => {
 /**
  * Agrega un comentario a un producto en Firestore
  */
-export const addProductComment = async (productId: string | number, comment: { name: string; text: string; date: string }) => {
-  if (!productId || !comment?.text) throw new Error('productId y comentario requeridos');
+export const addProductComment = async (
+  productId: string | number,
+  comment: { name: string; text: string; date: string; rating: number; replies: any[] }
+) => {
+  if (!productId || !comment?.text) throw new Error("productId y comentario requeridos");
   const commentsCol = collection(db, `products/${productId}/comments`);
-  await addDoc(commentsCol, comment);
+  await addDoc(commentsCol, comment); // ✅ Ahora incluye rating y replies
 };
+
+
 
 /**
  * Obtiene todos los comentarios de un producto desde Firestore, ordenados por fecha descendente
@@ -168,5 +177,26 @@ export const getProductComments = async (productId: string | number) => {
   const commentsCol = collection(db, `products/${productId}/comments`);
   const q = query(commentsCol, orderBy('date', 'desc'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data());
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })); // ✅ AÑADIR doc.id
+};
+
+export const updateProductRating = async (productId: string | number, averageRating: number) => {
+  const productRef = doc(db, "products", String(productId));
+  await updateDoc(productRef, { averageRating });
+};
+
+
+export const addReplyToComment = async (
+  productId: string | number,
+  commentId: string,
+  reply: { name: string; text: string; date: string }
+) => {
+  const commentRef = doc(db, `products/${productId}/comments`, commentId);
+  const snapshot = await getDoc(commentRef);
+  if (!snapshot.exists()) return;
+
+  const data = snapshot.data();
+  const updatedReplies = [...(data.replies || []), reply];
+
+  await updateDoc(commentRef, { replies: updatedReplies });
 };

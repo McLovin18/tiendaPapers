@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Form, Alert } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
+import TopbarMobile from '../components/TopbarMobile';
 import NavbarComponent from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import LoginRequired from '../components/LoginRequired';
@@ -149,11 +150,13 @@ const CartPage = () => {
   return (
     <div className="d-flex flex-column min-vh-100">
       {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
+
+      {user && <TopbarMobile />}
       
-      {user && <Sidebar />}
-      
-      <div className="d-flex flex-grow-1">
-        <main className="flex-grow-1 w-100">
+      <div className="d-flex flex-grow-1 w-100">
+        {user && <Sidebar />}
+
+        <main className="flex-grow-1">
         <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
           <h1 className="fw-bold text-center mb-5">Tu Carrito</h1>
           {cartItems.length === 0 ? (

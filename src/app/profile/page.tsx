@@ -130,25 +130,70 @@ const ProfilePage = () => {
     } catch {
       setError('No se pudo actualizar el perfil. Intenta de nuevo.');
     }
+
+    if (user) {
+      await updateProfile(user, {
+        displayName: name,
+        photoURL: avatar, // 🔹 También actualiza la foto
+      });
+    }
   };
 
-  // Cargar favoritos desde Firestore cuando el usuario o la pestaña cambian
-  useEffect(() => {
-    const fetchFavourites = async () => {
-      if (!user?.uid || activeTab !== 'favorites') return;
-      setLoadingFavourites(true);
-      const favs = await getUserFavourites(user.uid);
-      setFavourites(favs as Favourite[]);
+// 🔹 Función para cargar favoritos desde localStorage + Firestore
+  const loadFavourites = async () => {
+    setLoadingFavourites(true);
+
+    try {
+      // 1️⃣ Cargar primero desde localStorage para mostrar rápido
+      const localFavs = JSON.parse(localStorage.getItem("favourites") || "[]");
+      setFavourites(localFavs);
+
+      // 2️⃣ Si hay usuario, sincronizar con Firestore
+      if (user?.uid) {
+        const remoteFavs = await getUserFavourites(user.uid);
+        setFavourites(remoteFavs);
+        localStorage.setItem("favourites", JSON.stringify(remoteFavs));
+      }
+    } catch (err) {
+      console.error("Error cargando favoritos:", err);
+    } finally {
       setLoadingFavourites(false);
-    };
-    fetchFavourites();
-  }, [user?.uid, activeTab]);
+    }
+  };
+
+  // 🔹 Cargar favoritos cuando el tab es "favorites"
+  useEffect(() => {
+    if (activeTab === "favorites") {
+      loadFavourites();
+    }
+  }, [activeTab, user?.uid]);
+
+  // 🔹 Escuchar cambios globales de favoritos
+  useEffect(() => {
+    const handleFavUpdate = () => loadFavourites();
+    window.addEventListener("favourites-updated", handleFavUpdate);
+    return () => window.removeEventListener("favourites-updated", handleFavUpdate);
+  }, [user?.uid]);
 
   const removeFavouriteHandler = async (id: string | number) => {
     if (!user?.uid) return;
-    await removeFavourite(user.uid, id);
-    setFavourites(favourites.filter(fav => fav.id !== id));
+
+    try {
+      await removeFavourite(user.uid, id);
+
+      // Actualizar estado y localStorage
+      const updatedFavs = favourites.filter(fav => fav.id !== id);
+      setFavourites(updatedFavs);
+      localStorage.setItem("favourites", JSON.stringify(updatedFavs));
+
+      // 🔹 Disparar evento global
+      window.dispatchEvent(new Event("favourites-updated"));
+    } catch (error) {
+      console.error("Error al eliminar favorito:", error);
+    }
   };
+
+
 
   if (!user) {
     return <LoginRequired />;
@@ -347,7 +392,6 @@ const ProfilePage = () => {
                                       <div className="text-primary fw-bold mb-1">${fav.price.toFixed(2)}</div>
                                       <div className="small text-muted mb-2">{fav.description?.substring(0, 60)}...</div>
                                     </div>
-                                    <Button variant="link" className="text-danger ms-auto p-0" onClick={() => removeFavouriteHandler(fav.id)}><i className="bi bi-x-lg"></i></Button>
                                   </div>
                                 </Card.Body>
                               </Card>

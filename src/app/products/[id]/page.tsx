@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,8 +9,10 @@ import { useAuth } from '../../context/AuthContext';
 import NavbarComponent from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
 import LoginRequired from '../../components/LoginRequired';
-import { addFavourite, removeFavourite, getUserFavourites, addProductComment, getProductComments } from '../../services/purchaseService';
+import { addFavourite, removeFavourite, getUserFavourites, addProductComment, getProductComments, updateProductRating, addReplyToComment } from '../../services/purchaseService';
 import allProducts from '../productsData';
+import FavouriteButton from '../../components/FavouriteButton';
+
 
 // Productos relacionados
 const relatedProducts = [
@@ -52,20 +54,51 @@ const ProductDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   // Comentarios por producto (Firestore)
-  const [comments, setComments] = useState<{name: string, text: string, date: string, rating?: number}[]>([]);
-  const [commentName, setCommentName] = useState('');
-  const [commentText, setCommentText] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
   const [rating, setRating] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [replyText, setReplyText] = useState<{ [key: string]: string }>({}); // para respuestas
 
-  useEffect(() => {
-    const checkFavourite = async () => {
-      if (!user?.uid || !product?.id) return;
-      const favs = await getUserFavourites(user.uid);
-      setIsFavourite(favs.some((item: any) => item.id == product.id));
-    };
-    checkFavourite();
+
+  const updateFavouriteState = useCallback(async () => {
+    if (!user?.uid || !product?.id) {
+      setIsFavourite(false);
+      return;
+    }
+  
+    // 🔥 Siempre obtener favoritos del usuario actual desde Firestore
+    const favs = await getUserFavourites(user.uid);
+    const fav = favs.some((item: any) => item.id == product.id);
+    setIsFavourite(fav);
   }, [user?.uid, product?.id]);
+  
+  useEffect(() => {
+    updateFavouriteState();
+  }, [updateFavouriteState]);
+
+
+
+  const handleAddToFavourites = async () => {
+    if (!user?.uid || !product) return;
+  
+    if (isFavourite) {
+      await removeFavourite(user.uid, product.id);
+    } else {
+      await addFavourite(user.uid, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || product.image || "/placeholder.jpg",
+      });
+    }
+  
+    // 🔥 Volvemos a cargar favoritos desde Firestore
+    await updateFavouriteState();
+  };
+  
+
 
   // Cargar comentarios desde Firestore
   useEffect(() => {
@@ -73,43 +106,102 @@ const ProductDetailPage = () => {
       if (!product?.id) return;
       setLoadingComments(true);
       const fetched = await getProductComments(product.id);
-      // Mapear a tipo seguro
-      setComments(fetched.map((c: any) => ({
-        name: c.name || 'Usuario',
-        text: c.text || '',
-        date: c.date || '',
-        rating: c.rating || 0
-      })));
+  
+      setComments(
+        fetched.map((c: any) => ({
+          id: c.id,
+          name: c.name || "Usuario",
+          text: c.text || "",
+          date: c.date || "",
+          rating: c.rating || 0,
+          replies: c.replies || []
+        }))
+      );
+  
+      // 🔹 Calcular promedio (por si no existe en Firestore)
+      if (fetched.length > 0) {
+        const avg = fetched.reduce((acc, c) => acc + (c.rating || 0), 0) / fetched.length;
+        setAverageRating(avg);
+      } else {
+        setAverageRating(0);
+      }
+  
       setLoadingComments(false);
     };
+  
     fetchComments();
   }, [product?.id]);
+  
 
   // Guardar comentario en Firestore
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (!commentText.trim() || rating < 1) return;
+  
     const newComment = {
-      name: user.displayName || 'Usuario',
+      name: user.displayName || "Usuario",
       text: commentText.trim(),
       date: new Date().toISOString(),
-      rating
+      rating,
+      replies: [],
+      photoURL: user.photoURL || "/new_user.png", // 🔹 Se guarda la foto de perfil
+
     };
+  
     if (!product) return;
-    
+  
     await addProductComment(product.id, newComment);
-    setCommentText('');
-    setRating(0);
-    // Recargar comentarios
+  
+    // 🔹 Obtener comentarios actualizados
     const fetched = await getProductComments(product.id);
     setComments(fetched.map((c: any) => ({
-      name: c.name || 'Usuario',
-      text: c.text || '',
-      date: c.date || '',
-      rating: c.rating || 0
+      name: c.name || "Usuario",
+      text: c.text || "",
+      date: c.date || "",
+      rating: c.rating || 0,
+      replies: c.replies || [],
+      photoURL: c.photoURL || "/new_user.png", // 🔹 Se carga la foto guardada
+
     })));
+  
+    // 🔹 Calcular y guardar promedio
+    const avg = fetched.reduce((acc, c) => acc + (c.rating || 0), 0) / fetched.length;
+    setAverageRating(avg);
+    await updateProductRating(product.id, avg);
+  
+    // Reset
+    setCommentText("");
+    setRating(0);
   };
+  
+
+
+  const handleReply = async (commentIndex: number) => {
+    const replyMessage = replyText[commentIndex]?.trim();
+    if (!replyMessage || !user || !product) return;
+  
+    const reply = {
+      name: user.displayName || "Usuario",
+      text: replyMessage,
+      date: new Date().toISOString()
+    };
+  
+    // 🔹 Obtener ID real del comentario (hay que mapear doc.id en getProductComments)
+    const comment = comments[commentIndex];
+    await addReplyToComment(product.id, comment.id, reply);
+  
+    // 🔹 Recargar comentarios
+    const fetched = await getProductComments(product.id);
+    setComments(fetched.map((c: any) => ({
+      ...c,
+      replies: c.replies || []
+    })));
+  
+    setReplyText((prev) => ({ ...prev, [commentIndex]: "" }));
+  };
+  
+  
 
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -191,22 +283,6 @@ const ProductDetailPage = () => {
     }
   };
 
-  const handleAddToFavourites = async () => {
-    if (!user?.uid || !product) return;
-    if (isFavourite) {
-      await removeFavourite(user.uid, product.id);
-      setIsFavourite(false);
-    } else {
-      await addFavourite(user.uid, {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        description: product.description
-      });
-      setIsFavourite(true);
-    }
-  };
 
   // Si el usuario no está autenticado, mostrar mensaje de inicio de sesión requerido
   if (!user) {
@@ -391,9 +467,7 @@ const ProductDetailPage = () => {
                 <Button variant="dark" size="lg" className="w-100 rounded-1 mb-3" onClick={handleAddToCart}>
                   Añadir al carrito
                 </Button>
-                <Button variant="outline-danger" size="lg" className="rounded-1 mb-3" onClick={handleAddToFavourites}>
-                  <i className={`bi ${isFavourite ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
-                </Button>
+                <FavouriteButton product={product} />
               </div>
             </Col>
           </Row>
@@ -403,76 +477,167 @@ const ProductDetailPage = () => {
       {/* Sección de comentarios */}
       <div className="my-5">
         <Container>
+          <div className="mb-3">
+            <h5 className="fw-bold">Calificación promedio:</h5>
+
+            <div style={{ fontSize: "1.5rem", color: "#e63946" }}>
+              {[1, 2, 3, 4, 5].map((star) => {
+                const full = star <= Math.floor(averageRating); // Estrella llena
+                const half = star === Math.ceil(averageRating) && averageRating % 1 >= 0.5; // Media estrella
+
+                return (
+                  <span
+                    key={star}
+                    style={{
+                      position: "relative",
+                      display: "inline-block",
+                      width: "1.2em",
+                    }}
+                  >
+                    <span style={{ color: "#ccc" }}>★</span>
+                    <span
+                      style={{
+                        color: "#e63946",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: full ? "100%" : half ? "50%" : "0%",
+                        overflow: "hidden",
+                      }}
+                    >
+                      ★
+                    </span>
+                  </span>
+                );
+              })}
+              <span className="ms-2">({averageRating.toFixed(1)}/5)</span>
+            </div>
+          </div>
+
           <h3 className="fw-bold mb-4">Comentarios</h3>
-          <form onSubmit={handleAddComment} className="mb-4">
+
+          {/* Formulario de nuevo comentario */}
+          <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-light">
             <Row className="g-2 align-items-end">
-              <Col xs={12} md={3} className="d-flex align-items-center">
-                <div className="fw-bold">{user?.displayName || 'Usuario'}</div>
-              </Col>
-              <Col xs={12} md={7}>
+              <Col>
                 <Form.Group>
                   <Form.Label>Calificación</Form.Label>
-                  <div style={{ fontSize: '1.5rem', color: '#e63946', marginBottom: 6 }}>
-                    {[1,2,3,4,5].map(star => (
+                  <div style={{ fontSize: "1.5rem", color: "#e63946", marginBottom: 6 }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <span
                         key={star}
-                        style={{ cursor: 'pointer', filter: star > rating ? 'grayscale(1)' : 'none', transition: 'filter 0.15s' }}
+                        style={{
+                          cursor: "pointer",
+                          filter: star > rating ? "grayscale(1)" : "none",
+                          transition: "filter 0.2s",
+                        }}
                         onClick={() => setRating(star)}
-                        onMouseOver={() => setRating(star)}
-                        onMouseLeave={() => setRating(rating)}
-                        role="button"
-                        aria-label={`Calificar ${star} estrellas`}
                       >
                         ★
                       </span>
                     ))}
                   </div>
                   <Form.Label>Comentario</Form.Label>
-                  <Form.Control as="textarea" rows={1} value={commentText} onChange={e => setCommentText(e.target.value)} required maxLength={200} />
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    required
+                    maxLength={200}
+                  />
                 </Form.Group>
               </Col>
               <Col xs={12} md={2} className="d-grid">
-                <Button type="submit" variant="dark" className="rounded-1">Comentar</Button>
+                <Button type="submit" variant="dark" className="rounded-1">
+                  Comentar
+                </Button>
               </Col>
             </Row>
-          </form>
+          </Form>
+
+          {/* Lista de comentarios */}
           {loadingComments ? (
             <div className="text-center text-muted py-4">
               <span className="spinner-border spinner-border-sm me-2"></span>
               Cargando comentarios...
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center text-muted py-4">Aún no hay comentarios para este producto.</div>
+            <div className="text-center text-muted py-4">
+              Aún no hay comentarios para este producto.
+            </div>
           ) : (
-            <Row className="g-4">
+            <div className="d-flex flex-column gap-3">
               {comments.map((c, idx) => (
-                <Col key={idx} xs={12} md={6} lg={4}>
-                  <Card className="mb-3 border-0 shadow-sm">
-                    <Card.Body className="d-flex align-items-start gap-3">
-                      <div style={{ minWidth: 60 }}>
-                        {product.images && product.images[0] && (
-                          <Image src={product.images[0]} alt={product.name} width={60} height={60} className="rounded-1" />
-                        )}
+                <Card
+                  key={idx}
+                  className="p-3 shadow-sm border-0 rounded-3 w-100"
+                  style={{ maxWidth: "100%" }}
+                >
+                  <div className="d-flex align-items-start gap-3">
+                    <Image
+                      src={c.photoURL || "/new_user.png"}
+                      alt={c.name}
+                      width={40}
+                      height={40}
+                      className="rounded-circle me-2 border"
+                    />
+                    <div className="flex-grow-1">
+                      <div className="fw-bold">{c.name}</div>
+                      <div style={{ color: "#e63946", fontSize: "1.1rem" }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star} style={{ filter: star > c.rating ? "grayscale(1)" : "none" }}>
+                            ★
+                          </span>
+                        ))}
                       </div>
-                      <div>
-                        <div className="fw-bold mb-1">{c.name}</div>
-                        <div style={{ color: '#e63946', fontSize: '1.2rem', marginBottom: 2 }}>
-                          {[1,2,3,4,5].map(star => (
-                            <span key={star} style={{ filter: star > c.rating ? 'grayscale(1)' : 'none' }}>★</span>
+                      <div className="small text-muted">{new Date(c.date).toLocaleString()}</div>
+                      <p className="mt-2 mb-2">{c.text}</p>
+
+                      {/* Respuestas */}
+                      {c.replies && c.replies.length > 0 && (
+                        <div className="mt-2 ps-3 border-start">
+                          {c.replies.map((r, i) => (
+                            <div key={i} className="mb-2">
+                              <strong>{r.name}</strong>
+                              <div className="small text-muted">{new Date(r.date).toLocaleString()}</div>
+                              <p className="mb-1">{r.text}</p>
+                            </div>
                           ))}
                         </div>
-                        <div className="small text-muted mb-2">{new Date(c.date).toLocaleString()}</div>
-                        <div>{c.text}</div>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
+                      )}
+
+                      {/* Formulario de respuesta */}
+                      <Form
+                        className="mt-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleReply(idx);
+                        }}
+                      >
+                        <Form.Control
+                          value={replyText[idx] || ""}
+                          onChange={(e) =>
+                            setReplyText((prev) => ({ ...prev, [idx]: e.target.value }))
+                          }
+                          placeholder="Responder..."
+                          className="mb-2"
+                        />
+                        <Button size="sm" variant="outline-dark" type="submit">
+                          Responder
+                        </Button>
+                      </Form>
+                    </div>
+                  </div>
+                </Card>
               ))}
-            </Row>
+            </div>
           )}
         </Container>
       </div>
-      
+
+
+            
       {/* Tabs de información adicional */}
       <div className="my-5">
         <Container>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import FavouriteButton from "../components/FavouriteButton";
 import { Container, Row, Col, Card, Button, Form, Pagination, Badge } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import Image from 'next/image';
@@ -108,16 +109,32 @@ const ProductsPage = () => {
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
                           <Card.Title className="fw-bold">{product.name}</Card.Title>
-                          <Card.Text className="text-primary fw-bold fs-5 mb-2">${product.price.toFixed(2)}</Card.Text>
+                          <Card.Text className="text-primary fw-bold fs-5 mb-2">
+                            ${product.price.toFixed(2)}
+                          </Card.Text>
                         </div>
-                        <Button 
-                          as={Link} 
-                          href={`/products/${product.id}`} 
-                          variant="dark" 
-                          className="w-100 mt-2 rounded-1"
-                        >
-                          Ver Detalles
-                        </Button>
+
+                        <div className="d-flex gap-2">
+                          <Button 
+                            as={Link} 
+                            href={`/products/${product.id}`} 
+                            variant="dark" 
+                            className="flex-grow-1 rounded-1"
+                          >
+                            Ver Detalles
+                          </Button>
+
+                          <FavouriteButton 
+                            product={{
+                              id: product.id,
+                              name: product.name,
+                              price: product.price,
+                              image: product.images?.[0] || "",
+                              description: product.description
+                            }} 
+                          />
+
+                        </div>
                       </Card.Body>
                     </Card>
                   </Col>

@@ -93,6 +93,12 @@ const ProductDetailPage = () => {
         image: product.images?.[0] || product.image || "/placeholder.jpg",
       });
     }
+
+    const favs = await getUserFavourites(user.uid);
+
+    window.dispatchEvent(new Event("favourites-updated"));
+
+
   
     // 🔥 Volvemos a cargar favoritos desde Firestore
     await updateFavouriteState();

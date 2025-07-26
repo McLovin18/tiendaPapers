@@ -1,22 +1,49 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useAuth } from '../context/AuthContext';
+import { getUserFavourites } from '../services/purchaseService';
 import { Container, Button, Row, Col, Card, Image } from "react-bootstrap";
 import Link from "next/link";
 
 const FavouritePage = () => {
+  const { user } = useAuth();
   const [favourites, setFavourites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const updateFavourites = () => {
-      const favs = JSON.parse(localStorage.getItem("favourites") || "[]");
-      setFavourites(favs);
+    const loadFavourites = async () => {
+      if (!user?.uid) {
+        setFavourites([]);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const favsFromFirebase = await getUserFavourites(user.uid);
+        setFavourites(favsFromFirebase);
+      } catch (error) {
+        console.error("Error cargando favoritos:", error);
+        setFavourites([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    updateFavourites();
-    window.addEventListener("favourites-updated", updateFavourites);
+    loadFavourites();
 
-    return () => window.removeEventListener("favourites-updated", updateFavourites);
-  }, []);
+    window.addEventListener("favourites-updated", loadFavourites);
+
+    return () => window.removeEventListener("favourites-updated", loadFavourites);
+  }, [user?.uid]);
+
+  if (loading) {
+    return (
+      <Container className="py-5 text-center">
+        <h1 className="fw-bold mb-5">Mis Favoritos</h1>
+        <p>Cargando favoritos...</p>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-5 text-center">

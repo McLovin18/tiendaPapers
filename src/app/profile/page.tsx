@@ -1,6 +1,9 @@
 'use client';
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import React, { useState, useEffect } from 'react';
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../utils/firebase";
 import { Container, Row, Col, Card, Button, Form, Alert, Tab, Nav, ListGroup, Badge, Tabs, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import NavbarComponent from '../components/Navbar';
@@ -23,6 +26,7 @@ interface Favourite {
 }
 
 const ProfilePage = () => {
+  const storage = getStorage();
   const { user, logout } = useAuth();
   const [name, setName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -105,16 +109,39 @@ const ProfilePage = () => {
 
 
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setAvatar(ev.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user?.uid) return;
+
+    try {
+      // 🔹 Subir siempre al mismo path → reemplaza la imagen anterior
+      const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/profile.png`);
+      await uploadBytes(avatarRef, file);
+
+      // 🔹 Obtener URL pública
+      const url = await getDownloadURL(avatarRef);
+
+      // 🔹 Actualizar perfil en Firebase Auth
+      await updateProfile(user, { photoURL: url });
+
+      setAvatar(url);
+    } catch (error) {
+      console.error("Error al subir avatar:", error);
     }
   };
+
+
+  const handlePasswordReset = async () => {
+    if (!email) return;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Te enviamos un enlace para cambiar tu contraseña.");
+    } catch (err) {
+      alert("Error al enviar correo de recuperación.");
+    }
+  };
+
+
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,7 +236,29 @@ const ProfilePage = () => {
               <Card className="border-0 shadow-sm mb-4 p-4">
                 <Card.Body>
                   <div className="mb-3 text-center">
-                    <i className="bi bi-person-circle" style={{ fontSize: '4rem', color: '#888' }}></i>
+                  <div
+                    style={{
+                      width: "120px",
+                      height: "120px",
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      border: "2px solid #ddd",
+                      margin: "0 auto",
+                    }}
+                  >
+                    <Image
+                      src={avatar}
+                      alt="Avatar"
+                      width={120}
+                      height={120}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+
                     <h5 className="fw-bold mb-2 mt-2">{name}</h5>
                     <div className="mb-2 text-muted">{email}</div>
                   </div>
@@ -263,7 +312,29 @@ const ProfilePage = () => {
                       <h5 className="fw-bold mb-3">Información personal</h5>
                       <div className="text-center mb-4">
                         <div style={{ position: 'relative', display: 'inline-block' }}>
-                          <Image src={avatar} alt="Avatar" width={96} height={96} className="rounded-circle border" style={{ objectFit: 'cover' }} />
+                        <div
+                          style={{
+                            width: "120px",
+                            height: "120px",
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                            border: "2px solid #ddd",
+                            margin: "0 auto",
+                          }}
+                        >
+                          <Image
+                            src={avatar}
+                            alt="Avatar"
+                            width={120}
+                            height={120}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        </div>
+
                           <Button 
                             variant="light" 
                             size="sm" 
@@ -292,7 +363,14 @@ const ProfilePage = () => {
                             <Form.Label>Email</Form.Label>
                             <Form.Control type="email" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-1" disabled={user?.providerData[0]?.providerId !== 'password'} />
                             {user?.providerData[0]?.providerId !== 'password' && (
-                              <Form.Text className="text-muted">El email no se puede modificar</Form.Text>
+                                  <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="p-0 mt-1"
+                                  onClick={handlePasswordReset}
+                                >
+                                  Cambiar contraseña
+                                </Button>
                             )}
                           </Form.Group>
                           <div className="d-flex gap-2 mt-3">

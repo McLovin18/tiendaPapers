@@ -1,14 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
+import {
+  User,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
   signInWithPopup,
-  UserCredential
+  UserCredential,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 
@@ -36,6 +36,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // ✅ Evita el error si auth es null (por variables de entorno mal configuradas)
+    if (!auth) {
+      console.error("⚠️ Firebase Auth no está inicializado. Revisa tus variables de entorno.");
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -45,35 +52,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase Auth no inicializado");
     return signInWithEmailAndPassword(auth, email, password);
   };
 
   const register = (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase Auth no inicializado");
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
+    if (!auth) throw new Error("Firebase Auth no inicializado");
     await signOut(auth);
-    // Limpia favoritos en memoria
-    localStorage.removeItem("favourites_temp"); 
-    return signOut(auth);
+    localStorage.removeItem("favourites_temp");
   };
 
   const loginWithGoogle = () => {
+    if (!auth) throw new Error("Firebase Auth no inicializado");
     return signInWithPopup(auth, googleProvider);
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    loginWithGoogle,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle }}>
       {!loading && children}
     </AuthContext.Provider>
   );

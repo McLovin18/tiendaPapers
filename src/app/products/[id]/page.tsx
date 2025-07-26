@@ -120,7 +120,8 @@ const ProductDetailPage = () => {
           text: c.text || "",
           date: c.date || "",
           rating: c.rating || 0,
-          replies: c.replies || []
+          replies: c.replies || [],
+          photoURL: c.photoURL || "/new_user.png" // 👈 AÑADE ESTO
         }))
       );
   
@@ -581,13 +582,30 @@ const ProductDetailPage = () => {
                   style={{ maxWidth: "100%" }}
                 >
                   <div className="d-flex align-items-start gap-3">
-                    <Image
-                      src={c.photoURL || "/new_user.png"}
-                      alt={c.name}
-                      width={40}
-                      height={40}
-                      className="rounded-circle me-2 border"
-                    />
+
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "2px solid #ddd",
+                        margin: "0 auto",
+                      }}
+                    >
+                      <Image
+                        src={c.photoURL}
+                        alt={c.name}
+                        width={40}
+                        height={40}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </div>
+
                     <div className="flex-grow-1">
                       <div className="fw-bold">{c.name}</div>
                       <div style={{ color: "#e63946", fontSize: "1.1rem" }}>

@@ -160,12 +160,20 @@ export const getUserFavourites = async (userId: string) => {
  */
 export const addProductComment = async (
   productId: string | number,
-  comment: { name: string; text: string; date: string; rating: number; replies: any[] }
+  comment: { 
+    name: string; 
+    text: string; 
+    date: string; 
+    rating: number; 
+    replies: any[],
+    photoURL?: string
+  }
 ) => {
   if (!productId || !comment?.text) throw new Error("productId y comentario requeridos");
   const commentsCol = collection(db, `products/${productId}/comments`);
-  await addDoc(commentsCol, comment); // ✅ Ahora incluye rating y replies
+  await addDoc(commentsCol, comment); // Guarda foto también
 };
+
 
 
 

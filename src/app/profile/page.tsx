@@ -2,6 +2,7 @@
 
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import React, { useState, useEffect } from 'react';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { Container, Row, Col, Card, Button, Form, Alert, Tab, Nav, ListGroup, Badge, Tabs, Spinner } from 'react-bootstrap';
@@ -16,6 +17,7 @@ import { getUserPurchases, clearUserPurchases, getUserFavourites, removeFavourit
 import { useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { updateProfile } from 'firebase/auth';
+
 
 interface Favourite {
   id: string | number;
@@ -39,6 +41,10 @@ const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [loadingFavourites, setLoadingFavourites] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const router = useRouter();
 
@@ -131,15 +137,39 @@ const ProfilePage = () => {
   };
 
 
-  const handlePasswordReset = async () => {
-    if (!email) return;
-    try {
-      await sendPasswordResetEmail(auth, email);
-      alert("Te enviamos un enlace para cambiar tu contraseña.");
-    } catch (err) {
-      alert("Error al enviar correo de recuperación.");
+
+  const isPasswordProvider = user?.providerData.some(
+    (provider) => provider.providerId === "password"
+  );
+
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setPasswordError("");
+  setPasswordSuccess("");
+
+  if (!user?.email || !currentPassword || !newPassword) {
+    setPasswordError("Completa todos los campos.");
+    return;
+  }
+
+  try {
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
+
+    setPasswordSuccess("✅ Contraseña cambiada con éxito");
+    setCurrentPassword("");
+    setNewPassword("");
+  } catch (err: any) {
+    if (err.code === "auth/invalid-credential") {
+      setPasswordError("❌ Contraseña actual incorrecta");
+    } else {
+      setPasswordError("❌ Error al cambiar contraseña");
     }
-  };
+  }
+};
+
 
 
 
@@ -353,40 +383,99 @@ const ProfilePage = () => {
                           />
                         </div>
                       </div>
+
+
                       {editMode ? (
-                        <Form onSubmit={handleEditSubmit} className="text-start">
-                          <Form.Group className="mb-3">
-                            <Form.Label>Nombre</Form.Label>
-                            <Form.Control type="text" value={name} onChange={e => setName(e.target.value)} required className="rounded-1" />
-                          </Form.Group>
-                          <Form.Group className="mb-3">
-                            <Form.Label>Email</Form.Label>
-                            <Form.Control type="email" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-1" disabled={user?.providerData[0]?.providerId !== 'password'} />
-                            {user?.providerData[0]?.providerId !== 'password' && (
-                                  <Button
-                                  variant="link"
-                                  size="sm"
-                                  className="p-0 mt-1"
-                                  onClick={handlePasswordReset}
-                                >
-                                  Cambiar contraseña
-                                </Button>
-                            )}
-                          </Form.Group>
-                          <div className="d-flex gap-2 mt-3">
-                            <Button type="submit" variant="dark" className="rounded-1">Guardar cambios</Button>
-                            <Button type="button" variant="outline-secondary" className="rounded-1" onClick={() => setEditMode(false)}>Cancelar</Button>
-                          </div>
-                        </Form>
+                        <>
+                          {/* 🔹 FORMULARIO DE EDICIÓN DE NOMBRE Y EMAIL */}
+                          <Form onSubmit={handleEditSubmit} className="text-start">
+                            <Form.Group className="mb-3">
+                              <Form.Label>Nombre</Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                className="rounded-1"
+                              />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3">
+                              <Form.Label>Email</Form.Label>
+                              <Form.Control
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="rounded-1"
+                                disabled={user?.providerData[0]?.providerId !== "password"}
+                              />
+                            </Form.Group>
+
+                            <div className="d-flex gap-2 mt-3">
+                              <Button type="submit" variant="dark" className="rounded-1">
+                                Guardar cambios
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline-secondary"
+                                className="rounded-1"
+                                onClick={() => setEditMode(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </Form>
+
+                          {/* 🔹 FORMULARIO DE CAMBIO DE CONTRASEÑA (FUERA DEL FORM ANTERIOR) */}
+
+                          {isPasswordProvider && (
+                            <Form onSubmit={handlePasswordChange} className="mt-4">
+                              <h5 className="fw-bold mb-3">Cambiar contraseña</h5>
+
+                              <Form.Group className="mb-3">
+                                <Form.Label>Contraseña actual</Form.Label>
+                                <Form.Control
+                                  type="password"
+                                  value={currentPassword}
+                                  onChange={(e) => setCurrentPassword(e.target.value)}
+                                  required
+                                />
+                              </Form.Group>
+
+                              <Form.Group className="mb-3">
+                                <Form.Label>Nueva contraseña</Form.Label>
+                                <Form.Control
+                                  type="password"
+                                  value={newPassword}
+                                  onChange={(e) => setNewPassword(e.target.value)}
+                                  required
+                                />
+                              </Form.Group>
+
+                              <Button type="submit" variant="dark">Cambiar contraseña</Button>
+
+                              {passwordError && <Alert variant="danger" className="mt-3">{passwordError}</Alert>}
+                              {passwordSuccess && <Alert variant="success" className="mt-3">{passwordSuccess}</Alert>}
+                            </Form>
+                          )}
+
+
+                        </>
                       ) : (
                         <>
                           <div className="mb-2"><strong>Nombre:</strong> {name}</div>
                           <div className="mb-2"><strong>Email:</strong> {email}</div>
-                          <Button variant="outline-dark" className="rounded-1 mt-3" onClick={() => setEditMode(true)}>
+                          <Button
+                            variant="outline-dark"
+                            className="rounded-1 mt-3"
+                            onClick={() => setEditMode(true)}
+                          >
                             <i className="bi bi-pencil me-2"></i>Editar datos personales
                           </Button>
                         </>
                       )}
+
                     </div>
                   )}
                   {activeTab === 'orders' && (

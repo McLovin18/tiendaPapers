@@ -32,7 +32,7 @@ const ProductsSportPage = () => {
 
         <main className="flex-grow-1 w-100">
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5">Colección Sport</h1>
+            <h1 className="fw-bold text-center mb-5">Colección Mujer</h1>
 
             <div className="d-flex justify-content-center mb-4">
               <form className="w-100" style={{ maxWidth: 500 }}>

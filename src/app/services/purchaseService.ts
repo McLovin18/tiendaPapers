@@ -199,6 +199,11 @@ export const addReplyToComment = async (
   commentId: string,
   reply: { name: string; text: string; date: string }
 ) => {
+  if (!productId || !commentId) {
+    console.error("❌ Falta productId o commentId en addReplyToComment");
+    return;
+  }
+
   const commentRef = doc(db, `products/${productId}/comments`, commentId);
   const snapshot = await getDoc(commentRef);
   if (!snapshot.exists()) return;
@@ -208,3 +213,4 @@ export const addReplyToComment = async (
 
   await updateDoc(commentRef, { replies: updatedReplies });
 };
+

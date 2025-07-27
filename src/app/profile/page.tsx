@@ -37,7 +37,7 @@ const ProfilePage = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [avatar, setAvatar] = useState(user?.photoURL || '/images/avatar.svg');
+  const [avatar, setAvatar] = useState(user?.photoURL || '/new_user.png');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [loadingFavourites, setLoadingFavourites] = useState(false);
@@ -276,6 +276,7 @@ const ProfilePage = () => {
                       margin: "0 auto",
                     }}
                   >
+
                     <Image
                       src={avatar}
                       alt="Avatar"

@@ -594,7 +594,7 @@ const ProductDetailPage = () => {
                       }}
                     >
                       <Image
-                        src={c.photoURL}
+                        src={c.photoURL || "/new_user.png"}
                         alt={c.name}
                         width={40}
                         height={40}

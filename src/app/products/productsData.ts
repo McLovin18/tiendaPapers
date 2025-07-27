@@ -62,7 +62,7 @@ const allProducts = [
     id: 4,
     name: 'Vestido 3',
     price: 12.00,
-    images: ['/vestidos/ve3.png'],
+    images: ['/vestidos/v3.png'],
     category: 'vestido',
     categoryLink: '/mujer',
     description: 'Vestido de algodón suave y cómodo para cualquier ocasión.',

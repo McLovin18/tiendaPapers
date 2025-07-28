@@ -109,7 +109,7 @@ export default function Home() {
                 <div
                   className="position-relative"
                   style={{
-                    width: 'auto',
+                    width: '200px',
                     height: '300px',
                     margin: '0 auto',
                     background: '#fff',

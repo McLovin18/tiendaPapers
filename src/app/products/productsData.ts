@@ -9,7 +9,7 @@ const allProducts = [
     category: 'Vestido',
     categoryLink: '/mujer',
     description: 'Vestido elegante y cómodo para cualquier ocasión.',
-    inStock: true,
+    inStock: false,
     sizes: ['M'],
     colors: ['Blanco', 'Azul', 'Negro', 'Rojo', 'Verde', 'piel', 'plomo'],
     details: [
@@ -62,7 +62,7 @@ const allProducts = [
     id: 4,
     name: 'Vestido 3',
     price: 12.00,
-    images: ['/vestidos/v3.png'],
+    images: ['/vestidos/vestido3.png'],
     category: 'vestido',
     categoryLink: '/mujer',
     description: 'Vestido de algodón suave y cómodo para cualquier ocasión.',
@@ -81,22 +81,22 @@ const allProducts = [
   },
   {
     id: 5,
-    name: 'Camisa Formal',
-    price: 34.99,
-    images: ['/images/product1.svg'],
-    category: 'camisas',
-    categoryLink: '/hombre',
-    description: 'Camisa formal para ocasiones especiales con acabado premium.',
-    inStock: false,
+    name: 'Conjunto corto Addle',
+    price: 10.00,
+    images: ['/conjuntos/conjunto1.png', '/conjuntos/co1.png'],
+    category: 'conjunto',
+    categoryLink: '/mujer',
+    description: 'CONJUNTO CORTO ADLEE TL CALIDAD PIEL DE DURAZNO.',
+    inStock: true,
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Blanco', 'Celeste', 'Negro'],
     details: [
-      'Tejido 100% algodón',
-      'Corte clásico',
-      'Cuello italiano',
-      'Puños dobles',
-      'Lavable a máquina'
-    ]
+      'tela suave',
+      'Buena calidad',
+
+
+    ],
+    featured: true
   },
   {
     id: 6,

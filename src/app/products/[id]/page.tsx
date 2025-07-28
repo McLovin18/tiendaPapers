@@ -366,9 +366,9 @@ const ProductDetailPage = () => {
       <main>
         <Container className="py-5">
           <Row className="g-5 align-items-center">
-            <Col xs={12} md={6}>
+            <Col xs={12} md={6} style={{ width: '40%' }}>
               <Card className="border-0 shadow-sm">
-                <div className="position-relative" style={{ width: '350px', height: '500px', margin: '0 auto', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '1rem 1rem 0 0', overflow: 'hidden' }}>
+                <div className="position-relative" style={{ width: '300px', height: '450px', margin: '0 auto', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '1rem 1rem 0 0', overflow: 'hidden' }}>
                   {product.images && product.images.length > 0 && (
                     <>
                       <Image

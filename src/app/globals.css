@@ -1,3 +1,35 @@
+/* Estilo YouTube para campos de comentario y respuesta */
+
+.youtube-input,
+.youtube-input:focus,
+.youtube-input:active,
+.youtube-input:valid,
+.youtube-input:invalid {
+  border: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1.5px solid rgba(0,0,0,0.10) !important;
+  box-shadow: 0 2px 6px -2px rgba(0,0,0,0.08);
+  background: #fff !important;
+  outline: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  transition: border-color 0.2s;
+  border-color: #222 !important;
+}
+
+
+
+input:valid, textarea:valid, select:valid, .form-control:valid
+ {
+    border-color: #222 !important;
+}
+
+
+.youtube-input:focus {
+  border-bottom: 1.5px solid rgba(230,57,70,0.18) !important;
+  box-shadow: 0 2px 8px -4px rgba(0,0,0,0.10);
+  border-color: transparent !important;
+}
 @import "tailwindcss";
 
 :root {
@@ -97,7 +129,6 @@ input, textarea, select, .form-control {
   transition: border 0.2s;
 }
 input:focus, textarea:focus, select:focus, .form-control:focus {
-  border-color: #e63946 !important;
   outline: none !important;
   box-shadow: 0 0 0 2px #e6394622;
 }

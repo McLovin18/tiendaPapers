@@ -78,6 +78,60 @@ const ProductDetailPage = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({}); // para respuestas
+  // Estado para mostrar el botón y picker de emojis en comentario principal
+  const [showEmojiButton, setShowEmojiButton] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiButtonRef = React.useRef(null);
+  const emojiPickerRef = React.useRef(null);
+
+  const [showCommentActions, setShowCommentActions] = useState(false);
+  // Cerrar el emoji picker solo si se hace clic fuera del input, botón y picker
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiButtonRef.current && emojiButtonRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      if (
+        emojiPickerRef.current && emojiPickerRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      setShowEmojiPicker(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+  // Estado para mostrar el botón y picker de emojis en cada campo de respuesta
+  // Estado para controlar el flujo de emoji en cada reply
+  // Estado para controlar el emoji en cada reply: { idx: { button: bool, picker: bool } }
+  const [replyEmojiState, setReplyEmojiState] = useState({});
+  const replyEmojiButtonRefs = React.useRef({});
+  const replyEmojiPickerRefs = React.useRef({});
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      Object.keys(replyEmojiState).forEach(idx => {
+        if (!replyEmojiState[idx]?.picker) return;
+        const btnRef = replyEmojiButtonRefs.current[idx];
+        const pickerRef = replyEmojiPickerRefs.current[idx];
+        if (btnRef && btnRef.contains(event.target)) return;
+        if (pickerRef && pickerRef.contains(event.target)) return;
+        setReplyEmojiState(prev => ({ ...prev, [idx]: { ...prev[idx], picker: false } }));
+      });
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [replyEmojiState]);
+  const emojiList = [
+    "😀","😂","😍","👍","🙏","🔥","🎉","😎","🥳","😢","😡","❤️","🤩","👏","😅","😇","😜","🤔","🙌","💯","😱","😏","😃","😆","😋","😌","😔","😤","😩","😬","😳","😵","😭","😰","😓","😪","😴","😷","🤒","🤕","🤢","🤧","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩","😺","😸","😹","😻","😼","😽","🙀","😿","😾"
+  ];
+
 
 
   const updateFavouriteState = useCallback(async () => {
@@ -231,8 +285,17 @@ const ProductDetailPage = () => {
       replies: c.replies || []
     })));
 
-    // Limpiar el campo de respuesta después de responder
-    setReplyText((prev) => ({ ...prev, [commentIndex]: "" }));
+    // Limpiar y ocultar el campo de respuesta y emoji después de responder
+    setReplyText((prev) => {
+      const updated = { ...prev };
+      delete updated[commentIndex];
+      return updated;
+    });
+    setReplyEmojiState(prev => {
+      const updated = { ...prev };
+      delete updated[commentIndex];
+      return updated;
+    });
   };
   
   
@@ -552,45 +615,171 @@ const ProductDetailPage = () => {
 
           {/* Formulario de nuevo comentario */}
           <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-light">
-            <Row className="g-2 align-items-end">
-              <Col>
-                <Form.Group>
-                  <Form.Label>Calificación</Form.Label>
-                  <div style={{ fontSize: "1.5rem", color: "#e63946", marginBottom: 6 }}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        style={{
-                          cursor: "pointer",
-                          filter: star > rating ? "grayscale(1)" : "none",
-                          transition: "filter 0.2s",
-                        }}
-                        onClick={() => setRating(star)}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <Form.Label>Comentario</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={2}
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    required
-                    maxLength={200}
-                  />
-                  {errorMessage && (
-                    <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
-                      {errorMessage}
+            <Row className="g-2 align-items-center">
+              <Col xs={12} className="d-flex align-items-start gap-2">
+                {/* Avatar del usuario */}
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7", marginTop: 2 }}>
+                  <img src={user?.photoURL || "/new_user.png"} alt="avatar" width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div className="flex-grow-1">
+                  <Form.Group className="w-100 mb-2">
+                    <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Calificación</Form.Label>
+                    <div style={{ fontSize: "1.3rem", color: "#e63946", marginBottom: 4 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                          key={star}
+                          style={{
+                            cursor: "pointer",
+                            filter: star > rating ? "grayscale(1)" : "none",
+                            transition: "filter 0.2s",
+                            fontSize: "1.3rem"
+                          }}
+                          onClick={() => setRating(star)}
+                        >
+                          ★
+                        </span>
+                      ))}
                     </div>
-                  )}
-                </Form.Group>
-              </Col>
-              <Col xs={12} md={2} className="d-grid">
-                <Button type="submit" variant="dark" className="rounded-1">
-                  Comentar
-                </Button>
+                  </Form.Group>
+                  <Form.Group className="w-100 mb-0">
+                    <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Comentario</Form.Label>
+                    <div style={{
+                      background: "#fff",
+                      borderRadius: "0.7rem",
+                      boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)",
+                      border: "1px solid #eee",
+                      padding: "12px 18px 0 18px",
+                      position: "relative",
+                      minHeight: "70px"
+                    }}>
+                      <Form.Control
+                        as="textarea"
+                        rows={1}
+                        className="youtube-input"
+                        style={{
+                          resize: "vertical",
+                          minHeight: "38px",
+                          maxHeight: "120px",
+                          fontSize: "1rem",
+                          padding: "8px 36px 8px 0px",
+                          border: "none",
+                          borderRadius: "0px",
+                          borderBottom: "1px solid rgba(0,0,0,0.10)",
+                          boxShadow: "none",
+                          outline: "none",
+                          background: "#fff",
+                          transition: "border-color 0.2s"
+                        }}
+                        value={commentText}
+                        onChange={e => {
+                          setCommentText(e.target.value);
+                          if (!showCommentActions) setShowCommentActions(true);
+                        }}
+                        placeholder="Escribe un comentario..."
+                        maxLength={200}
+                        onFocus={e => {
+                          e.currentTarget.style.borderBottom = "1px solid rgba(230,57,70,0.18)";
+                          setShowCommentActions(true);
+                        }}
+                        onBlur={e => {
+                          e.currentTarget.style.borderBottom = "1px solid rgba(0,0,0,0.10)";
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            // Evita enviar el formulario con Enter
+                            e.preventDefault();
+                            setCommentText(prev => prev + '\n');
+                          }
+                        }}
+                      />
+                      {showEmojiPicker && (
+                        <div
+                          ref={emojiPickerRef}
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            top: "calc(100% + 6px)",
+                            zIndex: 99,
+                            background: "#fff",
+                            border: "1px solid #eee",
+                            boxShadow: "0 4px 16px 0 rgba(0,0,0,0.10)",
+                            borderRadius: "0.7rem",
+                            padding: "8px 10px 6px 10px",
+                            minWidth: "220px",
+                            maxWidth: "320px",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px 8px",
+                            maxHeight: "180px",
+                            overflowY: "auto"
+                          }}
+                        >
+                          {emojiList.map((emoji) => (
+                            <span
+                              key={emoji}
+                              style={{ fontSize: "1.35rem", cursor: "pointer", transition: "transform 0.1s", borderRadius: "6px", padding: "2px 4px" }}
+                              onMouseDown={e => e.preventDefault()}
+                              onClick={() => {
+                                setCommentText(prev => prev + emoji);
+                              }}
+                              onMouseOver={e => e.currentTarget.style.background = "#f7f7f7"}
+                              onMouseOut={e => e.currentTarget.style.background = "transparent"}
+                            >{emoji}</span>
+                          ))}
+                        </div>
+                      )}
+                      {showCommentActions && (
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", marginBottom: "8px" }}>
+                          <div>
+                            <button
+                              type="button"
+                              ref={emojiButtonRef}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: "1.3rem",
+                                color: "#888"
+                              }}
+                              title="Agregar emoji"
+                              onClick={() => setShowEmojiPicker(prev => !prev)}
+                              tabIndex={0}
+                            >
+                              😊
+                            </button>
+                          </div>
+                          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                            <Button
+                              type="button"
+                              variant="light"
+                              style={{ borderRadius: "1.5rem", fontWeight: 500, color: "#333", background: "#f7f7f7", border: "none", boxShadow: "none", padding: "4px 18px" }}
+                              onClick={() => {
+                                setCommentText("");
+                                setShowCommentActions(false);
+                                setShowEmojiPicker(false);
+                              }}
+                            >Cancelar</Button>
+                            <Button
+                              type="submit"
+                              variant="dark"
+                              style={{ borderRadius: "1.5rem", fontWeight: 500, background: "#e63946", border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
+                              disabled={!commentText.trim()}
+                            >
+                              <i className="bi bi-chat-left-text" style={{ fontSize: "1.1rem", marginRight: 4 }}></i>
+                              Comentar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {errorMessage && (
+                      <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
+                        {errorMessage}
+                      </div>
+                    )}
+                  </Form.Group>
+                </div>
+                {/* Botón de comentar eliminado, solo se usan los botones dentro de las acciones debajo del campo */}
               </Col>
             </Row>
           </Form>
@@ -608,19 +797,29 @@ const ProductDetailPage = () => {
           ) : (
             <div className="d-flex flex-column gap-3">
               {comments.slice(0, commentsToShow).map((c, idx) => (
-                <Card
+                <div
                   key={idx}
-                  className="p-3 shadow-sm border-0 rounded-3 w-100"
-                  style={{ maxWidth: "100%", background: "#fff" }}
+                  className="w-100"
+                  style={{
+                    maxWidth: "100%",
+                    background: "#fff",
+                    minHeight: "60px",
+                    borderRadius: 0,
+                    border: "none",
+                    boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)",
+                    borderLeft: "3px solid #e0e0e0",
+                    marginBottom: "18px",
+                    padding: "18px 0 8px 0"
+                  }}
                 >
                   <div className="d-flex align-items-start gap-3">
                     <div
                       style={{
-                        width: "48px",
-                        height: "48px",
+                        width: "40px",
+                        height: "40px",
                         borderRadius: "50%",
                         overflow: "hidden",
-                        border: "2px solid #eee",
+                        border: "1px solid #eee",
                         margin: "0 auto",
                         background: "#f7f7f7"
                       }}
@@ -628,15 +827,15 @@ const ProductDetailPage = () => {
                       <Image
                         src={c.photoURL || "/new_user.png"}
                         alt={c.name}
-                        width={48}
-                        height={48}
+                        width={40}
+                        height={40}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>
                     <div className="flex-grow-1">
                       <div className="d-flex align-items-center gap-2">
-                        <span className="fw-bold" style={{ fontSize: "1.05rem" }}>{c.name}</span>
-                        <span style={{ color: "#e63946", fontSize: "1.1rem" }}>
+                        <span className="fw-bold" style={{ fontSize: "1rem" }}>{c.name}</span>
+                        <span style={{ color: "#e63946", fontSize: "1rem" }}>
                           {[1, 2, 3, 4, 5].map((star) => (
                             <span key={star} style={{ filter: star > c.rating ? "grayscale(1)" : "none" }}>
                               ★
@@ -645,54 +844,159 @@ const ProductDetailPage = () => {
                         </span>
                         <span className="small text-muted ms-2">{new Date(c.date).toLocaleString()}</span>
                       </div>
-                      <p className="mt-2 mb-2" style={{ fontSize: "1rem" }}>{c.text}</p>
+                      <p className="mt-1 mb-1" style={{ fontSize: "0.98rem", lineHeight: "1.3", wordBreak: "break-word", boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)", marginBottom: "8px" }}>{c.text}</p>
 
                       {/* Respuestas estilo YouTube */}
                       {c.replies && c.replies.length > 0 && (
-                        <div className="mt-2 ps-3 border-start">
+                        <div className="mt-1 ps-3" style={{ borderLeft: "2px solid #e0e0e0" }}>
                           {c.replies.slice(0, repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW).map((r, i) => (
-                            <div key={i} className="mb-2 d-flex align-items-start gap-2">
-                              <div style={{ width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7" }}>
-                                <Image src={r.photoURL || "/new_user.png"} alt={r.name} width={32} height={32} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <div key={i} className="mb-1 d-flex align-items-start gap-2" style={{ borderRadius: 0, border: "none", boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)", borderLeft: "2px solid #e0e0e0", background: "#fff" }}>
+                              <div style={{ width: "28px", height: "28px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7" }}>
+                                <Image src={r.photoURL || "/new_user.png"} alt={r.name} width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               </div>
                               <div>
-                                <span className="fw-bold" style={{ fontSize: "0.98rem" }}>{r.name}</span>
+                                <span className="fw-bold" style={{ fontSize: "0.95rem" }}>{r.name}</span>
                                 <span className="small text-muted ms-2">{new Date(r.date).toLocaleString()}</span>
-                                <p className="mb-1" style={{ fontSize: "0.98rem" }}>{r.text}</p>
+                                <p className="mb-1" style={{ fontSize: "0.95rem", lineHeight: "1.3", wordBreak: "break-word", boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)", marginBottom: "8px" }}>{r.text}</p>
                               </div>
                             </div>
                           ))}
                           {c.replies.length > (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW) && (
-                            <Button variant="link" className="p-0 text-primary" style={{ fontSize: "0.95rem" }} onClick={() => handleShowMoreReplies(idx, c.replies.length)}>
+                            <Button variant="link" className="p-0 text-primary" style={{ fontSize: "0.92rem" }} onClick={() => handleShowMoreReplies(idx, c.replies.length)}>
                               Ver más respuestas ({c.replies.length - (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW)})
                             </Button>
                           )}
                         </div>
                       )}
 
-                      {/* Formulario de respuesta */}
-                      <Form
-                        className="mt-2"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleReply(idx);
-                        }}
-                      >
-                        <Form.Control
-                          value={replyText[idx] || ""}
-                          onChange={(e) =>
-                            setReplyText((prev) => ({ ...prev, [idx]: e.target.value }))
-                          }
-                          placeholder="Responder..."
-                          className="mb-2"
-                        />
-                        <Button size="sm" variant="outline-dark" type="submit">
+                      {/* Botón para mostrar campo de respuesta */}
+                      <div className="mt-2">
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="p-0 text-primary"
+                          style={{ fontSize: "0.95rem" }}
+                          onClick={() => setReplyText((prev) => ({ ...prev, [idx]: prev[idx] === undefined ? "" : undefined }))}
+                        >
                           Responder
                         </Button>
-                      </Form>
+                      </div>
+
+                      {/* Formulario de respuesta solo si está activo */}
+                      {replyText[idx] !== undefined && (
+                        <div style={{ position: "relative" }}>
+                          <Form
+                            className="mt-1"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleReply(idx);
+                            }}
+                          >
+                            <Form.Control
+                              className="mb-1 youtube-input"
+                              style={{
+                                minHeight: "32px",
+                                maxHeight: "80px",
+                                fontSize: "0.98rem",
+                                resize: "vertical",
+                                padding: "6px 36px 6px 0px",
+                                border: "none",
+                                borderRadius: "0px",
+                                borderBottom: "1px solid rgba(0,0,0,0.10)",
+                                boxShadow: "0 2px 6px -2px rgba(0,0,0,0.08)",
+                                outline: "none",
+                                background: "#fff",
+                                transition: "border-color 0.2s"
+                              }}
+                              value={replyText[idx] || ""}
+                              onChange={(e) => setReplyText((prev) => ({ ...prev, [idx]: e.target.value }))}
+                              placeholder="Responder..."
+                              onFocus={e => {
+                                e.currentTarget.style.borderBottom = "1px solid rgba(230,57,70,0.18)";
+                                if (!replyEmojiState[idx]?.button) {
+                                  setReplyEmojiState(prev => ({ ...prev, [idx]: { button: true, picker: false } }));
+                                }
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  setReplyText(prev => ({ ...prev, [idx]: (prev[idx] || "") + '\n' }));
+                                }
+                              }}
+                            />
+                            {replyEmojiState[idx]?.button && (
+                              <button
+                                type="button"
+                                ref={el => { replyEmojiButtonRefs.current[idx] = el; }}
+                                style={{
+                                  position: "absolute",
+                                  right: 4,
+                                  bottom: 8,
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontSize: "1.2rem",
+                                  color: "#888"
+                                }}
+                                title="Agregar emoji"
+                                onClick={() => setReplyEmojiState(prev => ({ ...prev, [idx]: { ...prev[idx], picker: !prev[idx]?.picker } }))}
+                                tabIndex={0}
+                              >
+                                😊
+                              </button>
+                            )}
+                            {replyEmojiState[idx]?.picker && (
+                              <div
+                                ref={el => { replyEmojiPickerRefs.current[idx] = el; }}
+                                style={{
+                                  position: "absolute",
+                                  left: "auto",
+                                  right: 0,
+                                  top: "calc(100% + 6px)",
+                                  zIndex: 99,
+                                  background: "#fff",
+                                  border: "1px solid #eee",
+                                  boxShadow: "0 4px 16px 0 rgba(0,0,0,0.10)",
+                                  borderRadius: "0.7rem",
+                                  padding: "8px 10px 6px 10px",
+                                  minWidth: "220px",
+                                  maxWidth: "320px",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: "6px 8px",
+                                  maxHeight: "180px",
+                                  overflowY: "auto"
+                                }}
+                              >
+                                {emojiList.map((emoji) => (
+                                  <span
+                                    key={emoji}
+                                    style={{ fontSize: "1.25rem", cursor: "pointer", transition: "transform 0.1s", borderRadius: "6px", padding: "2px 4px" }}
+                                    onMouseDown={e => e.preventDefault()}
+                                    onClick={() => {
+                                      setReplyText(prev => ({ ...prev, [idx]: (prev[idx] || "") + emoji }));
+                                    }}
+                                    onMouseOver={e => e.currentTarget.style.background = "#f7f7f7"}
+                                    onMouseOut={e => e.currentTarget.style.background = "transparent"}
+                                  >{emoji}</span>
+                                ))}
+                              </div>
+                            )}
+                            <Button size="sm" variant="dark" type="submit" style={{ height: "32px", fontSize: "0.95rem", alignSelf: "flex-end", boxShadow: "none", background: "#e63946", border: "none", color: "#fff", fontWeight: 500, transition: "background 0.2s" }}
+                              onMouseOver={e => e.currentTarget.style.background = '#d62839'}
+                              onMouseOut={e => e.currentTarget.style.background = '#e63946'}
+                            >
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                                <i className="bi bi-reply" style={{ fontSize: "1rem", marginRight: 3 }}></i>
+                                Responder
+                              </span>
+                            </Button>
+                          </Form>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
               {comments.length > commentsToShow && (
                 <div className="text-center mt-3">

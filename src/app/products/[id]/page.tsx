@@ -222,6 +222,9 @@ const ProductDetailPage = () => {
     if (rating < 1) {
       error = 'Por favor selecciona una calificación antes de comentar';
       setErrorMessage(error);
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 2000);
       return;
     }
 
@@ -555,7 +558,9 @@ const ProductDetailPage = () => {
                   Producto añadido correctamente a tu carrito
                 </div>
               )}
-              {errorMessage && (
+              {/* El error de calificación solo se muestra debajo del comentario, no aquí */}
+              {/* Otros errores de carrito sí se muestran aquí */}
+              {errorMessage && errorMessage !== 'Por favor selecciona una calificación antes de comentar' && (
                 <div className="alert alert-danger text-center" role="alert">
                   {errorMessage}
                 </div>
@@ -772,7 +777,8 @@ const ProductDetailPage = () => {
                         </div>
                       )}
                     </div>
-                    {errorMessage && (
+                    {/* Solo mostrar el error de calificación aquí debajo del comentario */}
+                    {errorMessage === 'Por favor selecciona una calificación antes de comentar' && (
                       <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
                         {errorMessage}
                       </div>

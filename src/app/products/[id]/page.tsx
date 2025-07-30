@@ -40,6 +40,24 @@ const relatedProducts = [
 ];
 
 const ProductDetailPage = () => {
+  // Control de comentarios y respuestas visibles
+  const INITIAL_COMMENTS_TO_SHOW = 3;
+  const INITIAL_REPLIES_TO_SHOW = 2;
+  const [commentsToShow, setCommentsToShow] = useState(INITIAL_COMMENTS_TO_SHOW);
+  const [repliesToShow, setRepliesToShow] = useState<{ [key: number]: number }>({});
+
+  // Función para mostrar más comentarios
+  const handleShowMoreComments = () => {
+    setCommentsToShow((prev) => prev + INITIAL_COMMENTS_TO_SHOW);
+  };
+
+  // Función para mostrar más respuestas de un comentario
+  const handleShowMoreReplies = (idx: number, totalReplies: number) => {
+    setRepliesToShow((prev) => ({
+      ...prev,
+      [idx]: Math.min((prev[idx] || INITIAL_REPLIES_TO_SHOW) + INITIAL_REPLIES_TO_SHOW, totalReplies)
+    }));
+  };
   const { user } = useAuth();
   const params = useParams();
   const productId = Number(params.id);
@@ -113,21 +131,21 @@ const ProductDetailPage = () => {
       setLoadingComments(true);
       const fetched = await getProductComments(product.id);
   
-      setComments(
-        fetched.map((c: any) => ({
-          id: c.id,
-          name: c.name || "Usuario",
-          text: c.text || "",
-          date: c.date || "",
-          rating: c.rating || 0,
-          replies: c.replies || [],
-          photoURL: c.photoURL || "/new_user.png" // 👈 AÑADE ESTO
-        }))
-      );
-  
+
+      const mappedComments = fetched.map((c: any) => ({
+        id: c.id,
+        name: c.name || "Usuario",
+        text: c.text || "",
+        date: c.date || "",
+        rating: c.rating || 0,
+        replies: c.replies || [],
+        photoURL: c.photoURL || "/new_user.png"
+      }));
+      setComments(mappedComments);
+
       // 🔹 Calcular promedio (por si no existe en Firestore)
-      if (fetched.length > 0) {
-        const avg = fetched.reduce((acc, c) => acc + (c.rating || 0), 0) / fetched.length;
+      if (mappedComments.length > 0) {
+        const avg = mappedComments.reduce((acc, c) => acc + (c.rating || 0), 0) / mappedComments.length;
         setAverageRating(avg);
       } else {
         setAverageRating(0);
@@ -142,10 +160,17 @@ const ProductDetailPage = () => {
 
   // Guardar comentario en Firestore
   const handleAddComment = async (e: React.FormEvent) => {
+
     e.preventDefault();
+    let error = "";
     if (!user) return;
-    if (!commentText.trim() || rating < 1) return;
-  
+    if (!commentText.trim()) return;
+    if (rating < 1) {
+      error = 'Por favor selecciona una calificación antes de comentar';
+      setErrorMessage(error);
+      return;
+    }
+
     const newComment = {
       name: user.displayName || "Usuario",
       text: commentText.trim(),
@@ -153,58 +178,60 @@ const ProductDetailPage = () => {
       rating,
       replies: [],
       photoURL: user.photoURL || "/new_user.png", // 🔹 Se guarda la foto de perfil
-
     };
-  
+
     if (!product) return;
-  
+
     await addProductComment(product.id, newComment);
-  
+
+    // Reset campos antes de actualizar comentarios
+    setCommentText("");
+    setRating(0);
+    setErrorMessage("");
+
     // 🔹 Obtener comentarios actualizados
     const fetched = await getProductComments(product.id);
-    setComments(fetched.map((c: any) => ({
+    const mappedComments = fetched.map((c: any) => ({
       name: c.name || "Usuario",
       text: c.text || "",
       date: c.date || "",
       rating: c.rating || 0,
       replies: c.replies || [],
-      photoURL: c.photoURL || "/new_user.png", // 🔹 Se carga la foto guardada
+      photoURL: c.photoURL || "/new_user.png"
+    }));
+    setComments(mappedComments);
 
-    })));
-  
     // 🔹 Calcular y guardar promedio
-    const avg = fetched.reduce((acc, c) => acc + (c.rating || 0), 0) / fetched.length;
+    const avg = mappedComments.reduce((acc, c) => acc + (c.rating || 0), 0) / mappedComments.length;
     setAverageRating(avg);
     await updateProductRating(product.id, avg);
-  
-    // Reset
-    setCommentText("");
-    setRating(0);
   };
   
 
 
   const handleReply = async (commentIndex: number) => {
+
     const replyMessage = replyText[commentIndex]?.trim();
     if (!replyMessage || !user || !product) return;
-  
+
     const reply = {
       name: user.displayName || "Usuario",
       text: replyMessage,
       date: new Date().toISOString()
     };
-  
+
     // 🔹 Obtener ID real del comentario (hay que mapear doc.id en getProductComments)
     const comment = comments[commentIndex];
     await addReplyToComment(product.id, comment.id, reply);
-  
+
     // 🔹 Recargar comentarios
     const fetched = await getProductComments(product.id);
     setComments(fetched.map((c: any) => ({
       ...c,
       replies: c.replies || []
     })));
-  
+
+    // Limpiar el campo de respuesta después de responder
     setReplyText((prev) => ({ ...prev, [commentIndex]: "" }));
   };
   
@@ -553,6 +580,11 @@ const ProductDetailPage = () => {
                     required
                     maxLength={200}
                   />
+                  {errorMessage && (
+                    <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
+                      {errorMessage}
+                    </div>
+                  )}
                 </Form.Group>
               </Col>
               <Col xs={12} md={2} className="d-grid">
@@ -575,59 +607,66 @@ const ProductDetailPage = () => {
             </div>
           ) : (
             <div className="d-flex flex-column gap-3">
-              {comments.map((c, idx) => (
+              {comments.slice(0, commentsToShow).map((c, idx) => (
                 <Card
                   key={idx}
                   className="p-3 shadow-sm border-0 rounded-3 w-100"
-                  style={{ maxWidth: "100%" }}
+                  style={{ maxWidth: "100%", background: "#fff" }}
                 >
                   <div className="d-flex align-items-start gap-3">
-
                     <div
                       style={{
-                        width: "40px",
-                        height: "40px",
+                        width: "48px",
+                        height: "48px",
                         borderRadius: "50%",
                         overflow: "hidden",
-                        border: "2px solid #ddd",
+                        border: "2px solid #eee",
                         margin: "0 auto",
+                        background: "#f7f7f7"
                       }}
                     >
                       <Image
                         src={c.photoURL || "/new_user.png"}
                         alt={c.name}
-                        width={40}
-                        height={40}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
+                        width={48}
+                        height={48}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>
-
                     <div className="flex-grow-1">
-                      <div className="fw-bold">{c.name}</div>
-                      <div style={{ color: "#e63946", fontSize: "1.1rem" }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <span key={star} style={{ filter: star > c.rating ? "grayscale(1)" : "none" }}>
-                            ★
-                          </span>
-                        ))}
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="fw-bold" style={{ fontSize: "1.05rem" }}>{c.name}</span>
+                        <span style={{ color: "#e63946", fontSize: "1.1rem" }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star} style={{ filter: star > c.rating ? "grayscale(1)" : "none" }}>
+                              ★
+                            </span>
+                          ))}
+                        </span>
+                        <span className="small text-muted ms-2">{new Date(c.date).toLocaleString()}</span>
                       </div>
-                      <div className="small text-muted">{new Date(c.date).toLocaleString()}</div>
-                      <p className="mt-2 mb-2">{c.text}</p>
+                      <p className="mt-2 mb-2" style={{ fontSize: "1rem" }}>{c.text}</p>
 
-                      {/* Respuestas */}
+                      {/* Respuestas estilo YouTube */}
                       {c.replies && c.replies.length > 0 && (
                         <div className="mt-2 ps-3 border-start">
-                          {c.replies.map((r, i) => (
-                            <div key={i} className="mb-2">
-                              <strong>{r.name}</strong>
-                              <div className="small text-muted">{new Date(r.date).toLocaleString()}</div>
-                              <p className="mb-1">{r.text}</p>
+                          {c.replies.slice(0, repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW).map((r, i) => (
+                            <div key={i} className="mb-2 d-flex align-items-start gap-2">
+                              <div style={{ width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7" }}>
+                                <Image src={r.photoURL || "/new_user.png"} alt={r.name} width={32} height={32} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              </div>
+                              <div>
+                                <span className="fw-bold" style={{ fontSize: "0.98rem" }}>{r.name}</span>
+                                <span className="small text-muted ms-2">{new Date(r.date).toLocaleString()}</span>
+                                <p className="mb-1" style={{ fontSize: "0.98rem" }}>{r.text}</p>
+                              </div>
                             </div>
                           ))}
+                          {c.replies.length > (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW) && (
+                            <Button variant="link" className="p-0 text-primary" style={{ fontSize: "0.95rem" }} onClick={() => handleShowMoreReplies(idx, c.replies.length)}>
+                              Ver más respuestas ({c.replies.length - (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW)})
+                            </Button>
+                          )}
                         </div>
                       )}
 
@@ -655,6 +694,13 @@ const ProductDetailPage = () => {
                   </div>
                 </Card>
               ))}
+              {comments.length > commentsToShow && (
+                <div className="text-center mt-3">
+                  <Button variant="link" className="p-0 text-primary" style={{ fontSize: "1rem" }} onClick={handleShowMoreComments}>
+                    Ver más comentarios ({comments.length - commentsToShow})
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </Container>

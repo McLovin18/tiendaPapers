@@ -9,7 +9,7 @@ const allProducts = [
     category: 'Vestido',
     categoryLink: '/mujer',
     description: 'Vestido elegante y cómodo para cualquier ocasión.',
-    inStock: false,
+    inStock: true,
     sizes: ['M'],
     colors: ['Blanco', 'Azul', 'Negro', 'Rojo', 'Verde', 'piel', 'plomo'],
     details: [

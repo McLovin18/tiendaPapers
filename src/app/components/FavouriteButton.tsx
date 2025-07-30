@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { addFavourite, removeFavourite, getUserFavourites } from "../services/purchaseService";
 import { useRouter } from "next/navigation";
 
+
 interface FavouriteButtonProps {
   product: {
     id: string | number;

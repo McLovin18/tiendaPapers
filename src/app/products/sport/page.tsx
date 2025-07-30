@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Footer from "../../components/Footer";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
@@ -106,6 +107,7 @@ const ProductsSportPage = () => {
           </Container>
         </main>
       </div>
+      <Footer />
     </div>
   );
 };

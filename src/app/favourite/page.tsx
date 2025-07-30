@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from '../context/AuthContext';
 import { getUserFavourites } from '../services/purchaseService';
 import { Container, Button, Row, Col, Card, Image } from "react-bootstrap";
+import Footer from "../components/Footer";
+
 import Link from "next/link";
 
 const FavouritePage = () => {
@@ -100,6 +102,8 @@ const FavouritePage = () => {
           ))}
         </Row>
       )}
+
+      <Footer />
     </Container>
   );
 };

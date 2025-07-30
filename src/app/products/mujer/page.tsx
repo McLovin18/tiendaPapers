@@ -8,6 +8,8 @@ import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
 import Link from "next/link";
 import allProducts from "../productsData";
+import Footer from "../../components/Footer";
+
 
 const ProductsSportPage = () => {
   const { user } = useAuth();
@@ -106,6 +108,8 @@ const ProductsSportPage = () => {
           </Container>
         </main>
       </div>
+      <Footer />
+      {/* Footer siempre visible */}
     </div>
   );
 };

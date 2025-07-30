@@ -12,6 +12,8 @@ import LoginRequired from '../../components/LoginRequired';
 import { addFavourite, removeFavourite, getUserFavourites, addProductComment, getProductComments, updateProductRating, addReplyToComment } from '../../services/purchaseService';
 import allProducts from '../productsData';
 import FavouriteButton from '../../components/FavouriteButton';
+import Footer from "../../components/Footer";
+
 
 
 // Productos relacionados
@@ -1116,56 +1118,9 @@ const ProductDetailPage = () => {
           </Row>
         </Container>
       </div>
-      
-      {/* Footer */}
-      <footer className="bg-light text-dark py-5 border-top">
-        <Container>
-          <Row>
-            <Col md={3}>
-              <h5 className="fw-bold mb-3">Comprar</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
-                <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
-                <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
-                <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
-                <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
-              </ul>
-            </Col>
-            <Col md={3}>
-              <h5 className="fw-bold mb-3">Información Corporativa</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/about" className="text-dark text-decoration-none">Acerca de nosotros</Link></li>
-                <li className="mb-2"><Link href="/sustainability" className="text-dark text-decoration-none">Sostenibilidad</Link></li>
-                <li className="mb-2"><Link href="/press" className="text-dark text-decoration-none">Sala de prensa</Link></li>
-                <li className="mb-2"><Link href="/investors" className="text-dark text-decoration-none">Relación con inversores</Link></li>
-              </ul>
-            </Col>
-            <Col md={3}>
-              <h5 className="fw-bold mb-3">Ayuda</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/customer-service" className="text-dark text-decoration-none">Servicio al cliente</Link></li>
-                <li className="mb-2"><Link href="/my-account" className="text-dark text-decoration-none">Mi cuenta</Link></li>
-                <li className="mb-2"><Link href="/store-locator" className="text-dark text-decoration-none">Encontrar tiendas</Link></li>
-                <li className="mb-2"><Link href="/legal" className="text-dark text-decoration-none">Términos legales</Link></li>
-              </ul>
-            </Col>
-            <Col md={3}>
-              <h5 className="fw-bold mb-3">Únete a nosotros</h5>
-              <p>Recibe noticias sobre nuevas colecciones y ofertas exclusivas</p>
-              <div className="d-flex gap-3 mt-3">
-                <Link href="#" className="text-dark fs-5"><i className="bi bi-facebook"></i></Link>
-                <Link href="#" className="text-dark fs-5"><i className="bi bi-instagram"></i></Link>
-                <Link href="#" className="text-dark fs-5"><i className="bi bi-twitter"></i></Link>
-                <Link href="#" className="text-dark fs-5"><i className="bi bi-youtube"></i></Link>
-              </div>
-            </Col>
-          </Row>
-          <hr className="my-4" />
-          <div className="text-center">
-            <p className="small">&copy; {new Date().getFullYear()} Fashion Store. Todos los derechos reservados.</p>
-          </div>
-        </Container>
-      </footer>
+
+    {/* Footer */}
+      <Footer/>
     </div>
   );
 };

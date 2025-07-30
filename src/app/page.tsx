@@ -10,6 +10,8 @@ import Sidebar from './components/Sidebar';
 import TopbarMobile from './components/TopbarMobile';
 import allProducts from './products/productsData';
 import FavouriteButton from "./components/FavouriteButton";
+import Footer from "./components/Footer";
+
 
 
 const featuredProducts = allProducts.filter(p => p.featured);
@@ -289,35 +291,9 @@ export default function Home() {
           </Container>
         </main>
       </div>
+      <Footer/>
 
-      {/* Footer */}
-      <footer className="bg-dark text-white py-4">
-        <Container>
-          <Row>
-            <Col md={4}>
-              <h5>Tienda de Ropa</h5>
-              <p>Las mejores prendas para toda la familia.</p>
-            </Col>
-            <Col md={4}>
-              <h5>Enlaces</h5>
-              <ul className="list-unstyled">
-                <li><Link href="/" className="text-white">Inicio</Link></li>
-                <li><Link href="/products" className="text-white">Productos</Link></li>
-                <li><Link href="/about" className="text-white">Nosotros</Link></li>
-              </ul>
-            </Col>
-            <Col md={4}>
-              <h5>Contacto</h5>
-              <p>Email: info@tiendaropa.com</p>
-              <p>Teléfono: (123) 456-7890</p>
-            </Col>
-          </Row>
-          <hr />
-          <div className="text-center">
-            <p>&copy; {new Date().getFullYear()} Tienda de Ropa. Todos los derechos reservados.</p>
-          </div>
-        </Container>
-      </footer>
+
     </div>
   );
 

@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import { getUserPurchases } from "../services/purchaseService";
 import Image from "next/image";
 import Link from "next/link";
+import Footer from "../components/Footer";
+
 
 const MyOrdersPage = () => {
   const { user } = useAuth();
@@ -78,6 +80,7 @@ const MyOrdersPage = () => {
           ))}
         </Row>
       )}
+      <Footer />
     </Container>
   );
 };

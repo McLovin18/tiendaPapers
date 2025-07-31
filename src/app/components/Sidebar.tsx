@@ -3,10 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
+import { useAdmin } from '../context/AdminContext';
 import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const pathname = usePathname();
 
   if (!user) return null;
@@ -17,6 +19,11 @@ const Sidebar = () => {
     { name: 'Mis compras', path: '/myOrders', icon: 'bi-bag-check' },
     { name: 'Favoritos', path: '/favourite', icon: 'bi-heart' },
   ];
+
+  // Solo agregar la opción de admin si el usuario es administrador
+  if (isAdmin) {
+    menuItems.push({ name: 'Admin Pedidos', path: '/admin/orders', icon: 'bi-clipboard-data' });
+  }
 
   return (
     <>

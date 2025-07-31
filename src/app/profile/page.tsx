@@ -5,17 +5,14 @@ import React, { useState, useEffect } from 'react';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { Container, Row, Col, Card, Button, Form, Alert, Tab, Nav, ListGroup, Badge, Tabs, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Alert, ListGroup, Badge, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
-import NavbarComponent from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
 import Link from 'next/link';
-import Modal from 'react-bootstrap/Modal';
-import { getUserPurchases, clearUserPurchases, getUserFavourites, removeFavourite, Purchase } from '../services/purchaseService';
+import { getUserPurchases, getUserFavourites, removeFavourite, Purchase } from '../services/purchaseService';
 import { useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { updateProfile } from 'firebase/auth';
 import Footer from "../components/Footer";
 
@@ -59,27 +56,27 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // Cargar historial de compras desde Firestore y detectar parámetro de consulta 'tab'
-  useEffect(() => {
-    const loadPurchases = async () => {
-      if (!user?.uid) return;
-      
-      setLoading(true);
-      
-      try {
-        
-        // Cargar compras desde Firestore
-        const userPurchases = await getUserPurchases(user.uid);
-        console.log('Compras cargadas desde Firestore:', userPurchases);
-        setPurchases(userPurchases);
-      } catch (error) {
-        console.error('Error al cargar compras:', error);
-        console.error('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Función para cargar historial de compras desde Firestore
+  const loadPurchases = async () => {
+    if (!user?.uid) return;
     
+    setLoading(true);
+    
+    try {
+      // Cargar compras desde Firestore
+      const userPurchases = await getUserPurchases(user.uid);
+      console.log('Compras cargadas desde Firestore:', userPurchases);
+      setPurchases(userPurchases);
+    } catch (error) {
+      console.error('Error al cargar compras:', error);
+      console.error('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Detectar parámetro de consulta 'tab' en la URL y cargar datos iniciales
+  useEffect(() => {
     // Detectar parámetro de consulta 'tab' en la URL
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -92,9 +89,6 @@ const ProfilePage = () => {
           loadPurchases();
         }
       }
-    } else {
-      // Cargar compras de todos modos si no hay parámetro de URL
-      loadPurchases();
     }
   }, [user?.uid]);
 
@@ -106,21 +100,6 @@ const ProfilePage = () => {
       await logout();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-    }
-  };
-
-  const handleClearHistory = async () => {
-    if (!user?.uid) return;
-    
-    try {
-      setLoading(true);
-      await clearUserPurchases(user.uid);
-      setPurchases([]);
-    } catch (error) {
-      console.error('Error al limpiar historial de compras:', error);
-      console.error('No se pudo limpiar el historial. Intenta de nuevo más tarde.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -214,8 +193,12 @@ const ProfilePage = () => {
       // 2️⃣ Si hay usuario, sincronizar con Firestore
       if (user?.uid) {
         const remoteFavs = await getUserFavourites(user.uid);
-        setFavourites(remoteFavs);
-        localStorage.setItem("favourites", JSON.stringify(remoteFavs));
+        // Validar que los favoritos tienen la estructura correcta
+        const validFavs = remoteFavs.filter((fav: any) => 
+          fav.id && fav.name && fav.price !== undefined && fav.image
+        ) as Favourite[];
+        setFavourites(validFavs);
+        localStorage.setItem("favourites", JSON.stringify(validFavs));
       }
     } catch (err) {
       console.error("Error cargando favoritos:", err);
@@ -316,6 +299,7 @@ const ProfilePage = () => {
                       onClick={() => {
                         setActiveTab('orders');
                         router.push('/profile?tab=orders');
+                        loadPurchases(); // ✅ Cargar inmediatamente al hacer clic
                       }}
                     >
                       <i className="bi bi-bag-check me-2"></i>Historial de pedidos
@@ -491,11 +475,6 @@ const ProfilePage = () => {
                     <div className="p-3">
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="fw-bold mb-0">Historial de Pedidos</h5>
-                        {purchases.length > 0 && !loading && (
-                          <Button variant="outline-danger" size="sm" onClick={handleClearHistory} disabled={loading}>
-                            <i className="bi bi-trash me-1"></i> Limpiar Historial
-                          </Button>
-                        )}
                       </div>
                       {loading ? (
                         <div className="text-center py-5">
@@ -506,7 +485,7 @@ const ProfilePage = () => {
                         <div className="text-center py-5">
                           <i className="bi bi-box2 fs-1"></i>
                           <h5 className="fw-bold mb-2">No tienes compras recientes</h5>
-                          <Link variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Link>
+                          <Link href="/products" className="btn btn-dark rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </div>
                       ) : (
                         <>
@@ -553,7 +532,7 @@ const ProfilePage = () => {
                         <>
                           <i className="bi bi-heart fs-1 text-danger mb-3"></i>
                           <p className="text-muted">Aún no tienes productos favoritos.</p>
-                          <Link variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Link>
+                          <Link href="/products" className="btn btn-dark rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </>
                       ) : (
                         <Row className="g-4 justify-content-center">

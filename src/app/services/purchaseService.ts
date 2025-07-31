@@ -20,6 +20,27 @@ export interface Purchase {
   total: number;
 }
 
+export interface DailyOrder {
+  id: string;
+  userId: string;
+  userName?: string; // Opcional para compatibilidad con pedidos existentes
+  userEmail?: string; // Opcional: email del usuario
+  date: string;
+  items: PurchaseItem[];
+  total: number;
+  orderTime: string;
+}
+
+export interface DailyOrdersDocument {
+  date: string; // YYYY-MM-DD
+  dateFormatted: string;
+  orders: DailyOrder[];
+  totalOrdersCount: number;
+  totalDayAmount: number;
+  createdAt: string;
+  lastUpdated: string;
+}
+
 // Colección de compras en Firestore (ahora como subcolección por usuario)
 // const PURCHASES_COLLECTION = 'purchases';
 
@@ -45,20 +66,98 @@ function validatePurchase(purchase: Omit<Purchase, 'id'>) {
 
 /**
  * Guarda una nueva compra en Firestore en la subcolección del usuario
+ * Y también intenta guardarla en la colección diaria de pedidos para fácil visualización (opcional)
  */
-export const savePurchase = async (purchase: Omit<Purchase, 'id'>): Promise<string> => {
+export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: string, userEmail?: string): Promise<string> => {
   try {
     validatePurchase(purchase);
-    // Referencia a la subcolección purchases del usuario
-    const collectionRef = collection(db, `users/${purchase.userId}/purchases`);
-    const date = purchase.date || new Date().toISOString();
-    const docRef = await addDoc(collectionRef, {
-      ...purchase,
-      date,
+    
+    const currentDate = new Date();
+    const dateString = purchase.date || currentDate.toISOString();
+    const dayKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    console.log('🔍 Guardando compra:', {
+      userId: purchase.userId,
+      dayKey,
+      total: purchase.total,
+      itemsCount: purchase.items.length
     });
-    return docRef.id;
+    
+    // 1. OPERACIÓN PRINCIPAL: Guardar en la subcolección del usuario
+    const userCollectionRef = collection(db, `users/${purchase.userId}/purchases`);
+    const userDocRef = await addDoc(userCollectionRef, {
+      ...purchase,
+      date: dateString,
+    });
+    
+    console.log('✅ Guardado en subcolección del usuario:', userDocRef.id);
+    
+    // 2. OPERACIÓN OPCIONAL: Intentar guardar en la colección diaria (sin fallar si no puede)
+    try {
+      const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
+      console.log('🔍 Intentando acceder a documento diario:', `dailyOrders/${dayKey}`);
+      
+      const dailyOrderSnapshot = await getDoc(dailyOrderRef);
+      
+      const orderData = {
+        id: userDocRef.id,
+        userId: purchase.userId,
+        userName: userName || (userEmail ? userEmail.split('@')[0] : undefined), // Fallback al email si no hay userName
+        userEmail: userEmail || undefined, // Asegurar que se guarde el email
+        date: dateString,
+        items: purchase.items,
+        total: purchase.total,
+        orderTime: currentDate.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      };
+      
+      if (dailyOrderSnapshot.exists()) {
+        console.log('📄 Documento diario existe, agregando pedido...');
+        const existingData = dailyOrderSnapshot.data();
+        const orders: DailyOrder[] = existingData.orders || [];
+        orders.push(orderData);
+        
+        await updateDoc(dailyOrderRef, {
+          orders: orders,
+          totalOrdersCount: orders.length,
+          totalDayAmount: orders.reduce((sum: number, order: DailyOrder) => sum + order.total, 0),
+          lastUpdated: currentDate.toISOString()
+        });
+        
+        console.log('✅ Documento diario actualizado con', orders.length, 'pedidos');
+      } else {
+        console.log('📝 Creando nuevo documento diario...');
+        await setDoc(dailyOrderRef, {
+          date: dayKey,
+          dateFormatted: currentDate.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          orders: [orderData],
+          totalOrdersCount: 1,
+          totalDayAmount: purchase.total,
+          createdAt: currentDate.toISOString(),
+          lastUpdated: currentDate.toISOString()
+        });
+        
+        console.log('✅ Nuevo documento diario creado');
+      }
+      
+      console.log('🎉 Compra guardada exitosamente en ambas ubicaciones');
+    } catch (dailyOrderError) {
+      // No fallar si no puede guardar en dailyOrders - solo logear el error
+      console.warn('⚠️ No se pudo guardar en dailyOrders (puede ser por permisos):', dailyOrderError);
+      console.log('✅ Compra guardada correctamente en subcolección del usuario (funcionalidad principal)');
+    }
+    
+    // SIEMPRE retornar el ID exitosamente, ya que la operación principal funcionó
+    return userDocRef.id;
   } catch (error) {
-    console.error('Error detallado al guardar compra:', error);
+    console.error('❌ Error detallado al guardar compra:', error);
     if (error instanceof Error) {
       console.error('Mensaje de error:', error.message);
       console.error('Stack trace:', error.stack);
@@ -212,5 +311,157 @@ export const addReplyToComment = async (
   const updatedReplies = [...(data.replies || []), reply];
 
   await updateDoc(commentRef, { replies: updatedReplies });
+};
+
+// --- FUNCIONES PARA GESTIÓN DIARIA DE PEDIDOS ---
+
+/**
+ * Obtiene todos los pedidos de un día específico
+ */
+export const getDailyOrders = async (date: string): Promise<DailyOrdersDocument | null> => {
+  try {
+    const dailyOrderRef = doc(db, `dailyOrders/${date}`);
+    const snapshot = await getDoc(dailyOrderRef);
+    
+    if (snapshot.exists()) {
+      return snapshot.data() as DailyOrdersDocument;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error al obtener pedidos del día:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene todos los días que tienen pedidos, ordenados por fecha descendente
+ */
+export const getAllOrderDays = async (): Promise<DailyOrdersDocument[]> => {
+  try {
+    const q = query(
+      collection(db, 'dailyOrders'),
+      orderBy('date', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const days: DailyOrdersDocument[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as DailyOrdersDocument;
+      days.push(data);
+    });
+    
+    return days;
+  } catch (error) {
+    console.error('❌ Error al obtener días con pedidos:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene estadísticas de pedidos por rango de fechas
+ */
+export const getOrdersStatistics = async (startDate: string, endDate: string) => {
+  try {
+    const q = query(
+      collection(db, 'dailyOrders'),
+      orderBy('date', 'asc')
+    );
+    const querySnapshot = await getDocs(q);
+    
+    const filteredDays: DailyOrdersDocument[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as DailyOrdersDocument;
+      if (data.date >= startDate && data.date <= endDate) {
+        filteredDays.push(data);
+      }
+    });
+    
+    const totalOrders = filteredDays.reduce((sum, day) => sum + day.totalOrdersCount, 0);
+    const totalAmount = filteredDays.reduce((sum, day) => sum + day.totalDayAmount, 0);
+    const averageOrderValue = totalOrders > 0 ? totalAmount / totalOrders : 0;
+    
+    return {
+      totalDays: filteredDays.length,
+      totalOrders,
+      totalAmount,
+      averageOrderValue,
+      averageOrdersPerDay: filteredDays.length > 0 ? totalOrders / filteredDays.length : 0,
+      days: filteredDays
+    };
+  } catch (error) {
+    console.error('Error al obtener estadísticas:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene los pedidos de hoy
+ */
+export const getTodayOrders = async (): Promise<DailyOrdersDocument | null> => {
+  const today = new Date().toISOString().split('T')[0];
+  return getDailyOrders(today);
+};
+
+/**
+ * REGLAS DE FIRESTORE ACTUALIZADAS (con UID específico del admin):
+ * 
+ * rules_version = '2';
+ * service cloud.firestore {
+ *   match /databases/{database}/documents {
+ * 
+ *     // ✅ Usuarios: Solo el dueño puede leer o modificar su perfil
+ *     match /users/{userId} {
+ *       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+ *       allow create: if request.auth != null;
+ *       
+ *       // ✅ Subcolecciones del usuario (compras, favoritos)
+ *       match /{collection}/{document} {
+ *         allow read, write: if request.auth != null && request.auth.uid == userId;
+ *       }
+ *     }
+ * 
+ *     // ✅ Productos: lectura pública, escritura solo para admins
+ *     match /products/{productId} {
+ *       allow read: if true;
+ *       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+ *       
+ *       // ✅ Comentarios de productos
+ *       match /comments/{commentId} {
+ *         allow read: if request.auth != null;
+ *         allow create: if request.auth != null;
+ *         allow update: if request.auth != null;
+ *         allow delete: if false;
+ *       }
+ *     }
+ *    
+ *     // ✅ ACTUALIZADO: Pedidos diarios para administración
+ *     match /dailyOrders/{date} {
+ *       // CUALQUIER usuario autenticado puede escribir (para guardar pedidos)
+ *       allow write: if request.auth != null;
+ *       // SOLO el admin puede leer (usando UID específico)
+ *       allow read: if request.auth != null && 
+ *         request.auth.uid == "byRByEqdFOYxXOmUu9clvujvIUg1";
+ *     }
+ *   }
+ * }
+ */
+/**
+ * Función auxiliar para obtener información del usuario desde Firebase Auth
+ */
+export const getUserDisplayInfo = (user: any) => {
+  if (!user) return { userName: undefined, userEmail: undefined };
+  
+  // Prioridad: displayName > email (parte antes del @) > undefined
+  let userName: string | undefined = undefined;
+  if (user.displayName) {
+    userName = user.displayName;
+  } else if (user.email) {
+    userName = user.email.split('@')[0];
+  }
+  
+  return {
+    userName,
+    userEmail: user.email || undefined
+  };
 };
 

@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import Footer from "../components/Footer";
 
-import { savePurchase } from '../services/purchaseService';
+import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 
 // PayPal Client ID - Replace with your actual client ID in production
 const PAYPAL_CLIENT_ID = 'test';
@@ -77,6 +77,10 @@ const CartPage = () => {
     const storedCart = localStorage.getItem(cartKey);
     const items = storedCart ? JSON.parse(storedCart) : [];
     setCartItems(items);
+    
+    // Reset payment success state when cart loads
+    setPaymentSuccess(false);
+    setSaveError('');
   }, [user?.uid, loading, isClient]);
 
   // Listen for cart updates from other components
@@ -123,6 +127,12 @@ const CartPage = () => {
   if (!user) {
     return <LoginRequired />;
   }
+
+  console.log('🔍 Estado actual del carrito:', {
+    paymentSuccess,
+    cartItemsLength: cartItems.length,
+    saveError
+  });
 
   if (paymentSuccess) {
     return (
@@ -220,15 +230,23 @@ const CartPage = () => {
                     className="w-100 py-2 rounded-1 mb-3"
                     disabled={cartItems.length === 0}
                     onClick={() => {
+                      console.log('🔍 Botón "Completar Compra" clickeado');
+                      console.log('📊 Estado actual:', {
+                        cartItemsLength: cartItems.length,
+                        userUid: user?.uid,
+                        total: calculateTotal()
+                      });
+                      
                       try {
                         // Verificar autenticación
                         if (!user?.uid) {
+                          console.log('❌ Usuario no autenticado');
                           alert('Debes iniciar sesión para completar la compra');
                           return;
                         }
                         
-                        console.log('Usuario autenticado:', user.uid);
-                        console.log('Datos de la compra:', {
+                        console.log('✅ Usuario autenticado:', user.uid);
+                        console.log('📦 Datos de la compra:', {
                           items: cartItems,
                           total: calculateTotal()
                         });
@@ -254,6 +272,8 @@ const CartPage = () => {
                         localStorage.setItem('purchases', JSON.stringify(existingPurchases));
                         
                         // Guardar compra en Firestore
+                        console.log('🛒 Iniciando proceso de compra...');
+                        const userInfo = getUserDisplayInfo(user);
                         savePurchase({
                           userId: user.uid,
                           date: new Date().toLocaleString(),
@@ -265,19 +285,28 @@ const CartPage = () => {
                             image: item.image
                           })),
                           total: calculateTotal()
-                        })
+                        }, userInfo.userName, userInfo.userEmail)
                         .then(() => {
-                          // Limpiar carrito
-                          setCartItems([]);
-                          localStorage.removeItem('cartItems');
-                          setPaymentSuccess(true);
+                          console.log('✅ Compra guardada exitosamente en Firebase');
                           setSaveError('');
-                          console.log('Compra completada con éxito');
                         })
                         .catch((error) => {
-                          console.error('Error al guardar la compra:', error);
+                          console.error('❌ Error al guardar la compra en Firebase:', error);
                           setSaveError('Hubo un problema al guardar tu compra en la base de datos, pero tu compra ha sido procesada.');
-                          setPaymentSuccess(true); // Aún así mostramos éxito porque la compra se procesó
+                        })
+                        .finally(() => {
+                          // SIEMPRE limpiar carrito, independientemente del resultado de Firebase
+                          console.log('🧹 Limpiando carrito...');
+                          setCartItems([]);
+                          const cartKey = `cartItems_${user.uid}`;
+                          localStorage.removeItem(cartKey);
+                          
+                          // Disparar evento para actualizar contador en navbar
+                          window.dispatchEvent(new CustomEvent('cart-updated'));
+                          
+                          console.log('🎯 Estableciendo paymentSuccess = true');
+                          setPaymentSuccess(true);
+                          console.log('✅ Carrito limpiado y compra completada');
                         });
                       } catch (error) {
                         console.error('Error al procesar la compra:', error);

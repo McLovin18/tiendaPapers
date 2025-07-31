@@ -67,7 +67,7 @@ const FavouriteButton: React.FC<FavouriteButtonProps> = ({ product }) => {
   return (
     <OverlayTrigger
       placement="top"
-      overlay={!user ? <Tooltip>Inicia sesión para guardar en favoritos</Tooltip> : <></>}
+      overlay={!user ? <Tooltip>Inicia sesión para guardar en favoritos</Tooltip> : <div></div>}
     >
       <Button
         variant={isFav ? "danger" : "outline-danger"}

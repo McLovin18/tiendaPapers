@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
+import { AdminProvider } from './context/AdminContext';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -11,7 +12,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <AuthProvider>
-      {children}
+      <AdminProvider>
+        {children}
+      </AdminProvider>
     </AuthProvider>
   );
 }

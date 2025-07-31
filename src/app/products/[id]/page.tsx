@@ -79,12 +79,12 @@ const ProductDetailPage = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
-  const [replyText, setReplyText] = useState<{ [key: string]: string }>({}); // para respuestas
+  const [replyText, setReplyText] = useState<{ [key: number]: string | undefined }>({}); // para respuestas
   // Estado para mostrar el botón y picker de emojis en comentario principal
   const [showEmojiButton, setShowEmojiButton] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiButtonRef = React.useRef(null);
-  const emojiPickerRef = React.useRef(null);
+  const emojiButtonRef = React.useRef<HTMLButtonElement>(null);
+  const emojiPickerRef = React.useRef<HTMLDivElement>(null);
 
   const [showCommentActions, setShowCommentActions] = useState(false);
   // Cerrar el emoji picker solo si se hace clic fuera del input, botón y picker
@@ -111,17 +111,18 @@ const ProductDetailPage = () => {
   // Estado para mostrar el botón y picker de emojis en cada campo de respuesta
   // Estado para controlar el flujo de emoji en cada reply
   // Estado para controlar el emoji en cada reply: { idx: { button: bool, picker: bool } }
-  const [replyEmojiState, setReplyEmojiState] = useState({});
-  const replyEmojiButtonRefs = React.useRef({});
-  const replyEmojiPickerRefs = React.useRef({});
+  const [replyEmojiState, setReplyEmojiState] = useState<{ [key: number]: { button?: boolean; picker?: boolean } }>({});
+  const replyEmojiButtonRefs = React.useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const replyEmojiPickerRefs = React.useRef<{ [key: number]: HTMLDivElement | null }>({});
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      Object.keys(replyEmojiState).forEach(idx => {
+      Object.keys(replyEmojiState).forEach(idxStr => {
+        const idx = Number(idxStr);
         if (!replyEmojiState[idx]?.picker) return;
         const btnRef = replyEmojiButtonRefs.current[idx];
         const pickerRef = replyEmojiPickerRefs.current[idx];
-        if (btnRef && btnRef.contains(event.target)) return;
-        if (pickerRef && pickerRef.contains(event.target)) return;
+        if (btnRef && btnRef.contains(event.target as Node)) return;
+        if (pickerRef && pickerRef.contains(event.target as Node)) return;
         setReplyEmojiState(prev => ({ ...prev, [idx]: { ...prev[idx], picker: false } }));
       });
     };
@@ -186,7 +187,6 @@ const ProductDetailPage = () => {
       if (!product?.id) return;
       setLoadingComments(true);
       const fetched = await getProductComments(product.id);
-  
 
       const mappedComments = fetched.map((c: any) => ({
         id: c.id,
@@ -197,6 +197,7 @@ const ProductDetailPage = () => {
         replies: c.replies || [],
         photoURL: c.photoURL || "/new_user.png"
       }));
+      
       setComments(mappedComments);
 
       // 🔹 Calcular promedio (por si no existe en Firestore)
@@ -251,6 +252,7 @@ const ProductDetailPage = () => {
     // 🔹 Obtener comentarios actualizados
     const fetched = await getProductComments(product.id);
     const mappedComments = fetched.map((c: any) => ({
+      id: c.id, // ✅ IMPORTANTE: incluir el ID
       name: c.name || "Usuario",
       text: c.text || "",
       date: c.date || "",
@@ -269,39 +271,69 @@ const ProductDetailPage = () => {
 
 
   const handleReply = async (commentIndex: number) => {
+    try {
+      const replyMessage = replyText[commentIndex]?.trim();
+      if (!replyMessage || !user || !product) {
+        return;
+      }
 
-    const replyMessage = replyText[commentIndex]?.trim();
-    if (!replyMessage || !user || !product) return;
+      const reply = {
+        name: user.displayName || "Usuario",
+        text: replyMessage,
+        date: new Date().toISOString(),
+        photoURL: user.photoURL || "/new_user.png"
+      };
 
-    const reply = {
-      name: user.displayName || "Usuario",
-      text: replyMessage,
-      date: new Date().toISOString(),
-      photoURL: user.photoURL || "/new_user.png"
-    };
+      // 🔹 Obtener ID real del comentario y verificar que existe
+      const comment = comments[commentIndex];
+      
+      if (!comment) {
+        console.error("❌ Comentario no encontrado en índice:", commentIndex);
+        return;
+      }
+      
+      if (!comment.id) {
+        console.error("❌ Comentario sin ID:", comment);
+        return;
+      }
+      
+      // Agregar la respuesta a Firestore
+      const success = await addReplyToComment(product.id, comment.id, reply);
+      
+      if (!success) {
+        console.error("❌ Error al guardar respuesta en Firestore");
+        return;
+      }
 
-    // 🔹 Obtener ID real del comentario (hay que mapear doc.id en getProductComments)
-    const comment = comments[commentIndex];
-    await addReplyToComment(product.id, comment.id, reply);
+      // 🔹 Recargar comentarios desde Firestore
+      const fetched = await getProductComments(product.id);
+      const mappedComments = fetched.map((c: any) => ({
+        id: c.id,
+        name: c.name || "Usuario",
+        text: c.text || "",
+        date: c.date || "",
+        rating: c.rating || 0,
+        replies: c.replies || [],
+        photoURL: c.photoURL || "/new_user.png"
+      }));
+      
+      setComments(mappedComments);
 
-    // 🔹 Recargar comentarios
-    const fetched = await getProductComments(product.id);
-    setComments(fetched.map((c: any) => ({
-      ...c,
-      replies: c.replies || []
-    })));
+      // Limpiar y ocultar el campo de respuesta y emoji después de responder
+      setReplyText((prev) => {
+        const updated = { ...prev };
+        delete updated[commentIndex];
+        return updated;
+      });
+      setReplyEmojiState(prev => {
+        const updated = { ...prev };
+        delete updated[commentIndex];
+        return updated;
+      });
 
-    // Limpiar y ocultar el campo de respuesta y emoji después de responder
-    setReplyText((prev) => {
-      const updated = { ...prev };
-      delete updated[commentIndex];
-      return updated;
-    });
-    setReplyEmojiState(prev => {
-      const updated = { ...prev };
-      delete updated[commentIndex];
-      return updated;
-    });
+    } catch (error) {
+      console.error("❌ Error al enviar respuesta:", error);
+    }
   };
   
   

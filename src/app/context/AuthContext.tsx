@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   UserCredential,
+  updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 
@@ -16,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<UserCredential>;
-  register: (email: string, password: string) => Promise<UserCredential>;
+  register: (email: string, password: string, name?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<UserCredential>;
 }
@@ -56,9 +57,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const register = (email: string, password: string) => {
+  const register = async (email: string, password: string, name?: string) => {
     if (!auth) throw new Error("Firebase Auth no inicializado");
-    return createUserWithEmailAndPassword(auth, email, password);
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Si se proporciona un nombre, actualizar el perfil del usuario
+    if (name && result.user) {
+      await updateProfile(result.user, {
+        displayName: name
+      });
+    }
+    
+    return result;
   };
 
   const logout = async () => {

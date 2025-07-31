@@ -37,7 +37,7 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await register(email, password);
+      await register(email, password, name);
       router.push('/');
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {

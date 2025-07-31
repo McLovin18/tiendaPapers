@@ -276,7 +276,8 @@ const ProductDetailPage = () => {
     const reply = {
       name: user.displayName || "Usuario",
       text: replyMessage,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      photoURL: user.photoURL || "/new_user.png"
     };
 
     // 🔹 Obtener ID real del comentario (hay que mapear doc.id en getProductComments)

@@ -32,14 +32,14 @@ interface Favourite {
 const ProfilePage = () => {
   const storage = getStorage();
   const { user, logout } = useAuth();
-  const [name, setName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [avatar, setAvatar] = useState(user?.photoURL || '/new_user.png');
+  const [avatar, setAvatar] = useState('/new_user.png');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [loadingFavourites, setLoadingFavourites] = useState(false);
@@ -49,6 +49,15 @@ const ProfilePage = () => {
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const router = useRouter();
+
+  // Actualizar el estado cuando el usuario cambie
+  useEffect(() => {
+    if (user) {
+      setName(user.displayName || '');
+      setEmail(user.email || '');
+      setAvatar(user.photoURL || '/new_user.png');
+    }
+  }, [user]);
 
   // Cargar historial de compras desde Firestore y detectar parámetro de consulta 'tab'
   useEffect(() => {
@@ -180,21 +189,16 @@ const ProfilePage = () => {
     setEditMode(false);
     try {
       if (user && name && user.displayName !== name) {
-        await updateProfile(user, { displayName: name });
+        await updateProfile(user, { 
+          displayName: name,
+          photoURL: avatar
+        });
       }
-      // Note: updateProfile doesn't support email updates directly
       setSuccess(true);
       setError('');
       setTimeout(() => setSuccess(false), 3000);
     } catch {
       setError('No se pudo actualizar el perfil. Intenta de nuevo.');
-    }
-
-    if (user) {
-      await updateProfile(user, {
-        displayName: name,
-        photoURL: avatar, // 🔹 También actualiza la foto
-      });
     }
   };
 
@@ -390,7 +394,7 @@ const ProfilePage = () => {
 
                       {editMode ? (
                         <>
-                          {/* 🔹 FORMULARIO DE EDICIÓN DE NOMBRE Y EMAIL */}
+                          {/* 🔹 FORMULARIO DE EDICIÓN DE NOMBRE */}
                           <Form onSubmit={handleEditSubmit} className="text-start">
                             <Form.Group className="mb-3">
                               <Form.Label>Nombre</Form.Label>
@@ -408,11 +412,13 @@ const ProfilePage = () => {
                               <Form.Control
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
                                 className="rounded-1"
-                                disabled={user?.providerData[0]?.providerId !== "password"}
+                                disabled
+                                style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
                               />
+                              <Form.Text className="text-muted">
+                                El email no se puede modificar por seguridad
+                              </Form.Text>
                             </Form.Group>
 
                             <div className="d-flex gap-2 mt-3">

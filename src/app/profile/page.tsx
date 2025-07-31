@@ -66,12 +66,44 @@ const ProfilePage = () => {
       // Cargar compras desde Firestore
       const userPurchases = await getUserPurchases(user.uid);
       console.log('Compras cargadas desde Firestore:', userPurchases);
-      setPurchases(userPurchases);
+      
+      // Ordenar por fecha (más reciente primero)
+      const sortedPurchases = userPurchases.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      setPurchases(sortedPurchases);
     } catch (error) {
       console.error('Error al cargar compras:', error);
       console.error('No se pudieron cargar tus compras. Intenta de nuevo más tarde.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para formatear fecha de manera legible
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return `Hoy a las ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 2) {
+      return `Ayer a las ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays <= 7) {
+      return `Hace ${diffDays - 1} días`;
+    } else {
+      return date.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   };
 
@@ -494,27 +526,55 @@ const ProfilePage = () => {
                               <ListGroup.Item key={idx} className="mb-3 bg-white rounded-1 shadow-sm border-0">
                                 <div className="d-flex justify-content-between align-items-center">
                                   <div>
-                                    <h6 className="fw-bold mb-1">Pedido #{purchase.id}</h6>
-                                    <div className="small text-muted mb-2">{purchase.date}</div>
-                                    <div>
-                                      {purchase.items.map((item: { id: string; name: string; image: string; quantity: number }, i: number) => (
-                                        <span key={i} className="me-3">
-                                          <Image src={item.image} alt={item.name} width={40} height={40} className="me-2 rounded-1" />
-                                          {item.name} x{item.quantity}
-                                        </span>
-                                      ))}
+                                    <h6 className="fw-bold mb-1 text-primary">
+                                      <i className="bi bi-box me-2"></i>
+                                      Pedido #{idx + 1}
+                                    </h6>
+                                    <div className="small text-muted mb-2">
+                                      <i className="bi bi-clock me-1"></i>
+                                      {formatDate(purchase.date)}
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="small text-muted">Productos:</span>
+                                      <div className="mt-1">
+                                        {purchase.items.map((item: { id: string; name: string; image: string; quantity: number }, i: number) => (
+                                          <div key={i} className="d-flex align-items-center mb-1">
+                                            <Image src={item.image} alt={item.name} width={35} height={35} className="me-2 rounded-1" />
+                                            <span className="small">
+                                              <strong>{item.name}</strong> 
+                                              <span className="text-muted"> (Cantidad: {item.quantity})</span>
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="text-end">
-                                    <div className="fw-bold fs-5 mb-2">${purchase.total.toFixed(2)}</div>
-                                    <Badge bg="success">Pagado</Badge>
+                                    <div className="fw-bold fs-5 mb-2 text-success">${purchase.total.toFixed(2)}</div>
+                                    <Badge bg="success">
+                                      <i className="bi bi-check-circle me-1"></i>
+                                      Pagado
+                                    </Badge>
                                   </div>
                                 </div>
                               </ListGroup.Item>
                             ))}
                           </ListGroup>
-                          <div className="text-end mt-3">
-                            <span className="fw-bold">Total gastado: ${purchases.reduce((acc, p) => acc + p.total, 0).toFixed(2)}</span>
+                          <div className="row mt-4 p-3 bg-light rounded">
+                            <div className="col-md-6">
+                              <h6 className="fw-bold mb-2">
+                                <i className="bi bi-graph-up me-2"></i>
+                                Resumen de compras
+                              </h6>
+                              <p className="mb-1"><strong>Total de pedidos:</strong> {purchases.length}</p>
+                              <p className="mb-0"><strong>Total gastado:</strong> <span className="text-success fw-bold">${purchases.reduce((acc, p) => acc + p.total, 0).toFixed(2)}</span></p>
+                            </div>
+                            <div className="col-md-6 text-md-end">
+                              <small className="text-muted">
+                                <i className="bi bi-info-circle me-1"></i>
+                                Los pedidos se muestran del más reciente al más antiguo
+                              </small>
+                            </div>
                           </div>
                         </>
                       )}

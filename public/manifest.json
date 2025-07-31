@@ -1,0 +1,27 @@
+{
+  "name": "Lua Store - Tienda de Ropa Online",
+  "short_name": "Lua Store",
+  "description": "Descubre la mejor moda en Lua Store. Ropa de calidad para toda la familia con precios accesibles.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["shopping", "lifestyle"],
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/logoShop1.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/logoShop1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://lua-store.vercel.app/sitemap.xml
+
+# Directorios permitidos
+Allow: /products/
+Allow: /auth/
+Allow: /cart
+Allow: /profile
+Allow: /favourite
+
+# Archivos estáticos
+Allow: /images/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.svg
+Allow: /*.webp
+
+# Crawl-delay para ser respetuoso con los servidores
+Crawl-delay: 1

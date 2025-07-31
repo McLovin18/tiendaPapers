@@ -9,13 +9,16 @@ import Sidebar from '../components/Sidebar';
 import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import PayPalButton from '../components/paypalButton';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import Footer from "../components/Footer";
 
 import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 
-// PayPal Client ID - Replace with your actual client ID in production
-const PAYPAL_CLIENT_ID = 'test';
+// PayPal Client ID - Get from environment variables
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
+
+console.log('🔧 PayPal Client ID:', PAYPAL_CLIENT_ID);
 
 // Tipo para los items del carrito
 interface CartItem {
@@ -123,6 +126,66 @@ const CartPage = () => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   // Estado para manejar errores de guardado
   const [saveError, setSaveError] = useState('');
+  // Estado para el procesamiento del pago
+  const [processing, setProcessing] = useState(false);
+
+  // Función para manejar el éxito del pago de PayPal
+  const handlePayPalSuccess = async (details: any) => {
+    if (!user?.uid) {
+      setSaveError('Error: Usuario no autenticado');
+      return;
+    }
+
+    console.log('💰 Pago exitoso con PayPal:', details);
+    setProcessing(true);
+    setSaveError('');
+
+    try {
+      // Obtener información del usuario
+      const userInfo = getUserDisplayInfo(user);
+      
+      // Preparar datos de la compra
+      const purchaseData = {
+        userId: user.uid,
+        date: new Date().toISOString(),
+        items: cartItems.map(item => ({
+          id: item.id.toString(),
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        total: calculateTotal()
+      };
+
+      console.log('💾 Guardando compra:', purchaseData);
+      
+      // Guardar la compra en Firestore
+      const purchaseId = await savePurchase(purchaseData, userInfo.userName, userInfo.userEmail);
+      console.log('✅ Compra guardada con ID:', purchaseId);
+      
+      // Limpiar el carrito
+      const cartKey = `cartItems_${user.uid}`;
+      localStorage.removeItem(cartKey);
+      setCartItems([]);
+      
+      // Mostrar éxito
+      setPaymentSuccess(true);
+      
+    } catch (error) {
+      console.error('❌ Error al guardar la compra:', error);
+      setSaveError('Hubo un problema al guardar tu compra. Por favor, contacta al soporte.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Función para manejar errores del pago de PayPal
+  const handlePayPalError = (error: any) => {
+    console.error('❌ Error en el pago de PayPal:', error);
+    setSaveError('Hubo un problema con el pago. Por favor, inténtalo de nuevo.');
+    setProcessing(false);
+  };
 
   if (!user) {
     return <LoginRequired />;
@@ -160,171 +223,123 @@ const CartPage = () => {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
+    <PayPalScriptProvider
+      options={{
+        clientId: PAYPAL_CLIENT_ID,
+        currency: "USD",
+        intent: "capture",
+        vault: false,
+        "data-sdk-integration-source": "react-paypal-js",
+        "disable-funding": "",
+        "enable-funding": "venmo,paylater,card",
+        components: "buttons"
+      }}
+    >
+      <div className="d-flex flex-column min-vh-100">
+        {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
 
-      {user && <TopbarMobile />}
-      
-      <div className="d-flex flex-grow-1 w-100">
-        {user && <Sidebar />}
+        {user && <TopbarMobile />}
+        
+        <div className="d-flex flex-grow-1 w-100">
+          {user && <Sidebar />}
 
-        <main className="flex-grow-1">
-        <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-          <h1 className="fw-bold text-center mb-5">Tu Carrito</h1>
-          {cartItems.length === 0 ? (
-            <div className="text-center py-5">
-              <i className="bi bi-bag" style={{ fontSize: '4rem' }}></i>
-              <h2 className="fw-bold mb-3">Tu carrito está vacío</h2>
-              <Button href="/products" variant="dark" className="rounded-1 px-4 py-2 mt-3">Ver Productos</Button>
-            </div>
-          ) : (
-            <Row className="g-4">
-              <Col xs={12} md={8}>
-                {cartItems.map((item) => (
-                  <Card key={item.id} className="mb-4 border-0 shadow-sm">
-                    <Row className="g-0 align-items-center">
-                      <Col xs={4} md={3} className="p-3">
-                        <Image src={item.image} alt={item.name} width={100} height={120} style={{ objectFit: 'cover', borderRadius: '0.5rem' }} />
-                      </Col>
-                      <Col xs={8} md={9} className="p-3">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <h5 className="fw-bold mb-0">{item.name}</h5>
-                          <Button variant="link" className="text-danger p-0" onClick={() => removeItem(item.id, item.size, item.color)}><i className="bi bi-x-lg"></i></Button>
-                        </div>
-                        {(item.size || item.color) && (
-                          <div className="text-muted mb-2">
-                            {item.size && <span className="me-3"><strong>Talla:</strong> {item.size}</span>}
-                            {item.color && <span><strong>Color:</strong> {item.color}</span>}
+          <main className="flex-grow-1">
+          <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
+            <h1 className="fw-bold text-center mb-5">Tu Carrito</h1>
+            {cartItems.length === 0 ? (
+              <div className="text-center py-5">
+                <i className="bi bi-bag" style={{ fontSize: '4rem' }}></i>
+                <h2 className="fw-bold mb-3">Tu carrito está vacío</h2>
+                <Button href="/products" variant="dark" className="rounded-1 px-4 py-2 mt-3">Ver Productos</Button>
+              </div>
+            ) : (
+              <Row className="g-4">
+                <Col xs={12} md={8}>
+                  {cartItems.map((item) => (
+                    <Card key={item.id} className="mb-4 border-0 shadow-sm">
+                      <Row className="g-0 align-items-center">
+                        <Col xs={4} md={3} className="p-3">
+                          <Image src={item.image} alt={item.name} width={100} height={120} style={{ objectFit: 'cover', borderRadius: '0.5rem' }} />
+                        </Col>
+                        <Col xs={8} md={9} className="p-3">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h5 className="fw-bold mb-0">{item.name}</h5>
+                            <Button variant="link" className="text-danger p-0" onClick={() => removeItem(item.id, item.size, item.color)}><i className="bi bi-x-lg"></i></Button>
                           </div>
-                        )}
-                        <div className="d-flex align-items-center mb-2">
-                          <span className="me-2">Cantidad:</span>
-                          <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1, item.size, item.color)}>-</Button>
-                          <span className="mx-2">{item.quantity}</span>
-                          <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1, item.size, item.color)}>+</Button>
-                        </div>
-                        <div className="fw-bold text-primary fs-5">${(item.price * item.quantity).toFixed(2)}</div>
-                      </Col>
-                    </Row>
-                  </Card>
-                ))}
-              </Col>
-              <Col xs={12} md={4}>
-                <Card className="p-4 border-0 shadow-sm">
-                  <h4 className="fw-bold mb-4">Resumen</h4>
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Subtotal</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
-                  </div>
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Envío</span>
-                    <span className="text-success">Gratis</span>
-                  </div>
-                  <hr />
-                  <div className="d-flex justify-content-between mb-4">
-                    <strong>Total</strong>
-                    <strong>${calculateTotal().toFixed(2)}</strong>
-                  </div>
-                  <Button 
-                    variant="dark" 
-                    className="w-100 py-2 rounded-1 mb-3"
-                    disabled={cartItems.length === 0}
-                    onClick={() => {
-                      console.log('🔍 Botón "Completar Compra" clickeado');
-                      console.log('📊 Estado actual:', {
-                        cartItemsLength: cartItems.length,
-                        userUid: user?.uid,
-                        total: calculateTotal()
-                      });
+                          {(item.size || item.color) && (
+                            <div className="text-muted mb-2">
+                              {item.size && <span className="me-3"><strong>Talla:</strong> {item.size}</span>}
+                              {item.color && <span><strong>Color:</strong> {item.color}</span>}
+                            </div>
+                          )}
+                          <div className="d-flex align-items-center mb-2">
+                            <span className="me-2">Cantidad:</span>
+                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1, item.size, item.color)}>-</Button>
+                            <span className="mx-2">{item.quantity}</span>
+                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1, item.size, item.color)}>+</Button>
+                          </div>
+                          <div className="fw-bold text-primary fs-5">${(item.price * item.quantity).toFixed(2)}</div>
+                        </Col>
+                      </Row>
+                    </Card>
+                  ))}
+                </Col>
+                {/*Pago con paypal*/}
+
+                <Col xs={12} md={4}>
+                    <Card className="p-4 border-0 shadow-sm position-sticky" style={{ top: '20px' }}>
+                      <h4 className="fw-bold mb-4">Resumen</h4>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>${calculateTotal().toFixed(2)}</span>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Envío</span>
+                        <span className="text-success">Gratis</span>
+                      </div>
+                      <hr />
+                      <div className="d-flex justify-content-between mb-4">
+                        <strong>Total</strong>
+                        <strong>${calculateTotal().toFixed(2)}</strong>
+                      </div>
                       
-                      try {
-                        // Verificar autenticación
-                        if (!user?.uid) {
-                          console.log('❌ Usuario no autenticado');
-                          alert('Debes iniciar sesión para completar la compra');
-                          return;
-                        }
-                        
-                        console.log('✅ Usuario autenticado:', user.uid);
-                        console.log('📦 Datos de la compra:', {
-                          items: cartItems,
-                          total: calculateTotal()
-                        });
-                        
-                        // Guardar compra en localStorage temporalmente para depuración
-                        const purchase = {
-                          id: Date.now().toString(),
-                          userId: user.uid,
-                          date: new Date().toLocaleString(),
-                          items: cartItems.map(item => ({
-                            id: item.id.toString(),
-                            name: item.name,
-                            price: item.price,
-                            quantity: item.quantity,
-                            image: item.image
-                          })),
-                          total: calculateTotal()
-                        };
-                        
-                        // Guardar en localStorage para depuración
-                        const existingPurchases = JSON.parse(localStorage.getItem('purchases') || '[]');
-                        existingPurchases.push(purchase);
-                        localStorage.setItem('purchases', JSON.stringify(existingPurchases));
-                        
-                        // Guardar compra en Firestore
-                        console.log('🛒 Iniciando proceso de compra...');
-                        const userInfo = getUserDisplayInfo(user);
-                        savePurchase({
-                          userId: user.uid,
-                          date: new Date().toLocaleString(),
-                          items: cartItems.map(item => ({
-                            id: item.id.toString(),
-                            name: item.name,
-                            price: item.price,
-                            quantity: item.quantity,
-                            image: item.image
-                          })),
-                          total: calculateTotal()
-                        }, userInfo.userName, userInfo.userEmail)
-                        .then(() => {
-                          console.log('✅ Compra guardada exitosamente en Firebase');
-                          setSaveError('');
-                        })
-                        .catch((error) => {
-                          console.error('❌ Error al guardar la compra en Firebase:', error);
-                          setSaveError('Hubo un problema al guardar tu compra en la base de datos, pero tu compra ha sido procesada.');
-                        })
-                        .finally(() => {
-                          // SIEMPRE limpiar carrito, independientemente del resultado de Firebase
-                          console.log('🧹 Limpiando carrito...');
-                          setCartItems([]);
-                          const cartKey = `cartItems_${user.uid}`;
-                          localStorage.removeItem(cartKey);
-                          
-                          // Disparar evento para actualizar contador en navbar
-                          window.dispatchEvent(new CustomEvent('cart-updated'));
-                          
-                          console.log('🎯 Estableciendo paymentSuccess = true');
-                          setPaymentSuccess(true);
-                          console.log('✅ Carrito limpiado y compra completada');
-                        });
-                      } catch (error) {
-                        console.error('Error al procesar la compra:', error);
-                        alert('Ocurrió un error al procesar tu compra. Por favor, intenta de nuevo.');
-                      }
-                    }}
-                  >
-                    Completar Compra
-                  </Button>
-                </Card>
-              </Col>
-            </Row>
-          )}
-        </Container>
-      </main>
+                      {/* ✅ AQUÍ REEMPLAZAMOS EL BOTÓN MANUAL CON PAYPAL */}
+                      {saveError && (
+                        <Alert variant="danger" className="mb-3">
+                          {saveError}
+                        </Alert>
+                      )}
+                      
+                      {processing && (
+                        <Alert variant="info" className="mb-3">
+                          <i className="bi bi-hourglass-split me-2"></i>
+                          Procesando compra...
+                        </Alert>
+                      )}
+                      
+                      <PayPalButton
+                        amount={calculateTotal()}
+                        onSuccess={handlePayPalSuccess}
+                        onError={handlePayPalError}
+                        disabled={cartItems.length === 0 || processing}
+                      />
+                      
+                      <div className="text-center mt-3">
+                        <small className="text-muted">
+                          <i className="bi bi-shield-check me-1"></i>
+                          Pago seguro con PayPal
+                        </small>
+                      </div>
+                    </Card>
+                </Col>
+              </Row>
+            )}
+          </Container>
+        </main>
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </PayPalScriptProvider>
   );
 };
 

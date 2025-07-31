@@ -5,6 +5,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
 import NavbarComponent from './components/Navbar';
+import PayPalProvider from "./components/paypalProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -132,7 +133,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ClientLayout>
           <NavbarComponent />
-          {children}
+          <PayPalProvider>
+            {children}
+          </PayPalProvider>
         </ClientLayout>
       </body>
     </html>

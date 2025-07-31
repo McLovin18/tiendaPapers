@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Form, Alert, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '../../context/adminContext';
 import { 
   getAllOrderDays, 
   getDailyOrders, 

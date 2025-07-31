@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '../context/adminContext';
 import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {

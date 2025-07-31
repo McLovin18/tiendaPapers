@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
-import { AdminProvider } from './context/AdminContext';
+import { AdminProvider } from './context/adminContext';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {

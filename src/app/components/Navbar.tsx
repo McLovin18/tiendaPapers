@@ -74,7 +74,7 @@ const NavbarComponent = () => {
         {/* Logo */}
         <Navbar.Brand as={Link} href="/" className="mx-auto mx-lg-0">
           <Image
-            src="/images/logo.svg"
+            src="/logoShop1.png"
             alt="Logo Tienda"
             width={120}
             height={40}

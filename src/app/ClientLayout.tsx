@@ -7,7 +7,7 @@ import { AdminProvider } from './context/adminContext';
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Importar los scripts de Bootstrap de forma dinámica en el cliente
-    import('bootstrap/dist/js/bootstrap.bundle.min.js');
+    import('bootstrap/dist/js/bootstrap.bundle.min.js').catch(console.error);
   }, []);
 
   return (

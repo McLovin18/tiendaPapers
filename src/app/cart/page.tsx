@@ -18,7 +18,8 @@ import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 // PayPal Client ID - Get from environment variables
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
 
-console.log('🔧 PayPal Client ID:', PAYPAL_CLIENT_ID);
+console.log('🔧 PayPal Client ID configurado:', PAYPAL_CLIENT_ID ? 'SÍ' : 'NO');
+console.log('🔧 Environment:', process.env.NODE_ENV);
 
 // Tipo para los items del carrito
 interface CartItem {
@@ -239,10 +240,7 @@ const CartPage = () => {
         clientId: PAYPAL_CLIENT_ID,
         currency: "USD",
         intent: "capture",
-        vault: false,
         "data-sdk-integration-source": "react-paypal-js",
-        "disable-funding": "",
-        "enable-funding": "venmo,paylater,card",
         components: "buttons"
       }}
     >

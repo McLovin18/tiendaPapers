@@ -24,20 +24,9 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
           amount: {
             value: amount.toFixed(2),
             currency_code: "USD"
-          },
-          description: "Compra en Tienda Online Deporte"
+          }
         }
-      ],
-      intent: "CAPTURE",
-      application_context: {
-        shipping_preference: "NO_SHIPPING",
-        user_action: "PAY_NOW",
-        brand_name: "Tienda Online Deporte",
-        landing_page: "NO_PREFERENCE",
-        payment_method: {
-          payee_preferred: "UNRESTRICTED"
-        }
-      }
+      ]
     });
   }, [amount]);
 

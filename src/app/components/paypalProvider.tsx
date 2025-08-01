@@ -10,18 +10,15 @@ const initialOptions = {
   currency: "USD",
   intent: "capture",
   vault: false,
-  // Configuración para producción vs sandbox
-  "data-client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
-  "data-currency": "USD",
-  "data-intent": "capture",
-  // Configuración de funding según el entorno
-  "disable-funding": isProduction ? "" : "venmo,paylater", 
-  "enable-funding": "card,paypal",
-  components: "buttons",
   // Configuración específica para producción
-  "buyer-country": "US",
   "data-sdk-integration-source": "react-paypal-js",
-  debug: !isProduction // Solo debug en desarrollo
+  "disable-funding": "", // No deshabilitar nada en producción
+  "enable-funding": "paypal,card", // Habilitar PayPal y tarjetas
+  components: "buttons",
+  // Configuración de entorno
+  "buyer-country": "US",
+  "merchant-id": undefined, // Dejar que PayPal lo maneje automáticamente
+  debug: false // Sin debug en producción
 };
 
 export default function PayPalProvider({ children }: { children: React.ReactNode }) {

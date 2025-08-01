@@ -157,21 +157,6 @@ export default function Home() {
         </div>
       </Container>
       
-      {/* Banner de suscripción */}
-      <div className="bg-light py-5 my-4">
-        <Container className="text-center">
-          <h3 className="fw-bold mb-3">Únete a Fashion News</h3>
-          <p className="mb-4">Recibe las últimas tendencias y ofertas exclusivas</p>
-          <div className="row justify-content-center">
-            <div className="col-md-6">
-              <div className="input-group mb-3">
-                <input type="email" className="form-control" placeholder="Tu correo electrónico" />
-                <Button variant="dark" className="rounded-0">Suscribirse</Button>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </div>
 
       {/* Footer */}
       <footer className="bg-light text-dark py-5 mt-auto border-top">
@@ -187,21 +172,16 @@ export default function Home() {
                 <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
               </ul>
             </Col>
-            <Col md={4} className="mb-4 mb-md-0">
-              <h5 className="fw-bold mb-3">Nosotros</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/about" className="text-dark text-decoration-none">Acerca de nosotros</Link></li>
-              </ul>
-            </Col>
+
             <Col md={4}>
               <h5 className="fw-bold mb-3">Contacto</h5>
-              <p className="mb-1">Email: info@tiendaropa.com</p>
-              <p className="mb-0">Teléfono: (123) 456-7890</p>
+              <p className="mb-1">Email: lucilaaquino79@gmail.com</p>
+              <p className="mb-0">Teléfono: (593) 99-577-0937 </p>
             </Col>
           </Row>
           <hr className="my-4" />
           <div className="text-center">
-            <p className="small">&copy; {new Date().getFullYear()} Fashion Store. Todos los derechos reservados.</p>
+            <p className="small">&copy; {new Date().getFullYear()} Lua Store. Todos los derechos reservados.</p>
           </div>
         </Container>
       </footer>

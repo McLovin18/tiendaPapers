@@ -65,10 +65,23 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     console.error('❌ Error de PayPal:', error);
     const errorMessage = error?.message || '';
     
+    // Ignorar errores de ventana cerrada
     if (errorMessage.includes('Window closed') || 
         errorMessage.includes('popup_closed') ||
         errorMessage.includes('postrobot_method')) {
       console.log('🔕 Ventana cerrada - ignorando error');
+      return;
+    }
+    
+    // Detectar errores de configuración de producción
+    if (errorMessage.includes('CLIENT_ID_REQUIRED') || 
+        errorMessage.includes('INVALID_CLIENT_ID') ||
+        errorMessage.includes('sandbox') ||
+        process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID === 'test') {
+      onError({
+        ...error,
+        userMessage: 'Error de configuración de PayPal para producción. Contacta al administrador.'
+      });
       return;
     }
     

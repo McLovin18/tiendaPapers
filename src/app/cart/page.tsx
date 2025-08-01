@@ -183,7 +183,18 @@ const CartPage = () => {
   // Función para manejar errores del pago de PayPal
   const handlePayPalError = (error: any) => {
     console.error('❌ Error en el pago de PayPal:', error);
-    setSaveError('Hubo un problema con el pago. Por favor, inténtalo de nuevo.');
+    
+    // Mostrar mensaje específico si es error de configuración
+    if (error.userMessage) {
+      setSaveError(error.userMessage);
+    } else if (error?.message?.includes('INVALID_CLIENT_ID')) {
+      setSaveError('Error de configuración de PayPal. La aplicación necesita ser configurada para producción.');
+    } else if (error?.message?.includes('sandbox')) {
+      setSaveError('Error: PayPal está configurado para sandbox pero se está usando en producción.');
+    } else {
+      setSaveError('Hubo un problema con el pago. Por favor, inténtalo de nuevo o contacta al soporte.');
+    }
+    
     setProcessing(false);
   };
 

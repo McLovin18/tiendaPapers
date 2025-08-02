@@ -4,7 +4,7 @@ const allProducts = [
   {
     id: 1,
     name: 'Vestido Suplex',
-    price: 10.00,
+    price: 1.00,
     images: ['/vestidos/vestidoSuplex.png', '/vestidos/colores1.png'],
     category: 'Vestido',
     categoryLink: '/mujer',

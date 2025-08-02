@@ -297,20 +297,54 @@ export const addReplyToComment = async (
   productId: string | number,
   commentId: string,
   reply: { name: string; text: string; date: string }
-) => {
-  if (!productId || !commentId) {
-    console.error("❌ Falta productId o commentId en addReplyToComment");
-    return;
+): Promise<boolean> => {
+  try {
+    if (!productId || !commentId) {
+      console.error("❌ Falta productId o commentId en addReplyToComment");
+      return false;
+    }
+
+    console.log('📝 Intentando agregar respuesta:', {
+      productId,
+      commentId,
+      replyText: reply.text.substring(0, 50) + '...'
+    });
+
+    // Verificar que Firebase esté inicializado
+    if (!db) {
+      console.error("❌ Firebase no está inicializado");
+      return false;
+    }
+
+    const commentRef = doc(db, `products/${productId}/comments`, commentId);
+    console.log('🔍 Referencia del comentario:', commentRef.path);
+    
+    const snapshot = await getDoc(commentRef);
+    if (!snapshot.exists()) {
+      console.error("❌ El comentario no existe:", commentId);
+      return false;
+    }
+
+    const data = snapshot.data();
+    const updatedReplies = [...(data.replies || []), reply];
+
+    console.log('📤 Actualizando comentario con nuevas respuestas...');
+    await updateDoc(commentRef, { replies: updatedReplies });
+    
+    console.log('✅ Respuesta agregada exitosamente');
+    return true;
+    
+  } catch (error) {
+    console.error("❌ Error en addReplyToComment:", error);
+    
+    // Mostrar información específica del error
+    if (error instanceof Error) {
+      console.error("Mensaje del error:", error.message);
+      console.error("Código del error:", (error as any).code);
+    }
+    
+    return false;
   }
-
-  const commentRef = doc(db, `products/${productId}/comments`, commentId);
-  const snapshot = await getDoc(commentRef);
-  if (!snapshot.exists()) return;
-
-  const data = snapshot.data();
-  const updatedReplies = [...(data.replies || []), reply];
-
-  await updateDoc(commentRef, { replies: updatedReplies });
 };
 
 // --- FUNCIONES PARA GESTIÓN DIARIA DE PEDIDOS ---

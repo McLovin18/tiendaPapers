@@ -1,8 +1,8 @@
 'use client';
 
-import { PayPalButtons, usePayPalScriptReducer, FUNDING } from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useState, useCallback, useEffect } from 'react';
-import { Button, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 
 interface PayPalButtonProps {
   amount: number;
@@ -19,7 +19,7 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   // Detectar errores del script
   useEffect(() => {
     if (isRejected) {
-      setScriptError('Error al cargar PayPal. Verifica tu conexión a internet.');
+      setScriptError('Error al cargar PayPal. Verifica la configuración.');
       console.error('❌ PayPal SDK falló al cargar');
     }
   }, [isRejected]);
@@ -46,10 +46,6 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     try {
       const details = await actions.order.capture();
       console.log('✅ Pago exitoso:', details);
-      
-      const paymentMethod = details.payment_source || details.payer?.payment_method;
-      console.log('💳 Método de pago:', paymentMethod);
-      
       onSuccess(details);
     } catch (error) {
       console.error('❌ Error en captura:', error);
@@ -65,21 +61,8 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     
     // Ignorar errores de ventana cerrada
     if (errorMessage.includes('Window closed') || 
-        errorMessage.includes('popup_closed') ||
-        errorMessage.includes('postrobot_method')) {
+        errorMessage.includes('popup_closed')) {
       console.log('🔕 Ventana cerrada - ignorando error');
-      return;
-    }
-    
-    // Detectar errores de configuración de producción
-    if (errorMessage.includes('CLIENT_ID_REQUIRED') || 
-        errorMessage.includes('INVALID_CLIENT_ID') ||
-        errorMessage.includes('sandbox') ||
-        process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID === 'test') {
-      onError({
-        ...error,
-        userMessage: 'Error de configuración de PayPal para producción. Contacta al administrador.'
-      });
       return;
     }
     
@@ -94,12 +77,27 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     );
   }
 
+  // Mostrar error si el script falló
+  if (isRejected || scriptError) {
+    return (
+      <Alert variant="warning" className="text-center">
+        <i className="bi bi-exclamation-triangle me-2"></i>
+        {scriptError || 'Error al cargar PayPal'}
+        <div className="mt-2">
+          <small>Verifica tu conexión a internet e intenta recargar la página.</small>
+        </div>
+      </Alert>
+    );
+  }
+
+  // Mostrar loading mientras se carga el script
   if (isPending || !isResolved) {
     return (
       <div className="text-center p-3">
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border text-primary mb-2" role="status">
           <span className="visually-hidden">Cargando PayPal...</span>
         </div>
+        <div className="small text-muted">Inicializando PayPal...</div>
       </div>
     );
   }
@@ -109,52 +107,22 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
       {loading && (
         <div className="text-center mb-2">
           <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-          <span className="text-primary">Procesando...</span>
+          <span className="text-primary">Procesando pago...</span>
         </div>
       )}
       
-      {/* ✅ BOTÓN PAYPAL */}
-      <div className="mb-2">
-        <PayPalButtons
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onErrorHandler}
-          fundingSource={FUNDING.PAYPAL}
-          style={{
-            layout: 'horizontal',
-            color: 'blue',
-            shape: 'rect',
-            label: 'paypal',
-            height: 40,
-            tagline: false
-          }}
-        />
-      </div>
-
-      {/* ✅ BOTÓN TARJETAS DE CRÉDITO/DÉBITO */}
-      <div className="mb-2">
-        <PayPalButtons
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onErrorHandler}
-          fundingSource={FUNDING.CARD}
-          style={{
-            layout: 'horizontal',
-            color: 'black',
-            shape: 'rect',
-            label: 'pay',
-            height: 40,
-            tagline: false
-          }}
-        />
-      </div>
-      
-      <div className="text-center mt-2">
-        <small className="text-muted">
-          <i className="bi bi-shield-check me-1"></i>
-          Pago 100% seguro
-        </small>
-      </div>
+      <PayPalButtons
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onErrorHandler}
+        style={{
+          layout: 'vertical',
+          color: 'blue',
+          shape: 'rect',
+          label: 'paypal',
+          height: 40
+        }}
+      />
     </div>
   );
 }

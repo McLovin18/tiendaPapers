@@ -20,6 +20,7 @@ interface AuthContextType {
   register: (email: string, password: string, name?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<UserCredential>;
+  updateUserProfile: (displayName?: string, photoURL?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -71,6 +72,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await updateProfile(result.user, {
         displayName: name
       });
+      // Forzar actualización del estado del usuario
+      setUser({ ...result.user, displayName: name });
     }
     
     return result;
@@ -87,8 +90,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return signInWithPopup(auth, googleProvider);
   };
 
+  const updateUserProfile = async (displayName?: string, photoURL?: string) => {
+    if (!auth?.currentUser) throw new Error("Usuario no autenticado");
+    
+    const updateData: { displayName?: string; photoURL?: string } = {};
+    if (displayName !== undefined) updateData.displayName = displayName;
+    if (photoURL !== undefined) updateData.photoURL = photoURL;
+    
+    await updateProfile(auth.currentUser, updateData);
+    // Forzar actualización del estado del usuario
+    setUser({ ...auth.currentUser });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle, updateUserProfile }}>
       {!loading && children}
     </AuthContext.Provider>
   );

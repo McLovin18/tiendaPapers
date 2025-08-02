@@ -22,12 +22,21 @@ let googleProvider: any = null;
 
 if (!isBuilding) {
   try {
+    console.log('🔧 Inicializando Firebase con configuración:', {
+      apiKey: firebaseConfig.apiKey ? 'Configurada' : 'Falta',
+      authDomain: firebaseConfig.authDomain ? 'Configurada' : 'Falta',
+      projectId: firebaseConfig.projectId ? 'Configurada' : 'Falta',
+    });
+    
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
+    
+    console.log('✅ Firebase inicializado correctamente');
   } catch (error) {
-    console.warn('Firebase initialization failed:', error);
+    console.error('❌ Firebase initialization failed:', error);
+    console.error('Configuración utilizada:', firebaseConfig);
   }
 }
 

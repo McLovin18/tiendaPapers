@@ -28,7 +28,7 @@ interface Favourite {
 
 const ProfilePage = () => {
   const storage = getStorage();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserProfile } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
@@ -200,10 +200,7 @@ const ProfilePage = () => {
     setEditMode(false);
     try {
       if (user && name && user.displayName !== name) {
-        await updateProfile(user, { 
-          displayName: name,
-          photoURL: avatar
-        });
+        await updateUserProfile(name, avatar);
       }
       setSuccess(true);
       setError('');

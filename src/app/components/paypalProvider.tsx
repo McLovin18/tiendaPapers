@@ -1,29 +1,52 @@
 'use client';
 
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { ReactNode } from 'react';
 
-// Detectar si estamos en producción
+interface PayPalProviderProps {
+  children: ReactNode;
+}
+
 const isProduction = process.env.NODE_ENV === 'production';
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+// Seleccionar Client ID según el entorno
+let clientId: string;
+
+if (isProduction && !isLocalhost) {
+  // Producción (Vercel/Hostinger)
+  clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID_LIVE || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+} else {
+  // Desarrollo local
+  clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID_SANDBOX || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+}
+
+console.log('🔧 PayPal Provider Debug:', {
+  environment: process.env.NODE_ENV,
+  isLocalhost,
+  clientIdSource: isProduction && !isLocalhost ? 'LIVE' : 'SANDBOX',
+  clientId: clientId ? `${clientId.substring(0, 8)}...` : 'NO CONFIGURADO'
+});
 
 const initialOptions = {
-  clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test",
+  clientId: clientId,
   currency: "USD",
-  intent: "capture",
-  vault: false,
-  // Configuración específica para producción
-  "data-sdk-integration-source": "react-paypal-js",
-  "disable-funding": "", // No deshabilitar nada en producción
-  "enable-funding": "paypal,card", // Habilitar PayPal y tarjetas
-  components: "buttons",
-  // Configuración de entorno
-  "buyer-country": "US",
-  "merchant-id": undefined, // Dejar que PayPal lo maneje automáticamente
-  debug: false // Sin debug en producción
+  intent: "capture" as const,
+  "data-sdk-integration-source": "react-paypal-js"
 };
 
-export default function PayPalProvider({ children }: { children: React.ReactNode }) {
+export default function PayPalProvider({ children }: PayPalProviderProps) {
+  if (!clientId || clientId === 'test') {
+    console.warn('⚠️ PayPal Client ID no configurado');
+    return <>{children}</>;
+  }
+
+  console.log('🚀 Inicializando PayPal Provider con opciones:', initialOptions);
+
   return (
-    <PayPalScriptProvider options={initialOptions}>
+    <PayPalScriptProvider 
+      options={initialOptions}
+    >
       {children}
     </PayPalScriptProvider>
   );

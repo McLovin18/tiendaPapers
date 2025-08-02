@@ -40,6 +40,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // ✅ Evita el error si auth es null (por variables de entorno mal configuradas)
     if (!auth) {
       console.error("⚠️ Firebase Auth no está inicializado. Revisa tus variables de entorno.");
+      console.error("Variables de entorno disponibles:", {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Configurada' : 'Falta',
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? 'Configurada' : 'Falta',
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'Configurada' : 'Falta',
+      });
       setLoading(false);
       return;
     }

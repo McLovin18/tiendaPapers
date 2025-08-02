@@ -28,11 +28,33 @@ const Login = () => {
       await login(email, password);
       router.push('/');
     } catch (error: any) {
-      setError(
-        error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password'
-          ? 'Credenciales incorrectas'
-          : 'Error al iniciar sesión. Inténtelo de nuevo.'
-      );
+      console.error('Error de login:', error);
+      let errorMessage = '';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'Usuario no encontrado';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Contraseña incorrecta';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Email inválido';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'Usuario deshabilitado';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Demasiados intentos. Intenta más tarde';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Error de conexión. Verifica tu internet';
+          break;
+        default:
+          errorMessage = error.message || 'Error al iniciar sesión. Inténtelo de nuevo.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,9 @@
 'use client';
 
 import { db } from '../utils/firebase';
-import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc} from 'firebase/firestore';
+import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { auth } from '../utils/firebase';
+import { SecureLogger } from '../utils/security';
 
 // Definición de tipos
 export interface PurchaseItem {
@@ -14,6 +16,7 @@ export interface PurchaseItem {
 
 export interface Purchase {
   id?: string;
+  purchaseId?: string;
   userId: string;
   date: string;
   items: PurchaseItem[];
@@ -76,31 +79,61 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
     const dateString = purchase.date || currentDate.toISOString();
     const dayKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     
-    console.log('🔍 Guardando compra:', {
-      userId: purchase.userId,
-      dayKey,
-      total: purchase.total,
-      itemsCount: purchase.items.length
+    SecureLogger.log('Saving purchase', { 
+      userId: purchase.userId, 
+      total: purchase.total, 
+      itemCount: purchase.items.length 
+    });
+
+    // ✅ VERIFICAR AUTENTICACIÓN ANTES DE CONTINUAR
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+    }
+
+    console.log('🔐 [DEBUG] Usuario verificado:', {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      emailVerified: currentUser.emailVerified
     });
     
     // 1. OPERACIÓN PRINCIPAL: Guardar en la subcolección del usuario
     const userCollectionRef = collection(db, `users/${purchase.userId}/purchases`);
-    const userDocRef = await addDoc(userCollectionRef, {
+    
+    // ✅ Generar el documento primero para obtener el ID
+    const tempDocRef = doc(userCollectionRef);
+    const purchaseId = tempDocRef.id;
+    
+    // ✅ Crear el documento con el purchaseId incluido desde el inicio
+    await setDoc(tempDocRef, {
       ...purchase,
       date: dateString,
+      purchaseId: purchaseId  // Incluir el ID desde el momento de creación
     });
-    
-    console.log('✅ Guardado en subcolección del usuario:', userDocRef.id);
     
     // 2. OPERACIÓN OPCIONAL: Intentar guardar en la colección diaria (sin fallar si no puede)
     try {
-      const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
-      console.log('🔍 Intentando acceder a documento diario:', `dailyOrders/${dayKey}`);
+      console.log('🔍 [DEBUG] Usuario autenticado:', !!currentUser?.uid);
+      console.log('🔍 [DEBUG] User UID:', currentUser?.uid);
+      console.log('🔍 [DEBUG] User email:', currentUser?.email);
+      console.log('🔍 [DEBUG] Intentando guardar en dailyOrders para fecha:', dayKey);
       
-      const dailyOrderSnapshot = await getDoc(dailyOrderRef);
+      // ✅ VERIFICAR TOKEN DE AUTENTICACIÓN
+      const token = await currentUser.getIdToken();
+      console.log('🔐 [DEBUG] Token obtenido:', !!token);
+      
+      // ✅ ESPERAR UN POCO PARA ASEGURAR QUE LA AUTENTICACIÓN ESTÉ COMPLETAMENTE ESTABLECIDA
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
+      
+      console.log('📍 [DEBUG] Referencia del documento:', dailyOrderRef.path);
+      
+      // ✅ NUEVA LÓGICA: No intentar leer el documento, usar merge directo
+      console.log('📄 [DEBUG] Usando merge para crear/actualizar sin necesidad de leer');
       
       const orderData = {
-        id: userDocRef.id,
+        id: purchaseId,  // Usar el purchaseId generado
         userId: purchase.userId,
         userName: userName || (userEmail ? userEmail.split('@')[0] : undefined), // Fallback al email si no hay userName
         userEmail: userEmail || undefined, // Asegurar que se guarde el email
@@ -113,51 +146,129 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
         })
       };
       
-      if (dailyOrderSnapshot.exists()) {
-        console.log('📄 Documento diario existe, agregando pedido...');
-        const existingData = dailyOrderSnapshot.data();
-        const orders: DailyOrder[] = existingData.orders || [];
-        orders.push(orderData);
-        
+      // ✅ NUEVA ESTRATEGIA: Usar arrayUnion para agregar órdenes de manera atómica
+      console.log('📊 [DEBUG] Usando arrayUnion para agregar orden de manera atómica...');
+      
+      // Preparar los datos base del documento si no existe
+      const baseDocData = {
+        date: dayKey,
+        dateFormatted: currentDate.toLocaleDateString('es-ES', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        orders: [],
+        totalOrdersCount: 0,
+        totalDayAmount: 0,
+        createdAt: currentDate.toISOString(),
+        lastUpdated: currentDate.toISOString()
+      };
+      
+      // ESTRATEGIA MEJORADA: Intentar directamente con arrayUnion
+      let success = false;
+      
+      try {
+        console.log('🎯 [DEBUG] Intentando directamente con arrayUnion...');
         await updateDoc(dailyOrderRef, {
-          orders: orders,
-          totalOrdersCount: orders.length,
-          totalDayAmount: orders.reduce((sum: number, order: DailyOrder) => sum + order.total, 0),
+          orders: arrayUnion(orderData),
+          totalOrdersCount: increment(1),
+          totalDayAmount: increment(purchase.total),
           lastUpdated: currentDate.toISOString()
         });
         
-        console.log('✅ Documento diario actualizado con', orders.length, 'pedidos');
-      } else {
-        console.log('📝 Creando nuevo documento diario...');
-        await setDoc(dailyOrderRef, {
-          date: dayKey,
-          dateFormatted: currentDate.toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }),
-          orders: [orderData],
-          totalOrdersCount: 1,
-          totalDayAmount: purchase.total,
-          createdAt: currentDate.toISOString(),
-          lastUpdated: currentDate.toISOString()
-        });
+        console.log('✅ [DEBUG] Orden agregada exitosamente usando arrayUnion directo');
+        success = true;
+      } catch (updateError: any) {
+        console.log('⚠️ [DEBUG] arrayUnion falló:', updateError.code, 'Intentando crear documento base...');
         
-        console.log('✅ Nuevo documento diario creado');
+        // Si arrayUnion falla, probablemente el documento no existe
+        try {
+          // Crear documento base sin sobrescribir órdenes existentes
+          await setDoc(dailyOrderRef, baseDocData, { merge: true });
+          console.log('✅ [DEBUG] Documento base creado con merge');
+          
+          // Intentar arrayUnion de nuevo
+          await updateDoc(dailyOrderRef, {
+            orders: arrayUnion(orderData),
+            totalOrdersCount: increment(1),
+            totalDayAmount: increment(purchase.total),
+            lastUpdated: currentDate.toISOString()
+          });
+          
+          console.log('✅ [DEBUG] Orden agregada exitosamente después de crear base');
+          success = true;
+        } catch (secondError: any) {
+          console.log('⚠️ [DEBUG] Segundo intento falló:', secondError.code);
+          
+          // ÚLTIMO RECURSO: Usar transacción para leer y escribir manualmente
+          try {
+            const { runTransaction } = await import('firebase/firestore');
+            await runTransaction(db, async (transaction) => {
+              const docSnap = await transaction.get(dailyOrderRef);
+              
+              if (docSnap.exists()) {
+                const existingData = docSnap.data();
+                const orders: DailyOrder[] = existingData.orders || [];
+                orders.push(orderData);
+                
+                transaction.update(dailyOrderRef, {
+                  orders: orders,
+                  totalOrdersCount: orders.length,
+                  totalDayAmount: orders.reduce((sum: number, order: DailyOrder) => sum + order.total, 0),
+                  lastUpdated: currentDate.toISOString()
+                });
+              } else {
+                transaction.set(dailyOrderRef, {
+                  ...baseDocData,
+                  orders: [orderData],
+                  totalOrdersCount: 1,
+                  totalDayAmount: purchase.total
+                });
+              }
+            });
+            
+            console.log('✅ [DEBUG] Orden agregada usando transacción como último recurso');
+            success = true;
+          } catch (transactionError: any) {
+            console.error('❌ [DEBUG] Transacción también falló:', transactionError.code);
+          }
+        }
       }
       
-      console.log('🎉 Compra guardada exitosamente en ambas ubicaciones');
-    } catch (dailyOrderError) {
-      // No fallar si no puede guardar en dailyOrders - solo logear el error
-      console.warn('⚠️ No se pudo guardar en dailyOrders (puede ser por permisos):', dailyOrderError);
-      console.log('✅ Compra guardada correctamente en subcolección del usuario (funcionalidad principal)');
+      if (!success) {
+        console.error('❌ [DEBUG] TODAS las estrategias fallaron para guardar en dailyOrders');
+      }
+      
+    } catch (dailyOrderError: any) {
+      const currentUser = auth.currentUser;
+      console.error('❌ [DEBUG] Error completo:', dailyOrderError);
+      console.error('❌ [DEBUG] Error code:', dailyOrderError?.code);
+      console.error('❌ [DEBUG] Error message:', dailyOrderError?.message);
+      console.error('❌ [DEBUG] Error details:', dailyOrderError?.details);
+      console.error('❌ [DEBUG] Error stack:', dailyOrderError?.stack);
+      console.error('❌ [DEBUG] User UID:', currentUser?.uid);
+      console.error('❌ [DEBUG] User email:', currentUser?.email);
+      console.error('❌ [DEBUG] Day key:', dayKey);
+      console.error('❌ [DEBUG] Document path:', `dailyOrders/${dayKey}`);
+      
+      // Verificar si el usuario está autenticado
+      if (!currentUser) {
+        console.error('❌ [DEBUG] CRÍTICO: Usuario no autenticado al intentar guardar en dailyOrders');
+      } else {
+        console.error('❌ [DEBUG] Usuario autenticado correctamente:', {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          emailVerified: currentUser.emailVerified
+        });
+      }
+      
+      // No fallar si no puede guardar en dailyOrders - solo continuar
     }
     
     // SIEMPRE retornar el ID exitosamente, ya que la operación principal funcionó
-    return userDocRef.id;
+    return purchaseId;  // Usar el purchaseId generado
   } catch (error) {
-    console.error('❌ Error detallado al guardar compra:', error);
     if (error instanceof Error) {
       console.error('Mensaje de error:', error.message);
       console.error('Stack trace:', error.stack);
@@ -180,7 +291,8 @@ export const getUserPurchases = async (userId: string): Promise<Purchase[]> => {
     querySnapshot.forEach((doc) => {
       const data = doc.data() as Omit<Purchase, 'id'>;
       purchases.push({
-        id: doc.id,
+        id: doc.id, // Usar el ID del documento como ID principal
+        purchaseId: data.purchaseId || doc.id, // Mantener purchaseId si existe
         ...data,
       });
     });
@@ -312,31 +424,23 @@ export const addReplyToComment = async (
 
     // Verificar que Firebase esté inicializado
     if (!db) {
-      console.error("❌ Firebase no está inicializado");
       return false;
     }
 
     const commentRef = doc(db, `products/${productId}/comments`, commentId);
-    console.log('🔍 Referencia del comentario:', commentRef.path);
     
     const snapshot = await getDoc(commentRef);
     if (!snapshot.exists()) {
-      console.error("❌ El comentario no existe:", commentId);
       return false;
     }
 
     const data = snapshot.data();
     const updatedReplies = [...(data.replies || []), reply];
-
-    console.log('📤 Actualizando comentario con nuevas respuestas...');
     await updateDoc(commentRef, { replies: updatedReplies });
     
-    console.log('✅ Respuesta agregada exitosamente');
     return true;
     
   } catch (error) {
-    console.error("❌ Error en addReplyToComment:", error);
-    
     // Mostrar información específica del error
     if (error instanceof Error) {
       console.error("Mensaje del error:", error.message);

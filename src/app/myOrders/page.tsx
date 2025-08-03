@@ -1,8 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, ListGroup, Badge, Spinner, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, ListGroup, Badge, Spinner, Button, Alert } from "react-bootstrap";
 import { useAuth } from "../context/AuthContext";
 import { getUserPurchases } from "../services/purchaseService";
+import { 
+  getDeliveryStatusByOrderId, 
+  getDeliveryStatusInfo, 
+  saveDeliveryRating,
+  hasOrderBeenRated 
+} from "../services/deliveryService";
+import DeliveryRatingModal from "../components/DeliveryRatingModal";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "../components/Footer";
@@ -11,7 +18,14 @@ import Footer from "../components/Footer";
 const MyOrdersPage = () => {
   const { user } = useAuth();
   const [purchases, setPurchases] = useState<any[]>([]);
+  const [deliveryStatuses, setDeliveryStatuses] = useState<{[key: string]: any}>({});
   const [loading, setLoading] = useState(false);
+  
+  // ✅ Estados para el sistema de calificación
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [ratedOrders, setRatedOrders] = useState<{[key: string]: boolean}>({});
+  const [ratingSuccess, setRatingSuccess] = useState<string>('');
 
   // Función para formatear fecha de manera legible
   const formatDate = (dateString: string) => {
@@ -52,6 +66,39 @@ const MyOrdersPage = () => {
         });
         
         setPurchases(sortedPurchases);
+
+        // Cargar estados de delivery para cada orden
+        const deliveryStatusPromises = sortedPurchases.map(async (purchase, index) => {
+          // Usar el ID del documento de la compra
+          const orderId = purchase.id!;
+          const deliveryStatus = await getDeliveryStatusByOrderId(orderId);
+          return { orderId, status: deliveryStatus };
+        });
+
+        const deliveryResults = await Promise.all(deliveryStatusPromises);
+        const statusMap: {[key: string]: any} = {};
+        
+        deliveryResults.forEach(result => {
+          statusMap[result.orderId] = result.status;
+        });
+        
+        setDeliveryStatuses(statusMap);
+
+        // ✅ Verificar qué órdenes ya han sido calificadas
+        const ratingCheckPromises = sortedPurchases.map(async (purchase) => {
+          const orderId = purchase.id!; // Usar el ID del documento
+          const hasRating = await hasOrderBeenRated(orderId, user.uid);
+          return { orderId, hasRating };
+        });
+
+        const ratingResults = await Promise.all(ratingCheckPromises);
+        const ratingMap: {[key: string]: boolean} = {};
+        
+        ratingResults.forEach(result => {
+          ratingMap[result.orderId] = result.hasRating;
+        });
+        
+        setRatedOrders(ratingMap);
       } finally {
         setLoading(false);
       }
@@ -59,11 +106,77 @@ const MyOrdersPage = () => {
     fetchPurchases();
   }, [user?.uid]);
 
+  // ✅ Función para manejar el clic en "Calificar"
+  const handleRateClick = (purchase: any, deliveryStatus: any) => {
+    if (!user?.uid) return;
+    
+    const orderId = purchase.id!; // Usar el ID del documento
+    const deliveryPersonEmail = deliveryStatus?.assignedTo || '';
+    
+    // ✅ Obtener el nombre real del repartidor basado en el email
+    const getDeliveryPersonName = (email: string) => {
+      const deliveryUsers = [
+        { email: 'hwcobena@espol.edu.ec', name: 'Héctor Delivery' },
+        { email: 'delivery.guayaquil@tienda.com', name: 'Carlos Rodríguez' },
+        { email: 'delivery.centro@tienda.com', name: 'María González' },
+        { email: 'delivery.norte@tienda.com', name: 'Luis Martínez' },
+        { email: 'delivery.sur@tienda.com', name: 'Ana López' },
+        { email: 'delivery.santaelena@tienda.com', name: 'Pedro Salinas' },
+        { email: 'delivery.peninsula@tienda.com', name: 'Sofia Vera' }
+      ];
+      
+      const deliveryUser = deliveryUsers.find(user => user.email === email);
+      return deliveryUser?.name || 'Repartidor';
+    };
+    
+    setSelectedOrder({
+      orderId,
+      deliveryPersonName: getDeliveryPersonName(deliveryPersonEmail),
+      deliveryPersonEmail: deliveryPersonEmail,
+      purchase
+    });
+    setShowRatingModal(true);
+  };
+
+  // ✅ Función para enviar la calificación
+  const handleRatingSubmit = async (rating: number, comment: string) => {
+    if (!selectedOrder || !user) return;
+
+    try {
+      await saveDeliveryRating({
+        orderId: selectedOrder.orderId,
+        deliveryPersonEmail: selectedOrder.deliveryPersonEmail,
+        deliveryPersonName: selectedOrder.deliveryPersonName,
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || 'Usuario',
+        rating,
+        comment
+      });
+
+      // ✅ Actualizar el estado local
+      setRatedOrders(prev => ({
+        ...prev,
+        [selectedOrder.orderId]: true
+      }));
+
+      setRatingSuccess(`¡Gracias por calificar a ${selectedOrder.deliveryPersonName}!`);
+      
+      // ✅ Limpiar mensaje después de 5 segundos
+      setTimeout(() => setRatingSuccess(''), 5000);
+
+    } catch (error: any) {
+      // Relanzar el error con un mensaje más específico
+      throw new Error(error.message || 'Error al guardar la calificación');
+    }
+  };
+
   if (!user) {
     return (
       <Container className="py-5 text-center">
         <h2>Debes iniciar sesión para ver tus compras</h2>
-        <Button as={Link} href="/auth/login" variant="dark" className="mt-3">Iniciar sesión</Button>
+        <Link href="/auth/login">
+          <Button variant="dark" className="mt-3">Iniciar sesión</Button>
+        </Link>
       </Container>
     );
   }
@@ -102,10 +215,56 @@ const MyOrdersPage = () => {
                       </div>
                       <div className="text-end">
                         <div className="fw-bold fs-5 mb-2 text-success">${purchase.total.toFixed(2)}</div>
-                        <Badge bg="success">
-                          <i className="bi bi-check-circle me-1"></i>
-                          Pagado
-                        </Badge>
+                        <div className="d-flex flex-column gap-1">
+                          <Badge bg="success">
+                            <i className="bi bi-check-circle me-1"></i>
+                            Pagado
+                          </Badge>
+                          {(() => {
+                            const orderId = purchase.id || `${user?.uid}_${purchase.date}`;
+                            const deliveryStatus = deliveryStatuses[orderId];
+                            const statusInfo = getDeliveryStatusInfo(deliveryStatus?.status);
+                            
+                            return (
+                              <Badge bg={statusInfo.color}>
+                                <i className={`bi bi-${statusInfo.icon} me-1`}></i>
+                                {statusInfo.text}
+                              </Badge>
+                            );
+                          })()}
+                          
+                          {/* ✅ Botón de calificación para órdenes entregadas */}
+                          {(() => {
+                            const orderId = purchase.id || `${user?.uid}_${purchase.date}`;
+                            const deliveryStatus = deliveryStatuses[orderId];
+                            const hasBeenRated = ratedOrders[orderId];
+                            
+                            // Solo mostrar si está entregado
+                            if (deliveryStatus?.status === 'delivered') {
+                              if (hasBeenRated) {
+                                return (
+                                  <Badge bg="info" className="mt-1">
+                                    <i className="bi bi-star-fill me-1"></i>
+                                    Ya calificado
+                                  </Badge>
+                                );
+                              } else {
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="warning"
+                                    className="mt-1"
+                                    onClick={() => handleRateClick(purchase, deliveryStatus)}
+                                  >
+                                    <i className="bi bi-star me-1"></i>
+                                    Calificar
+                                  </Button>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
                     </div>
                     
@@ -135,6 +294,30 @@ const MyOrdersPage = () => {
           </Row>
         </>
       )}
+      
+      {/* ✅ Alert de éxito para calificación */}
+      {ratingSuccess && (
+        <Row className="mt-3">
+          <Col>
+            <Alert variant="success" dismissible onClose={() => setRatingSuccess('')}>
+              <i className="bi bi-check-circle-fill me-2"></i>
+              {ratingSuccess}
+            </Alert>
+          </Col>
+        </Row>
+      )}
+      
+      {/* ✅ Modal de calificación */}
+      {selectedOrder && (
+        <DeliveryRatingModal
+          show={showRatingModal}
+          onHide={() => setShowRatingModal(false)}
+          orderId={selectedOrder.orderId}
+          deliveryPersonName={selectedOrder.deliveryPersonName}
+          onRatingSubmit={handleRatingSubmit}
+        />
+      )}
+      
       <Footer />
     </Container>
   );

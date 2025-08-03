@@ -3,59 +3,94 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 
-interface AdminContextType {
+// Definir tipos de roles
+export type UserRole = 'admin' | 'delivery' | 'client';
+
+interface RoleContextType {
+  role: UserRole;
   isAdmin: boolean;
+  isDelivery: boolean;
+  isClient: boolean;
   loading: boolean;
 }
 
-const AdminContext = createContext<AdminContextType | undefined>(undefined);
+const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
-// Lista de emails de administradores (en producción esto debería estar en la base de datos)
-const ADMIN_EMAILS = [
-  'hectorcobea03@gmail.com' // Solo el administrador principal
-];
+// Lista de emails con roles específicos
+const USER_ROLES = {
+  admin: [
+    'hectorcobea03@gmail.com' // Admin principal
+  ],
+  delivery: [
+    'hwcobena@espol.edu.ec',  // ✅ Cuenta de delivery real para testing
+    'testdelivery@gmail.com', // Para pruebas - puedes crear esta cuenta
+    'delivery1@test.com',     // Repartidor de prueba 1
+    'delivery2@test.com'      // Repartidor de prueba 2
+  ] as string[]
+};
 
-export const AdminProvider = ({ children }: { children: ReactNode }) => {
+export const RoleProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<UserRole>('client');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAdminStatus = () => {
+    const checkUserRole = () => {
       setLoading(true);
       
       if (user?.email) {
-        // Verificar si el email del usuario está en la lista de admins
-        const adminStatus = ADMIN_EMAILS.includes(user.email.toLowerCase());
-        setIsAdmin(adminStatus);
+        const userEmail = user.email.toLowerCase();
         
-        // Log para debugging (remover en producción)
-        console.log('Admin check:', { 
-          userEmail: user.email, 
-          isAdmin: adminStatus,
-          adminEmails: ADMIN_EMAILS 
-        });
+        // Verificar si es admin
+        if (USER_ROLES.admin.includes(userEmail)) {
+          setRole('admin');
+        }
+        // Verificar si es delivery
+        else if (USER_ROLES.delivery.includes(userEmail)) {
+          setRole('delivery');
+        }
+        // Por defecto es cliente
+        else {
+          setRole('client');
+        }
       } else {
-        setIsAdmin(false);
+        setRole('client');
       }
       
       setLoading(false);
     };
 
-    checkAdminStatus();
+    checkUserRole();
   }, [user]);
 
+  const isAdmin = role === 'admin';
+  const isDelivery = role === 'delivery';
+  const isClient = role === 'client';
+
   return (
-    <AdminContext.Provider value={{ isAdmin, loading }}>
+    <RoleContext.Provider value={{ 
+      role, 
+      isAdmin, 
+      isDelivery, 
+      isClient, 
+      loading 
+    }}>
       {children}
-    </AdminContext.Provider>
+    </RoleContext.Provider>
   );
 };
 
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
+// Hook para usar el contexto de roles
+export const useRole = () => {
+  const context = useContext(RoleContext);
   if (context === undefined) {
-    throw new Error('useAdmin must be used within an AdminProvider');
+    throw new Error('useRole must be used within a RoleProvider');
   }
   return context;
+};
+
+// Hook de compatibilidad para mantener código existente
+export const useAdmin = () => {
+  const { isAdmin, loading } = useRole();
+  return { isAdmin, loading };
 };

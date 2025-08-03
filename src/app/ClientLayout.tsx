@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
-import { AdminProvider } from './context/adminContext';
+import { RoleProvider } from './context/adminContext';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -12,9 +12,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <AuthProvider>
-      <AdminProvider>
+      <RoleProvider>
         {children}
-      </AdminProvider>
+      </RoleProvider>
     </AuthProvider>
   );
 }

@@ -3,12 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { useAdmin } from '../context/adminContext';
+import { useRole } from '../context/adminContext';
 import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
   const { user } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, isDelivery } = useRole();
   const pathname = usePathname();
 
   if (!user) return null;
@@ -20,9 +20,16 @@ const Sidebar = () => {
     { name: 'Favoritos', path: '/favourite', icon: 'bi-heart' },
   ];
 
-  // Solo agregar la opción de admin si el usuario es administrador
+  // ✅ Agregar opciones específicas según el rol
   if (isAdmin) {
-    menuItems.push({ name: 'Admin Pedidos', path: '/admin/orders', icon: 'bi-clipboard-data' });
+    menuItems.push(
+      { name: 'Admin Pedidos', path: '/admin/orders', icon: 'bi-clipboard-data' },
+      { name: 'Estadísticas Delivery', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' }
+    );
+  }
+  
+  if (isDelivery) {
+    menuItems.push({ name: 'Mis Entregas', path: '/delivery/orders', icon: 'bi-truck' });
   }
 
   return (

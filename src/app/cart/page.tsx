@@ -10,16 +10,16 @@ import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
 import Link from 'next/link';
 import PayPalButton from '../components/paypalButton';
+import DeliveryLocationSelector from '../components/DeliveryLocationSelector';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import Footer from "../components/Footer";
 
 import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
+import { createDeliveryOrder } from '../services/deliveryService';
+import { runDailyOrdersTest } from '../utils/firestoreTest';
 
 // PayPal Client ID - Get from environment variables
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
-
-console.log('🔧 PayPal Client ID configurado:', PAYPAL_CLIENT_ID ? 'SÍ' : 'NO');
-console.log('🔧 Environment:', process.env.NODE_ENV);
 
 // Tipo para los items del carrito
 interface CartItem {
@@ -129,6 +129,8 @@ const CartPage = () => {
   const [saveError, setSaveError] = useState('');
   // Estado para el procesamiento del pago
   const [processing, setProcessing] = useState(false);
+  // Estado para la ubicación de entrega
+  const [deliveryLocation, setDeliveryLocation] = useState<{city: string; zone: string; address?: string} | null>(null);
 
   // Función para manejar el éxito del pago de PayPal
   const handlePayPalSuccess = async (details: any) => {
@@ -137,7 +139,6 @@ const CartPage = () => {
       return;
     }
 
-    console.log('💰 Pago exitoso con PayPal:', details);
     setProcessing(true);
     setSaveError('');
 
@@ -145,7 +146,7 @@ const CartPage = () => {
       // Obtener información del usuario
       const userInfo = getUserDisplayInfo(user);
       
-      // Preparar datos de la compra
+      // Preparar datos de la compra con información adicional para PayPal
       const purchaseData = {
         userId: user.uid,
         date: new Date().toISOString(),
@@ -156,14 +157,38 @@ const CartPage = () => {
           quantity: item.quantity,
           image: item.image
         })),
-        total: calculateTotal()
+        total: calculateTotal(),
+        // ✅ Información adicional para PayPal
+        paypalDetails: {
+          transactionId: details.id,
+          status: details.status,
+          payerEmail: details.payer?.email_address,
+          payerName: details.payer?.name?.given_name + ' ' + details.payer?.name?.surname,
+          amount: details.purchase_units?.[0]?.amount?.value,
+          currency: details.purchase_units?.[0]?.amount?.currency_code
+        },
+        // ✅ Información de envío (ayuda a PayPal a liberar fondos)
+        shipping: {
+          status: 'processing', // processing -> shipped -> delivered
+          method: 'standard_shipping',
+          estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 días
+          trackingNumber: 'TRACK-' + Date.now(), // Número de seguimiento simulado
+          // ✅ Incluir información de ubicación seleccionada
+          city: deliveryLocation?.city || 'No especificada',
+          zone: deliveryLocation?.zone || 'No especificada',
+          address: deliveryLocation?.address || 'Dirección por especificar'
+        }
       };
 
-      console.log('💾 Guardando compra:', purchaseData);
-      
       // Guardar la compra en Firestore
       const purchaseId = await savePurchase(purchaseData, userInfo.userName, userInfo.userEmail);
-      console.log('✅ Compra guardada con ID:', purchaseId);
+      
+      // ✅ Crear orden de delivery automáticamente con el purchaseId
+      try {
+        await createDeliveryOrder(purchaseData, userInfo.userName || 'Usuario', userInfo.userEmail || user.email || 'email@example.com', purchaseId);
+      } catch (deliveryError) {
+        // Continuar aunque falle la orden de delivery
+      }
       
       // Limpiar el carrito
       const cartKey = `cartItems_${user.uid}`;
@@ -174,7 +199,6 @@ const CartPage = () => {
       setPaymentSuccess(true);
       
     } catch (error) {
-      console.error('❌ Error al guardar la compra:', error);
       setSaveError('Hubo un problema al guardar tu compra. Por favor, contacta al soporte.');
     } finally {
       setProcessing(false);
@@ -183,8 +207,6 @@ const CartPage = () => {
 
   // Función para manejar errores del pago de PayPal
   const handlePayPalError = (error: any) => {
-    console.error('❌ Error en el pago de PayPal:', error);
-    
     // Mostrar mensaje específico si es error de configuración
     if (error.userMessage) {
       setSaveError(error.userMessage);
@@ -202,12 +224,6 @@ const CartPage = () => {
   if (!user) {
     return <LoginRequired />;
   }
-
-  console.log('🔍 Estado actual del carrito:', {
-    paymentSuccess,
-    cartItemsLength: cartItems.length,
-    saveError
-  });
 
   if (paymentSuccess) {
     return (
@@ -227,6 +243,15 @@ const CartPage = () => {
             <Button href="/products" variant="dark" className="px-4 py-2">Seguir comprando</Button>
             <Button href="/profile?tab=orders" variant="outline-dark" className="px-4 py-2">
               <i className="bi bi-clock-history me-2"></i>Ver mis compras
+            </Button>
+            {/* Botón de test temporal para debugging */}
+            <Button 
+              variant="info" 
+              className="px-3 py-2" 
+              onClick={() => runDailyOrdersTest()}
+              title="Probar reglas de Firestore"
+            >
+              🧪 Test Firestore
             </Button>
           </div>
         </Container>
@@ -326,11 +351,25 @@ const CartPage = () => {
                         </Alert>
                       )}
                       
+                      {/* ✅ SELECTOR DE UBICACIÓN DE ENTREGA */}
+                      <DeliveryLocationSelector 
+                        onLocationChange={setDeliveryLocation}
+                        disabled={cartItems.length === 0 || processing}
+                      />
+                      
+                      {/* ✅ Alerta si no hay ubicación seleccionada */}
+                      {cartItems.length > 0 && !deliveryLocation && (
+                        <Alert variant="warning" className="mb-3">
+                          <i className="bi bi-exclamation-triangle me-2"></i>
+                          <strong>Selecciona tu ubicación</strong> para continuar con el pago.
+                        </Alert>
+                      )}
+                      
                       <PayPalButton
                         amount={calculateTotal()}
                         onSuccess={handlePayPalSuccess}
                         onError={handlePayPalError}
-                        disabled={cartItems.length === 0 || processing}
+                        disabled={cartItems.length === 0 || processing || !deliveryLocation}
                       />
                       
                       <div className="text-center mt-3">

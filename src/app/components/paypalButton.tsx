@@ -25,8 +25,6 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   }, [isRejected]);
 
   const createOrder = useCallback((data: any, actions: any) => {
-    console.log('🔧 Creando orden para:', amount);
-    
     return actions.order.create({
       purchase_units: [
         {
@@ -40,19 +38,15 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   }, [amount]);
 
   const onApprove = useCallback(async (data: any, actions: any) => {
-    console.log('🎯 Aprobando pago...');
     setLoading(true);
     
     try {
       const details = await actions.order.capture();
-      console.log('✅ Pago exitoso:', details);
       
       const paymentMethod = details.payment_source || details.payer?.payment_method;
-      console.log('💳 Método de pago:', paymentMethod);
       
       onSuccess(details);
     } catch (error) {
-      console.error('❌ Error en captura:', error);
       onError(error);
     } finally {
       setLoading(false);
@@ -67,7 +61,6 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     if (errorMessage.includes('Window closed') || 
         errorMessage.includes('popup_closed') ||
         errorMessage.includes('postrobot_method')) {
-      console.log('🔕 Ventana cerrada - ignorando error');
       return;
     }
     

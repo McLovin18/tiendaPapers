@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Form, Alert, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { useAdmin } from '../../context/adminContext';
+import { useRole } from '../../context/adminContext';
+import { ProtectedRoute } from '../../utils/securityMiddleware';
 import { 
   getAllOrderDays, 
   getDailyOrders, 
@@ -12,6 +13,13 @@ import {
   DailyOrdersDocument,
   DailyOrder 
 } from '../../services/purchaseService';
+import { 
+  getPendingOrders, 
+  assignOrderToDelivery, 
+  getAvailableDeliveryUsers,
+  DeliveryOrder 
+} from '../../services/deliveryService';
+import { db } from '../../utils/firebase';
 import NavbarComponent from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
 import TopbarMobile from '../../components/TopbarMobile';
@@ -19,7 +27,7 @@ import Footer from '../../components/Footer';
 
 export default function AdminOrdersPage() {
   const { user } = useAuth();
-  const { isAdmin, loading: adminLoading } = useAdmin();
+  const { isAdmin, loading: adminLoading } = useRole();
   const [orderDays, setOrderDays] = useState<DailyOrdersDocument[]>([]);
   const [selectedDayOrders, setSelectedDayOrders] = useState<DailyOrdersDocument | null>(null);
   const [todayOrders, setTodayOrders] = useState<DailyOrdersDocument | null>(null);
@@ -27,6 +35,11 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
+  // ✅ Estados para delivery management
+  const [pendingDeliveries, setPendingDeliveries] = useState<DeliveryOrder[]>([]);
+  const [availableDeliveryUsers, setAvailableDeliveryUsers] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'orders' | 'deliveries'>('orders');
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -53,6 +66,13 @@ export default function AdminOrdersPage() {
       const stats = await getOrdersStatistics(startDate, endDate);
       setStatistics(stats);
 
+      // ✅ Cargar datos de delivery
+      const pending = await getPendingOrders();
+      setPendingDeliveries(pending);
+      
+      const deliveryUsers = getAvailableDeliveryUsers();
+      setAvailableDeliveryUsers(deliveryUsers);
+
     } catch (error: any) {
       console.error('Error al cargar datos de pedidos:', error);
       
@@ -77,6 +97,23 @@ export default function AdminOrdersPage() {
     } catch (error) {
       console.error('Error al cargar pedidos del día:', error);
       setError('Error al cargar pedidos del día seleccionado');
+    }
+  };
+
+  // ✅ Función para asignar orden a repartidor
+  const handleAssignDelivery = async (orderId: string, deliveryEmail: string) => {
+    try {
+      await assignOrderToDelivery(orderId, deliveryEmail);
+      
+      // Actualizar la lista local
+      setPendingDeliveries(prev => prev.filter(order => order.id !== orderId));
+      
+      // Mostrar éxito
+      alert('✅ Orden asignada correctamente al repartidor');
+      
+    } catch (error) {
+      console.error('Error asignando orden:', error);
+      alert('❌ Error al asignar la orden');
     }
   };
 
@@ -130,19 +167,48 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <TopbarMobile />
-      
-      <div className="d-flex flex-grow-1">
-        <Sidebar />
+    <ProtectedRoute requiredRole="admin">
+      <div className="d-flex flex-column min-vh-100">
+        <TopbarMobile />
         
-        <main className="flex-grow-1 w-100">
+        <div className="d-flex flex-grow-1">
+          <Sidebar />
+          
+          <main className="flex-grow-1 w-100">
           <Container className="py-4">
             {/* Header */}
             <Row className="mb-4">
               <Col>
-                <h1 className="fw-bold text-dark mb-2">Panel de Administración - Pedidos</h1>
-                <p className="text-muted">Gestiona y visualiza todos los pedidos organizados por fecha</p>
+                <h1 className="fw-bold text-dark mb-2">Panel de Administración</h1>
+                <p className="text-muted">Gestiona pedidos y asigna entregas</p>
+              </Col>
+            </Row>
+
+            {/* ✅ Tabs de navegación */}
+            <Row className="mb-4">
+              <Col>
+                <div className="nav nav-pills" role="tablist">
+                  <Button
+                    variant={activeTab === 'orders' ? 'primary' : 'outline-primary'}
+                    className="me-2"
+                    onClick={() => setActiveTab('orders')}
+                  >
+                    <i className="bi bi-clipboard-data me-2"></i>
+                    Pedidos
+                  </Button>
+                  <Button
+                    variant={activeTab === 'deliveries' ? 'primary' : 'outline-primary'}
+                    onClick={() => setActiveTab('deliveries')}
+                  >
+                    <i className="bi bi-truck me-2"></i>
+                    Gestión Delivery
+                    {pendingDeliveries.length > 0 && (
+                      <Badge bg="danger" className="ms-2">
+                        {pendingDeliveries.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
               </Col>
             </Row>
 
@@ -152,9 +218,12 @@ export default function AdminOrdersPage() {
               </Alert>
             )}
 
-            {/* Estadísticas generales */}
-            {statistics && (
-              <Row className="mb-4">
+            {/* ✅ Contenido según tab activo */}
+            {activeTab === 'orders' && (
+              <>
+                {/* Estadísticas generales */}
+                {statistics && (
+                  <Row className="mb-4">
                 <Col md={3}>
                   <Card className="text-center border-0 shadow-sm">
                     <Card.Body>
@@ -348,11 +417,210 @@ export default function AdminOrdersPage() {
                 )}
               </Col>
             </Row>
+            </>
+            )}
+
+            {/* ✅ Tab de Gestión de Delivery */}
+            {activeTab === 'deliveries' && (
+              <>
+                <Row className="mb-4">
+                  <Col>
+                    <h3 className="fw-bold mb-3">
+                      <i className="bi bi-truck me-2"></i>
+                      Gestión de Entregas
+                    </h3>
+                    
+                    {/* Órdenes pendientes de asignación */}
+                    <Card className="mb-4">
+                      <Card.Header className="bg-warning text-dark">
+                        <h5 className="mb-0">
+                          📦 Órdenes Pendientes de Asignación
+                          <Badge bg="danger" className="ms-2">
+                            {pendingDeliveries.length}
+                          </Badge>
+                        </h5>
+                      </Card.Header>
+                      <Card.Body>
+                        {pendingDeliveries.length === 0 ? (
+                          <div className="text-center py-4">
+                            <i className="bi bi-check-circle text-success" style={{ fontSize: '3rem' }}></i>
+                            <h5 className="mt-3 text-muted">¡Todas las órdenes están asignadas!</h5>
+                            <p className="text-muted">No hay órdenes pendientes de asignación.</p>
+                          </div>
+                        ) : (
+                          <Row>
+                            {pendingDeliveries.map((order) => (
+                              <Col xs={12} md={6} lg={4} key={order.id} className="mb-3">
+                                <Card className="h-100 border-warning">
+                                  <Card.Header className="d-flex justify-content-between align-items-center">
+                                    <small className="text-muted">
+                                      {new Date(order.date).toLocaleDateString()}
+                                    </small>
+                                    <Badge bg="warning" text="dark">Pendiente</Badge>
+                                  </Card.Header>
+                                  <Card.Body>
+                                    <h6 className="fw-bold">{order.userName}</h6>
+                                    <p className="text-muted small mb-2">{order.userEmail}</p>
+                                    
+                                    <div className="mb-3">
+                                      <strong>Total: ${order.total.toFixed(2)}</strong>
+                                    </div>
+                                    
+                                    {/* ✅ Información de ubicación */}
+                                    {order.deliveryLocation && (
+                                      <div className="mb-3 p-2 bg-light rounded">
+                                        <small className="fw-bold text-primary">📍 Ubicación:</small><br />
+                                        <small>
+                                          {order.deliveryLocation.address}<br />
+                                          {order.deliveryLocation.city}
+                                          {order.deliveryLocation.neighborhood && `, ${order.deliveryLocation.neighborhood}`}
+                                          {order.deliveryLocation.deliveryZone && (
+                                            <><br /><Badge bg="secondary" className="mt-1">
+                                              Zona: {order.deliveryLocation.deliveryZone}
+                                            </Badge></>
+                                          )}
+                                          {order.deliveryLocation.estimatedDistance && (
+                                            <><br /><span className="text-muted">
+                                              📏 ~{order.deliveryLocation.estimatedDistance}km aprox.
+                                            </span></>
+                                          )}
+                                        </small>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="mb-3">
+                                      <small>
+                                        <strong>Productos:</strong><br />
+                                        {order.items.map((item, idx) => (
+                                          <span key={idx}>
+                                            {item.quantity}x {item.name}
+                                            {idx < order.items.length - 1 && <br />}
+                                          </span>
+                                        ))}
+                                      </small>
+                                    </div>
+                                    
+                                    <Form.Group>
+                                      <Form.Label className="small fw-bold">Asignar a:</Form.Label>
+                                      <Form.Select
+                                        size="sm"
+                                        onChange={(e) => {
+                                          if (e.target.value && order.id) {
+                                            handleAssignDelivery(order.id, e.target.value);
+                                          }
+                                        }}
+                                        defaultValue=""
+                                      >
+                                        <option value="">Seleccionar repartidor...</option>
+                                        {availableDeliveryUsers
+                                          .filter(delivery => {
+                                            // ✅ Filtrar por zona si disponible
+                                            if (!order.deliveryLocation?.deliveryZone || !delivery.preferredZones) {
+                                              return true; // Mostrar todos si no hay info de zona
+                                            }
+                                            return delivery.preferredZones.includes(order.deliveryLocation.deliveryZone);
+                                          })
+                                          .map((delivery) => (
+                                          <option key={delivery.email} value={delivery.email}>
+                                            {delivery.name} 
+                                            {delivery.preferredZones && ` (${delivery.preferredZones.join(', ')})`}
+                                            {delivery.maxDistance && ` - ${delivery.maxDistance}km max`}
+                                          </option>
+                                        ))}
+                                        {/* ✅ Separador para otros repartidores */}
+                                        {availableDeliveryUsers.some(delivery => 
+                                          order.deliveryLocation?.deliveryZone && 
+                                          delivery.preferredZones && 
+                                          !delivery.preferredZones.includes(order.deliveryLocation.deliveryZone)
+                                        ) && (
+                                          <>
+                                            <option disabled>── Otros repartidores ──</option>
+                                            {availableDeliveryUsers
+                                              .filter(delivery => 
+                                                order.deliveryLocation?.deliveryZone && 
+                                                delivery.preferredZones && 
+                                                !delivery.preferredZones.includes(order.deliveryLocation.deliveryZone)
+                                              )
+                                              .map((delivery) => (
+                                              <option key={`other-${delivery.email}`} value={delivery.email}>
+                                                {delivery.name} (Fuera de zona preferida)
+                                              </option>
+                                            ))}
+                                          </>
+                                        )}
+                                      </Form.Select>
+                                    </Form.Group>
+                                  </Card.Body>
+                                </Card>
+                              </Col>
+                            ))}
+                          </Row>
+                        )}
+                      </Card.Body>
+                    </Card>
+
+                    {/* Información de repartidores */}
+                    <Card>
+                      <Card.Header className="bg-info text-white">
+                        <h5 className="mb-0">
+                          <i className="bi bi-people me-2"></i>
+                          Repartidores Disponibles
+                        </h5>
+                      </Card.Header>
+                      <Card.Body>
+                        {availableDeliveryUsers.length === 0 ? (
+                          <Alert variant="warning">
+                            <i className="bi bi-exclamation-triangle me-2"></i>
+                            No hay repartidores configurados. Contacta al desarrollador para agregar repartidores.
+                          </Alert>
+                        ) : (
+                          <Row>
+                            {availableDeliveryUsers.map((delivery) => (
+                              <Col xs={12} md={6} lg={4} key={delivery.email} className="mb-3">
+                                <Card className="border-info h-100">
+                                  <Card.Body className="text-center">
+                                    <i className="bi bi-person-circle text-info" style={{ fontSize: '2rem' }}></i>
+                                    <h6 className="mt-2 mb-1">{delivery.name}</h6>
+                                    <small className="text-muted d-block mb-2">{delivery.email}</small>
+                                    
+                                    {/* ✅ Zonas preferidas */}
+                                    {delivery.preferredZones && delivery.preferredZones.length > 0 && (
+                                      <div className="mb-2">
+                                        <small className="fw-bold text-primary">Zonas:</small><br />
+                                        {delivery.preferredZones.map((zone, idx) => (
+                                          <Badge key={idx} bg="info" className="me-1 mb-1">
+                                            {zone}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    )}
+                                    
+                                    {/* ✅ Distancia máxima */}
+                                    {delivery.maxDistance && (
+                                      <div>
+                                        <small className="text-muted">
+                                          📏 Máximo: {delivery.maxDistance}km
+                                        </small>
+                                      </div>
+                                    )}
+                                  </Card.Body>
+                                </Card>
+                              </Col>
+                            ))}
+                          </Row>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </>
+            )}
           </Container>
         </main>
       </div>
       
       <Footer />
     </div>
+    </ProtectedRoute>
   );
 }

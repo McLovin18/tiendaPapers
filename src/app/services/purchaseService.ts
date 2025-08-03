@@ -4,6 +4,7 @@ import { db } from '../utils/firebase';
 import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { auth } from '../utils/firebase';
 import { SecureLogger } from '../utils/security';
+import { inventoryService } from './inventoryService';
 
 // Definición de tipos
 export interface PurchaseItem {
@@ -89,6 +90,28 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
     const currentUser = auth.currentUser;
     if (!currentUser) {
       throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+    }
+
+    // ✅ PROCESAR INVENTARIO ANTES DE GUARDAR LA COMPRA
+    try {
+      SecureLogger.log('Processing inventory reduction for order');
+      await inventoryService.processOrder(purchase.items.map(item => ({
+        productId: parseInt(item.id),
+        quantity: item.quantity
+      })));
+      
+      SecureLogger.log('Inventory processed successfully');
+    } catch (inventoryError: any) {
+      SecureLogger.error('Inventory processing failed', inventoryError);
+      
+      // Lanzar error más específico para mejor UX
+      if (inventoryError.message.includes('Stock insuficiente')) {
+        throw new Error(`❌ Stock insuficiente: ${inventoryError.message}`);
+      } else if (inventoryError.message.includes('no está registrado')) {
+        throw new Error(`❌ Producto no disponible: ${inventoryError.message}`);
+      } else {
+        throw new Error(`❌ Error al verificar inventario: ${inventoryError.message || 'Verifica la disponibilidad de los productos'}`);
+      }
     }
     
     // 1. OPERACIÓN PRINCIPAL: Guardar en la subcolección del usuario

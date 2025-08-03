@@ -1,24 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
 import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
 import Link from "next/link";
-import allProducts from "../productsData";
 import Footer from "../../components/Footer";
+import { useProducts } from "../../hooks/useProducts";
 
 
-const ProductsSportPage = () => {
+const ProductsMujerPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Usar el hook personalizado para cargar productos de la categoría mujer
+  const { products, loading } = useProducts("mujer");
 
-  // Filtrar productos para la categoría sport
-  const products = allProducts.filter(
-    (product) => product.categoryLink === "/mujer"
-  );
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -54,7 +53,13 @@ const ProductsSportPage = () => {
             </div>
 
             <Row className="g-4">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <Col xs={12} className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <h4 className="mt-3 text-muted">Cargando productos...</h4>
+                  <p className="text-muted">Obteniendo productos de mujer</p>
+                </Col>
+              ) : filteredProducts.length === 0 ? (
                 <Col xs={12} className="text-center py-5">
                   <i
                     className="bi bi-emoji-frown"
@@ -114,4 +119,4 @@ const ProductsSportPage = () => {
   );
 };
 
-export default ProductsSportPage;
+export default ProductsMujerPage;

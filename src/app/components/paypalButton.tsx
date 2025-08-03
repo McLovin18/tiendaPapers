@@ -82,7 +82,7 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   if (disabled) {
     return (
       <div className="text-center p-3 bg-light rounded">
-        <span className="text-muted">Carrito vacío</span>
+        <span className="text-muted">Completa la información requerida</span>
       </div>
     );
   }

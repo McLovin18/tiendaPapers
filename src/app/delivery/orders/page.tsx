@@ -291,12 +291,21 @@ const DeliveryOrdersPage = () => {
                           </div>
                         </div>
 
-                        {/* Email del cliente */}
+                        {/* Información del cliente */}
                         <div className="mb-3">
                           <div className="small fw-bold mb-1 text-muted">Cliente:</div>
                           <div className="small text-muted bg-light p-2 rounded">
-                            <i className="bi bi-envelope me-1"></i>
-                            {order.userEmail.length > 25 ? order.userEmail.substring(0, 25) + '...' : order.userEmail}
+                            <div className="mb-1">
+                              <i className="bi bi-envelope me-1"></i>
+                              {order.userEmail.length > 25 ? order.userEmail.substring(0, 25) + '...' : order.userEmail}
+                            </div>
+                            {/* Mostrar teléfono si está disponible */}
+                            {order.shipping?.phone && (
+                              <div>
+                                <i className="bi bi-telephone me-1 text-success"></i>
+                                <span className="text-success fw-bold">{order.shipping.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -360,6 +369,16 @@ const DeliveryOrdersPage = () => {
                           <Card.Body>
                             <h6 className="fw-bold mb-2">Cliente: {order.userName}</h6>
                             <p className="text-muted small mb-2">{order.userEmail}</p>
+                            
+                            {/* Mostrar teléfono si está disponible */}
+                            {order.shipping?.phone && (
+                              <div className="mb-2">
+                                <small className="text-success fw-bold">
+                                  <i className="bi bi-telephone me-1"></i>
+                                  {order.shipping.phone}
+                                </small>
+                              </div>
+                            )}
                             
                             <div className="mb-3">
                               <strong>Productos:</strong>
@@ -436,6 +455,13 @@ const DeliveryOrdersPage = () => {
                               <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                                 {selectedOrder.userEmail}
                               </div>
+                              {/* Mostrar teléfono si está disponible */}
+                              {selectedOrder.shipping?.phone && (
+                                <div className="text-success fw-bold" style={{ fontSize: '0.75rem' }}>
+                                  <i className="bi bi-telephone me-1"></i>
+                                  {selectedOrder.shipping.phone}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

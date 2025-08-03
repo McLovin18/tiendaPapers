@@ -15,6 +15,37 @@ import FavouriteButton from '../../components/FavouriteButton';
 import Footer from "../../components/Footer";
 import { recommendationEngine, type Product } from '../../services/recommendationService';
 import { cartService } from '../../services/cartService';
+import { inventoryService, type ProductInventory } from '../../services/inventoryService';
+import ProductStockIndicator from '../../components/ProductStockIndicator';
+
+// Función para convertir ProductInventory a Product
+const convertInventoryToProduct = (inventory: ProductInventory): Product => {
+  // Mapeo de categorías a sus rutas correspondientes
+  const categoryLinkMap: { [key: string]: string } = {
+    'mujer': 'mujer',
+    'hombre': 'hombre',
+    'bebe': 'bebe',
+    'ninos': 'ninos',
+    'sport': 'sport'
+  };
+  
+  const categoryLink = categoryLinkMap[inventory.category?.toLowerCase() || ''] || 'general';
+  
+  return {
+    id: inventory.productId,
+    name: inventory.name,
+    price: inventory.price,
+    images: inventory.images,
+    category: inventory.category || 'Sin categoría',
+    categoryLink: categoryLink,
+    description: inventory.description || '',
+    inStock: inventory.stock > 0 && inventory.isActive,
+    sizes: inventory.sizes,
+    colors: inventory.colors,
+    details: inventory.details || [],
+    featured: false
+  };
+};
 
 const ProductDetailPage = () => {
   // Función para mapear colores a códigos hexadecimales
@@ -78,12 +109,72 @@ const ProductDetailPage = () => {
   const params = useParams();
   const productId = Number(params.id);
   
-  const [product, setProduct] = useState(() => allProducts.find(p => p.id === productId));
+  const [product, setProduct] = useState<Product | undefined>(undefined);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  
+  // ✅ Buscar producto tanto en productos estáticos como en inventario
+  useEffect(() => {
+    const findProduct = async () => {
+      setLoadingProduct(true);
+      
+      // Primero buscar en productos estáticos
+      let foundProduct = allProducts.find(p => p.id === productId);
+      
+      if (!foundProduct) {
+        // Si no se encuentra, buscar en inventario
+        try {
+          const inventoryProducts = await inventoryService.getAllProducts();
+          const inventoryProduct = inventoryProducts.find((p: ProductInventory) => p.productId === productId);
+          
+          if (inventoryProduct) {
+            // Convertir ProductInventory a Product
+            foundProduct = convertInventoryToProduct(inventoryProduct);
+          }
+        } catch (error) {
+          console.error('Error buscando en inventario:', error);
+        }
+      }
+      
+      setProduct(foundProduct);
+      setLoadingProduct(false);
+    };
+
+    if (productId) {
+      findProduct();
+    }
+  }, [productId]);
+  
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('details');
   const [addSuccess, setAddSuccess] = useState(false);
+  const [stockAvailable, setStockAvailable] = useState<boolean>(true);
+  const [stockAmount, setStockAmount] = useState<number>(0);
+
+  // ✅ Verificar stock disponible cuando cambie el producto o la cantidad
+  useEffect(() => {
+    const checkStock = async () => {
+      if (!product?.id) return;
+      
+      try {
+        const stock = await inventoryService.getProductStock(product.id);
+        const isAvailable = await inventoryService.isProductAvailable(product.id, quantity);
+        
+        setStockAmount(stock);
+        setStockAvailable(isAvailable && stock > 0);
+      } catch (error) {
+        console.error('Error verificando stock:', error);
+        setStockAvailable(false);
+        setStockAmount(0);
+      }
+    };
+
+    // Usar un timeout para evitar verificaciones excesivas
+    const timeoutId = setTimeout(checkStock, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [product?.id, quantity]);
   const [isFavourite, setIsFavourite] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [smartRecommendations, setSmartRecommendations] = useState<Product[]>([]);
@@ -226,7 +317,7 @@ const ProductDetailPage = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images?.[0] || "/placeholder.jpg",
+        image: product.images?.[0] || "/images/product1.svg",
       });
     }
 
@@ -444,29 +535,30 @@ const ProductDetailPage = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0] || '/placeholder.jpg',
+        image: product.images[0] || '/images/product1.svg',
         quantity,
         size: selectedSize,
         color: selectedColor
       };
 
-      const success = await cartService.addToCart(user.uid, cartItem);
+      await cartService.addToCart(user.uid, cartItem);
       
-      if (success) {
-        setAddSuccess(true);
-        setTimeout(() => setAddSuccess(false), 3000);
-        
-        // Limpiar campos después de agregar exitosamente
-        setSelectedSize('');
-        setSelectedColor('');
-        setQuantity(1);
+      setAddSuccess(true);
+      setTimeout(() => setAddSuccess(false), 3000);
+      
+      // Limpiar campos después de agregar exitosamente
+      setSelectedSize('');
+      setSelectedColor('');
+      setQuantity(1);
+      
+    } catch (error: any) {
+      console.error('Error adding to cart:', error);
+      // Mostrar mensaje específico de stock si es disponible
+      if (error.message && error.message.includes('stock')) {
+        setErrorMessage(error.message);
       } else {
         setErrorMessage('Error al agregar el producto al carrito');
       }
-      
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      setErrorMessage('Error al agregar el producto al carrito');
     }
   };
 
@@ -537,6 +629,55 @@ const ProductDetailPage = () => {
             </div>
           </Container>
         </footer>
+      </div>
+    );
+  }
+
+  // Mostrar pantalla de carga mientras se busca el producto
+  if (loadingProduct) {
+    return (
+      <div className="d-flex flex-column min-vh-100">
+        <NavbarComponent />
+        <main className="flex-grow-1 d-flex align-items-center justify-content-center">
+          <Container>
+            <div className="text-center">
+              <div className="spinner-border text-primary mb-3" role="status">
+                <span className="visually-hidden">Cargando...</span>
+              </div>
+              <h5 className="text-muted">Cargando producto...</h5>
+            </div>
+          </Container>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Mostrar mensaje de error si no se encuentra el producto
+  if (!product) {
+    return (
+      <div className="d-flex flex-column min-vh-100">
+        <NavbarComponent />
+        <main className="flex-grow-1 d-flex align-items-center justify-content-center">
+          <Container>
+            <div className="text-center">
+              <i className="bi bi-exclamation-triangle-fill text-warning mb-3" style={{ fontSize: '4rem' }}></i>
+              <h3 className="mb-3">Producto no encontrado</h3>
+              <p className="text-muted mb-4">
+                Lo sentimos, el producto que buscas no existe o ha sido eliminado.
+              </p>
+              <Button 
+                as={Link} 
+                href="/products" 
+                variant="primary" 
+                className="rounded-pill px-4"
+              >
+                Ver todos los productos
+              </Button>
+            </div>
+          </Container>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -614,7 +755,10 @@ const ProductDetailPage = () => {
             </Col>
             <Col xs={12} md={6}>
               <h2 className="fw-bold mb-3">{product.name}</h2>
-              <div className="text-primary fw-bold fs-3 mb-3">${product.price.toFixed(2)}</div>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <div className="text-primary fw-bold fs-3">${product.price.toFixed(2)}</div>
+                <ProductStockIndicator productId={product.id} />
+              </div>
               <div className="mb-4">{product.description}</div>
               <div className="mb-4">
                 <Form.Group className="mb-3">
@@ -640,6 +784,20 @@ const ProductDetailPage = () => {
                   <Form.Control type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="rounded-1" />
                 </Form.Group>
               </div>
+              {/* Alertas de stock */}
+              {!stockAvailable && stockAmount === 0 && (
+                <div className="alert alert-danger text-center mb-3" role="alert">
+                  <i className="bi bi-x-circle-fill me-2"></i>
+                  <strong>Producto sin stock</strong> - No disponible para compra
+                </div>
+              )}
+              {!stockAvailable && stockAmount > 0 && (
+                <div className="alert alert-warning text-center mb-3" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  <strong>Stock insuficiente</strong> - Disponible: {stockAmount} unidades, solicitado: {quantity}
+                </div>
+              )}
+              
               {addSuccess && (
                 <div className="alert alert-success text-center" role="alert">
                   Producto añadido correctamente a tu carrito
@@ -653,8 +811,31 @@ const ProductDetailPage = () => {
                 </div>
               )}
               <div className="d-flex gap-2">
-                <Button variant="dark" size="lg" className="w-100 rounded-1 mb-3" onClick={handleAddToCart}>
-                  Añadir al carrito
+                <Button 
+                  variant={stockAvailable ? "dark" : "secondary"} 
+                  size="lg" 
+                  className="w-100 rounded-1 mb-3" 
+                  onClick={handleAddToCart}
+                  disabled={!stockAvailable}
+                >
+                  {!stockAvailable ? (
+                    stockAmount === 0 ? (
+                      <>
+                        <i className="bi bi-x-circle me-2"></i>
+                        Sin stock
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        Stock insuficiente
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <i className="bi bi-cart-plus me-2"></i>
+                      Añadir al carrito
+                    </>
+                  )}
                 </Button>
                 <FavouriteButton product={product} />
               </div>
@@ -1185,7 +1366,7 @@ const ProductDetailPage = () => {
                     <Card className="h-100 shadow-sm border-0 product-recommendation-card">
                       <div className="position-relative overflow-hidden" style={{ height: '350px' }}>
                         <Image 
-                          src={recommendedProduct.images[0] || '/placeholder.jpg'} 
+                          src={recommendedProduct.images[0] || '/images/product1.svg'} 
                           alt={recommendedProduct.name} 
                           fill 
                           style={{ objectFit: 'cover' }}

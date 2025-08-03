@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Check if we're in a build environment and provide fallback values
 const isBuilding = process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -18,6 +19,7 @@ const firebaseConfig = {
 let app: any = null;
 let auth: any = null;
 let db: any = null;
+let storage: any = null;
 let googleProvider: any = null;
 
 if (!isBuilding) {
@@ -25,6 +27,7 @@ if (!isBuilding) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
+    storage = getStorage(app);
     googleProvider = new GoogleAuthProvider();
   } catch (error) {
     // ✅ Log de error seguro - sin exponer configuración sensible
@@ -35,4 +38,4 @@ if (!isBuilding) {
   }
 }
 
-export { app, auth, db, googleProvider };
+export { app, auth, db, storage, googleProvider };

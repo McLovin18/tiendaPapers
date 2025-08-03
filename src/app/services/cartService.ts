@@ -12,6 +12,7 @@ import {
   arrayUnion,
   arrayRemove 
 } from 'firebase/firestore';
+import { inventoryService } from './inventoryService';
 
 export interface CartItem {
   id: number;
@@ -57,10 +58,17 @@ class CartService {
   }
 
   /**
-   * Agregar producto al carrito
+   * Agregar producto al carrito con validación de stock
    */
   async addToCart(userId: string, item: Omit<CartItem, 'userId' | 'dateAdded'>): Promise<boolean> {
     try {
+      // ✅ VALIDAR STOCK ANTES DE AGREGAR AL CARRITO
+      const isAvailable = await inventoryService.isProductAvailable(item.id, item.quantity);
+      if (!isAvailable) {
+        const currentStock = await inventoryService.getProductStock(item.id);
+        throw new Error(`No hay suficiente stock disponible. Stock actual: ${currentStock} unidades`);
+      }
+
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
       const cartDoc = await getDoc(cartRef);
       
@@ -85,6 +93,14 @@ class CartService {
       };
 
       if (existingItemIndex !== -1) {
+        // ✅ VALIDAR STOCK PARA LA CANTIDAD TOTAL (EXISTENTE + NUEVA)
+        const totalQuantity = items[existingItemIndex].quantity + item.quantity;
+        const isAvailableTotal = await inventoryService.isProductAvailable(item.id, totalQuantity);
+        if (!isAvailableTotal) {
+          const currentStock = await inventoryService.getProductStock(item.id);
+          throw new Error(`No hay suficiente stock para la cantidad total. Stock disponible: ${currentStock}, cantidad en carrito: ${items[existingItemIndex].quantity}, cantidad a agregar: ${item.quantity}`);
+        }
+        
         // Si existe, actualizar cantidad
         items[existingItemIndex].quantity += item.quantity;
       } else {
@@ -112,17 +128,24 @@ class CartService {
       return true;
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
-      return false;
+      throw error; // Re-lanzar el error para que el componente lo maneje
     }
   }
 
   /**
-   * Actualizar cantidad de un producto en el carrito
+   * Actualizar cantidad de un producto en el carrito con validación de stock
    */
   async updateCartItemQuantity(userId: string, itemId: number, size: string, color: string, newQuantity: number): Promise<boolean> {
     try {
       if (newQuantity <= 0) {
         return await this.removeFromCart(userId, itemId, size, color);
+      }
+
+      // ✅ VALIDAR STOCK ANTES DE ACTUALIZAR CANTIDAD
+      const isAvailable = await inventoryService.isProductAvailable(itemId, newQuantity);
+      if (!isAvailable) {
+        const currentStock = await inventoryService.getProductStock(itemId);
+        throw new Error(`No hay suficiente stock disponible. Stock actual: ${currentStock} unidades, cantidad solicitada: ${newQuantity}`);
       }
 
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
@@ -166,7 +189,7 @@ class CartService {
       return true;
     } catch (error) {
       console.error('Error al actualizar cantidad:', error);
-      return false;
+      throw error; // Re-lanzar el error para que el componente lo maneje
     }
   }
 

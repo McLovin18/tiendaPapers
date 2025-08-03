@@ -7,19 +7,18 @@ import Sidebar from "../../components/Sidebar";
 import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
 import Link from "next/link";
-import allProducts from "../productsData";
+import { useProducts } from "../../hooks/useProducts";
 import Footer from "../../components/Footer";
 
 
-const ProductsSportPage = () => {
+const ProductsBebePagePage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filtrar productos para la categoría sport
-  const products = allProducts.filter(
-    (product) => product.categoryLink === "/bebe"
-  );
-  const filteredProducts = products.filter((product) =>
+  // Usar el hook optimizado para cargar productos con filtro de categoría
+  const { products: allCategoryProducts, loading } = useProducts('bebe');
+  
+  const filteredProducts = allCategoryProducts.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -115,4 +114,4 @@ const ProductsSportPage = () => {
   );
 };
 
-export default ProductsSportPage;
+export default ProductsBebePagePage;

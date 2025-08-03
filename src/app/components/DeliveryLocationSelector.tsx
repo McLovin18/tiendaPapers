@@ -7,6 +7,7 @@ interface LocationData {
   city: string;
   zone: string;
   address?: string;
+  phone?: string;
 }
 
 interface DeliveryLocationSelectorProps {
@@ -41,6 +42,7 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedZone, setSelectedZone] = useState<string>('');
   const [address, setAddress] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
   const [showAddressField, setShowAddressField] = useState<boolean>(false);
 
   // Resetear zona cuando cambia la ciudad
@@ -52,10 +54,11 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
 
   // Notificar cambios al componente padre
   useEffect(() => {
-    if (selectedCity && selectedZone) {
+    if (selectedCity && selectedZone && phone.trim()) {
       const locationData: LocationData = {
         city: selectedCity,
         zone: selectedZone,
+        phone: phone.trim(),
         ...(address.trim() && { address: address.trim() })
       };
       onLocationChange(locationData);
@@ -64,7 +67,7 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
       onLocationChange(null);
       setShowAddressField(false);
     }
-  }, [selectedCity, selectedZone, address, onLocationChange]);
+  }, [selectedCity, selectedZone, address, phone, onLocationChange]);
 
   const availableZones = selectedCity ? CITIES_AND_ZONES[selectedCity as keyof typeof CITIES_AND_ZONES] || [] : [];
 
@@ -91,7 +94,7 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
                 disabled={disabled}
                 size="sm"
               >
-                <option value="">Selecciona tu ciudad...</option>
+                <option value="">Tu ciudad...</option>
                 {Object.keys(CITIES_AND_ZONES).map((city) => (
                   <option key={city} value={city}>
                     {city}
@@ -115,7 +118,7 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
                 size="sm"
               >
                 <option value="">
-                  {selectedCity ? 'Selecciona tu zona...' : 'Primero selecciona ciudad'}
+                  {selectedCity ? 'Tu zona...' : 'Ciudad primero'}
                 </option>
                 {availableZones.map((zone) => (
                   <option key={zone} value={zone}>
@@ -125,10 +128,35 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
               </Form.Select>
             </Form.Group>
           </div>
+
+          {/* Campo de Teléfono */}
+          <div className="col-md-6 mb-3">
+            <Form.Group>
+              <Form.Label className="fw-bold small">
+                <i className="bi bi-phone me-1"></i>
+                Número de Teléfono *
+              </Form.Label>
+              <Form.Control
+                type="tel"
+                placeholder="Ej: 0987654321"
+                value={phone}
+                onChange={(e) => {
+                  // Solo permitir números y algunos caracteres especiales
+                  const value = e.target.value.replace(/[^0-9+\-\s()]/g, '');
+                  setPhone(value);
+                }}
+                disabled={disabled}
+                size="sm"
+                maxLength={15}
+              />
+              <Form.Text className="text-muted">
+              </Form.Text>
+            </Form.Group>
+          </div>
         </div>
 
-        {/* Campo de Dirección (aparece después de seleccionar ciudad y zona) */}
-        {showAddressField && (
+        {/* Campo de Dirección (aparece después de seleccionar ciudad, zona y teléfono) */}
+        {showAddressField && phone.trim() && (
           <div className="row">
             <div className="col-12">
               <Form.Group>
@@ -173,15 +201,7 @@ export default function DeliveryLocationSelector({ onLocationChange, disabled }:
           </Alert>
         )}
 
-        {/* Información de ayuda */}
-        {!selectedCity && (
-          <Alert variant="light" className="mt-3 mb-0">
-            <small>
-              <i className="bi bi-info-circle me-1"></i>
-              Selecciona tu ubicación para calcular el costo de entrega y asignar el repartidor más cercano.
-            </small>
-          </Alert>
-        )}
+
       </Card.Body>
     </Card>
   );

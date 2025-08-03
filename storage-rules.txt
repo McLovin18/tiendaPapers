@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// 🔒 REGLAS DE FIREBASE STORAGE COMPLETAS
+// Estas reglas van en Firebase Console → Storage → Rules
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ✅ FUNCIONES AUXILIARES
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.uid == "byRByEqdFOYxXOmUu9clvujvIUg1" ||
+        (request.auth.token.email != null && request.auth.token.email == "hectorcobea03@gmail.com")
+      );
+    }
+    
+    function isValidImageSize() {
+      return request.resource.size < 10 * 1024 * 1024; // Máximo 10MB
+    }
+    
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // ✅ AVATARES DE USUARIOS (reglas existentes mantenidas)
+    match /avatars/{userId}/{anyFile} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ✅ IMÁGENES DE PRODUCTOS (NUEVAS - para inventario)
+    match /products/{imageId} {
+      // Lectura: Todos pueden ver las imágenes (son públicas)
+      allow read: if true;
+      
+      // Escritura: Solo usuarios autenticados (admins) con validaciones
+      allow write: if isAuthenticated() 
+        && isValidImageSize() 
+        && isValidImageType();
+      
+      // Eliminación: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ✅ IMÁGENES DE USUARIOS GENERALES
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true; // Fotos públicas
+      allow write, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ✅ IMÁGENES TEMPORALES (para pruebas y desarrollo)
+    match /temp/{allPaths=**} {
+      allow read, write: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ✅ CUALQUIER OTRA IMAGEN (más permisivo para desarrollo)
+    match /{allPaths=**} {
+      // Lectura: Permitir a todos
+      allow read: if true;
+      
+      // Escritura: Solo usuarios autenticados con validaciones básicas
+      allow write: if isAuthenticated() && 
+        request.resource.size < 15 * 1024 * 1024; // 15MB máximo
+      
+      // Eliminación: Solo usuarios autenticados
+      allow delete: if isAuthenticated();
+    }
+  }
+}

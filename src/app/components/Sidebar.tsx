@@ -24,6 +24,8 @@ const Sidebar = () => {
   if (isAdmin) {
     menuItems.push(
       { name: 'Admin Pedidos', path: '/admin/orders', icon: 'bi-clipboard-data' },
+      { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
+      { name: 'Migración DB', path: '/admin/migration', icon: 'bi-database-fill-gear' },
       { name: 'Estadísticas Delivery', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' }
     );
   }

@@ -2,19 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import FavouriteButton from "../components/FavouriteButton";
-import { Container, Row, Col, Card, Button, Form, Pagination, Badge, Modal, Accordion } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Pagination, Badge, Modal, Accordion, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import Sidebar from '../components/Sidebar';
 import TopbarMobile from '../components/TopbarMobile';
-import allProducts from './productsData';
 import Footer from "../components/Footer";
+import { useProducts } from '../hooks/useProducts';
 
 
 const ProductsPage = () => {
   const { user } = useAuth();
-  const [products, setProducts] = useState(allProducts);
+  const { products, loading: productsLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,15 +26,17 @@ const ProductsPage = () => {
   // Productos por página responsivo: 24 en desktop (6 filas x 4 productos), 6 en mobile (6 filas x 1 producto)
   const productsPerPage = isMobile ? 6 : 24;
 
-  // Filtrar productos por búsqueda, talla y color primero
+  // Filtrar productos por búsqueda, talla, color y disponibilidad
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.sizes?.includes(size));
     const matchesColor = selectedColors.length === 0 || selectedColors.some(color => 
       product.colors?.some(productColor => productColor.toLowerCase().includes(color.toLowerCase()))
     );
+    // Usar directamente la propiedad inStock del producto para mejor rendimiento
+    const isAvailable = product.inStock !== false;
     
-    return matchesSearch && matchesSize && matchesColor;
+    return matchesSearch && matchesSize && matchesColor && isAvailable;
   });
 
   // Calcular productos para la página actual después del filtrado
@@ -225,7 +227,13 @@ const ProductsPage = () => {
               </div>
             </div>
             <Row className="g-4 products-container">
-              {filteredProducts.length === 0 ? (
+              {productsLoading ? (
+                <Col xs={12} className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <h4 className="mt-3 text-muted">Cargando productos...</h4>
+                  <p className="text-muted">Obteniendo productos del inventario</p>
+                </Col>
+              ) : filteredProducts.length === 0 ? (
                 <Col xs={12} className="text-center py-5">
                   <i className="bi bi-emoji-frown" style={{ fontSize: '2.5rem', color: '#888' }}></i>
                   <h4 className="mt-3 text-muted">No se encontraron productos</h4>
@@ -262,6 +270,12 @@ const ProductsPage = () => {
                               margin: '0 auto'
                             }}
                           />
+                        )}
+                        {/* Indicador simple de disponibilidad */}
+                        {!product.inStock && (
+                          <div className="position-absolute top-0 end-0 m-2">
+                            <Badge bg="secondary">Agotado</Badge>
+                          </div>
                         )}
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">

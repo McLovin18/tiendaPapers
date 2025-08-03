@@ -10,6 +10,7 @@ import LoginRequired from '../components/LoginRequired';
 import Image from 'next/image';
 import Link from 'next/link';
 import PayPalButton from '../components/paypalButton';
+import WhatsAppButton from '../components/WhatsAppButton';
 import DeliveryLocationSelector from '../components/DeliveryLocationSelector';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import Footer from "../components/Footer";
@@ -17,6 +18,7 @@ import Footer from "../components/Footer";
 import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 import { createDeliveryOrder } from '../services/deliveryService';
 import { cartService, type CartItem } from '../services/cartService';
+import StockValidation from '../components/StockValidation';
 
 // PayPal Client ID - Get from environment variables
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
@@ -29,12 +31,20 @@ const CartPage = () => {
   const updateQuantity = async (id: number, newQuantity: number, size: string = '', color: string = '') => {
     if (newQuantity < 1 || !user?.uid) return;
     
-    const success = await cartService.updateCartItemQuantity(user.uid, id, size, color, newQuantity);
-    if (success) {
+    try {
+      await cartService.updateCartItemQuantity(user.uid, id, size, color, newQuantity);
       // La actualización del estado se maneja por la suscripción en tiempo real
       console.log('Cantidad actualizada exitosamente');
-    } else {
-      console.error('Error al actualizar cantidad');
+    } catch (error: any) {
+      console.error('Error al actualizar cantidad:', error);
+      // Mostrar alerta temporal con el error específico de stock
+      if (error.message && error.message.includes('stock')) {
+        setSaveError(error.message);
+        setTimeout(() => setSaveError(''), 5000); // Limpiar error después de 5 segundos
+      } else {
+        setSaveError('Error al actualizar la cantidad del producto');
+        setTimeout(() => setSaveError(''), 5000);
+      }
     }
   };
 
@@ -96,7 +106,16 @@ const CartPage = () => {
   // Estado para el procesamiento del pago
   const [processing, setProcessing] = useState(false);
   // Estado para la ubicación de entrega
-  const [deliveryLocation, setDeliveryLocation] = useState<{city: string; zone: string; address?: string} | null>(null);
+  const [deliveryLocation, setDeliveryLocation] = useState<{city: string; zone: string; address?: string; phone?: string} | null>(null);
+  // Estado para validación de stock
+  const [stockValid, setStockValid] = useState(true);
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
+
+  // Función para manejar la validación de stock
+  const handleStockValidation = (isValid: boolean, errors: string[]) => {
+    setStockValid(isValid);
+    setStockErrors(errors);
+  };
 
   // Función para manejar el éxito del pago de PayPal
   const handlePayPalSuccess = async (details: any) => {
@@ -142,7 +161,8 @@ const CartPage = () => {
           // ✅ Incluir información de ubicación seleccionada
           city: deliveryLocation?.city || 'No especificada',
           zone: deliveryLocation?.zone || 'No especificada',
-          address: deliveryLocation?.address || 'Dirección por especificar'
+          address: deliveryLocation?.address || 'Dirección por especificar',
+          phone: deliveryLocation?.phone || 'Teléfono no especificado'
         }
       };
 
@@ -306,25 +326,67 @@ const CartPage = () => {
                         </Alert>
                       )}
                       
+                      {/* ✅ VALIDACIÓN DE STOCK EN TIEMPO REAL */}
+                      <StockValidation
+                        items={cartItems.map(item => ({
+                          id: item.id.toString(),
+                          name: item.name,
+                          quantity: item.quantity,
+                          price: item.price
+                        }))}
+                        onStockValidated={handleStockValidation}
+                        className="mb-3"
+                      />
+                      
+                      {/* ✅ Alertas de errores de stock */}
+                      {!stockValid && stockErrors.length > 0 && (
+                        <Alert variant="danger" className="mb-3">
+                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                          <strong>No es posible proceder con la compra:</strong>
+                          <ul className="mb-0 mt-2">
+                            {stockErrors.map((error, index) => (
+                              <li key={index}>{error}</li>
+                            ))}
+                          </ul>
+                        </Alert>
+                      )}
+                      
                       {/* ✅ SELECTOR DE UBICACIÓN DE ENTREGA */}
                       <DeliveryLocationSelector 
                         onLocationChange={setDeliveryLocation}
-                        disabled={cartItems.length === 0 || processing}
+                        disabled={cartItems.length === 0 || processing || !stockValid}
                       />
                       
                       {/* ✅ Alerta si no hay ubicación seleccionada */}
-                      {cartItems.length > 0 && !deliveryLocation && (
+                      {cartItems.length > 0 && !deliveryLocation && stockValid && (
                         <Alert variant="warning" className="mb-3">
                           <i className="bi bi-exclamation-triangle me-2"></i>
                           <strong>Selecciona tu ubicación</strong> para continuar con el pago.
                         </Alert>
                       )}
                       
+                      {/* ✅ Botón de WhatsApp - Primera opción */}
+                      <WhatsAppButton
+                        cartItems={cartItems}
+                        total={calculateTotal()}
+                        deliveryLocation={deliveryLocation}
+                        disabled={cartItems.length === 0 || processing || !deliveryLocation || !stockValid}
+                      />
+                      
+                      {/* ✅ Separador visual */}
+                      <div className="text-center my-3">
+                        <div className="d-flex align-items-center">
+                          <hr className="flex-grow-1" />
+                          <span className="px-3 text-muted small">o paga con tarjeta</span>
+                          <hr className="flex-grow-1" />
+                        </div>
+                      </div>
+                      
                       <PayPalButton
                         amount={calculateTotal()}
                         onSuccess={handlePayPalSuccess}
                         onError={handlePayPalError}
-                        disabled={cartItems.length === 0 || processing || !deliveryLocation}
+                        disabled={cartItems.length === 0 || processing || !deliveryLocation || !stockValid}
                       />
                       
                       <div className="text-center mt-3">

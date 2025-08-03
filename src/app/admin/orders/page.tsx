@@ -24,6 +24,7 @@ import NavbarComponent from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
 import TopbarMobile from '../../components/TopbarMobile';
 import Footer from '../../components/Footer';
+import StockAlert from '../../components/StockAlert';
 
 export default function AdminOrdersPage() {
   const { user } = useAuth();
@@ -176,6 +177,9 @@ export default function AdminOrdersPage() {
           
           <main className="flex-grow-1 w-100" style={{ paddingTop: '1rem' }}>
           <Container fluid className="px-2 px-md-4">
+            {/* Alertas de inventario */}
+            <StockAlert className="mb-4" />
+            
             {/* Header - Responsive */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4">
               <div className="mb-2 mb-md-0">
@@ -302,6 +306,13 @@ export default function AdminOrdersPage() {
                               ) : (
                                 <div className="small text-muted">ID: {order.userId.substring(0, 12)}...</div>
                               )}
+                              {/* Mostrar teléfono si está disponible */}
+                              {order.shipping?.phone && (
+                                <div className="small text-success fw-bold">
+                                  <i className="bi bi-telephone me-1"></i>
+                                  {order.shipping.phone}
+                                </div>
+                              )}
                             </div>
                           </td>
                           <td>
@@ -391,6 +402,13 @@ export default function AdminOrdersPage() {
                                   ) : (
                                     <div className="small text-muted">ID: {order.userId.substring(0, 12)}...</div>
                                   )}
+                                  {/* Mostrar teléfono si está disponible */}
+                                  {order.shipping?.phone && (
+                                    <div className="small text-success fw-bold">
+                                      <i className="bi bi-telephone me-1"></i>
+                                      {order.shipping.phone}
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                               <td>{order.items.length}</td>
@@ -470,6 +488,16 @@ export default function AdminOrdersPage() {
                                   <Card.Body>
                                     <h6 className="fw-bold">{order.userName}</h6>
                                     <p className="text-muted small mb-2">{order.userEmail}</p>
+                                    
+                                    {/* Mostrar teléfono si está disponible */}
+                                    {order.shipping?.phone && (
+                                      <div className="mb-2">
+                                        <small className="text-success fw-bold">
+                                          <i className="bi bi-telephone me-1"></i>
+                                          {order.shipping.phone}
+                                        </small>
+                                      </div>
+                                    )}
                                     
                                     <div className="mb-3">
                                       <strong>Total: ${order.total.toFixed(2)}</strong>

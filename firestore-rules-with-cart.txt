@@ -1,5 +1,5 @@
-// 🔒 REGLAS DE FIRESTORE SEGURAS Y FUNCIONALES
-// Versión 4.0 - Seguridad robusta + Funcionalidad completa + Todos los roles
+// 🔒 REGLAS DE FIRESTORE SEGURAS Y FUNCIONALES - CON CARRITO
+// Versión 4.1 - Seguridad robusta + Funcionalidad completa + Carrito sincronizado
 // Copia estas reglas en Firebase Console → Firestore Database → Rules
 
 rules_version = '2';
@@ -24,10 +24,9 @@ service cloud.firestore {
 
     function isMainDelivery() {
       return isAuthenticated() && (
-        request.auth.token.email != null && (
-          request.auth.token.email == "hwcobena@espol.edu.ec" ||
-          request.auth.token.email == "nexel2024@outlook.com"
-        )
+        request.auth.token.email != null && request.auth.token.email == "hwcobena@espol.edu.ec" ||
+        (request.auth.token.email != null && request.auth.token.email == "nexel2024@outlook.com")
+
       );
     }
 

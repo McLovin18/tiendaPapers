@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
 import { Navbar, Nav, Container } from 'react-bootstrap';
+import { cartService } from '../services/cartService';
 
 const NavbarComponent = () => {
   const { user, logout } = useAuth();
@@ -19,26 +20,21 @@ const NavbarComponent = () => {
   }, []);
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !user?.uid) {
+      setCartCount(0);
+      return;
+    }
 
-    const updateCartCount = () => {
-      if (!user?.uid) {
-        setCartCount(0);
-        return;
-      }
-      const cartKey = `cartItems_${user.uid}`;
-      const cartItems = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      const count = cartItems.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0);
+    // Migrar desde localStorage si es necesario
+    cartService.migrateFromLocalStorage(user.uid);
+
+    // Suscribirse a cambios del carrito en tiempo real
+    const unsubscribe = cartService.subscribeToCartChanges(user.uid, (items) => {
+      const count = items.reduce((acc, item) => acc + item.quantity, 0);
       setCartCount(count);
-    };
-    updateCartCount();
-    window.addEventListener('storage', updateCartCount);
-    window.addEventListener('cart-updated', updateCartCount);
+    });
 
-    return () => {
-      window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('cart-updated', updateCartCount);
-    };
+    return unsubscribe;
   }, [user?.uid, isClient]);
 
   // Cerrar menú si se hace click fuera (solo para móviles)

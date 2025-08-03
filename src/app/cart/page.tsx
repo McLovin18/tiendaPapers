@@ -16,41 +16,37 @@ import Footer from "../components/Footer";
 
 import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 import { createDeliveryOrder } from '../services/deliveryService';
-import { runDailyOrdersTest } from '../utils/firestoreTest';
+import { cartService, type CartItem } from '../services/cartService';
 
 // PayPal Client ID - Get from environment variables
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
-
-// Tipo para los items del carrito
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-  size?: string;
-  color?: string;
-}
 
 const CartPage = () => {
   const { user, loading } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isClient, setIsClient] = useState(false);
 
-  const updateQuantity = (id: number, newQuantity: number, size?: string, color?: string) => {
-    if (newQuantity < 1) return;
+  const updateQuantity = async (id: number, newQuantity: number, size: string = '', color: string = '') => {
+    if (newQuantity < 1 || !user?.uid) return;
     
-    setCartItems(cartItems.map(item => 
-      item.id === id && item.size === size && item.color === color 
-        ? { ...item, quantity: newQuantity } 
-        : item
-    ));
+    const success = await cartService.updateCartItemQuantity(user.uid, id, size, color, newQuantity);
+    if (success) {
+      // La actualización del estado se maneja por la suscripción en tiempo real
+      console.log('Cantidad actualizada exitosamente');
+    } else {
+      console.error('Error al actualizar cantidad');
+    }
   };
 
-  const removeItem = (id: number, size?: string, color?: string) => {
-    setCartItems(cartItems.filter(item => 
-      !(item.id === id && item.size === size && item.color === color)
-    ));
+  const removeItem = async (id: number, size: string = '', color: string = '') => {
+    if (!user?.uid) return;
+    
+    const success = await cartService.removeFromCart(user.uid, id, size, color);
+    if (success) {
+      console.log('Item removido exitosamente');
+    } else {
+      console.error('Error al remover item');
+    }
   };
 
   const calculateTotal = () => {
@@ -62,7 +58,7 @@ const CartPage = () => {
     setIsClient(true);
   }, []);
 
-  // Load cart items from localStorage on component mount and user change
+  // Load cart items from Firebase and subscribe to real-time updates
   useEffect(() => {
     // Only run on client-side to prevent hydration mismatch
     if (!isClient) return;
@@ -77,51 +73,21 @@ const CartPage = () => {
       return;
     }
     
-    const cartKey = `cartItems_${user.uid}`;
-    const storedCart = localStorage.getItem(cartKey);
-    const items = storedCart ? JSON.parse(storedCart) : [];
-    setCartItems(items);
+    // Migrate from localStorage if needed and subscribe to cart changes
+    cartService.migrateFromLocalStorage(user.uid);
+    
+    // Subscribe to real-time cart updates
+    const unsubscribe = cartService.subscribeToCartChanges(user.uid, (items) => {
+      setCartItems(items);
+    });
     
     // Reset payment success state when cart loads
     setPaymentSuccess(false);
     setSaveError('');
+    
+    // Return cleanup function
+    return unsubscribe;
   }, [user?.uid, loading, isClient]);
-
-  // Listen for cart updates from other components
-  useEffect(() => {
-    // Only run on client-side
-    if (!isClient) return;
-    
-    const updateCart = () => {
-      if (loading || !user?.uid) return;
-      const cartKey = `cartItems_${user.uid}`;
-      const storedCart = localStorage.getItem(cartKey);
-      const items = storedCart ? JSON.parse(storedCart) : [];
-
-      setCartItems(items);
-    };
-
-    window.addEventListener('cart-updated', updateCart);
-    return () => {
-      window.removeEventListener('cart-updated', updateCart);
-    };
-  }, [user?.uid, loading, isClient]);
-
-  // Save cart items to localStorage when cartItems change
-  useEffect(() => {
-    // Only run on client-side
-    if (!isClient || loading || !user?.uid) return;
-    
-    const cartKey = `cartItems_${user.uid}`;
-    const currentStored = localStorage.getItem(cartKey);
-    const newCartString = JSON.stringify(cartItems);
-    
-    // Only update localStorage if the data has actually changed
-    if (currentStored !== newCartString) {
-
-      localStorage.setItem(cartKey, newCartString);
-    }
-  }, [cartItems, user?.uid, loading, isClient]);
 
   // Estado para mostrar confirmación de compra
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -190,10 +156,8 @@ const CartPage = () => {
         // Continuar aunque falle la orden de delivery
       }
       
-      // Limpiar el carrito
-      const cartKey = `cartItems_${user.uid}`;
-      localStorage.removeItem(cartKey);
-      setCartItems([]);
+      // Limpiar el carrito de Firebase
+      await cartService.clearCart(user.uid);
       
       // Mostrar éxito
       setPaymentSuccess(true);
@@ -243,15 +207,6 @@ const CartPage = () => {
             <Button href="/products" variant="dark" className="px-4 py-2">Seguir comprando</Button>
             <Button href="/profile?tab=orders" variant="outline-dark" className="px-4 py-2">
               <i className="bi bi-clock-history me-2"></i>Ver mis compras
-            </Button>
-            {/* Botón de test temporal para debugging */}
-            <Button 
-              variant="info" 
-              className="px-3 py-2" 
-              onClick={() => runDailyOrdersTest()}
-              title="Probar reglas de Firestore"
-            >
-              🧪 Test Firestore
             </Button>
           </div>
         </Container>

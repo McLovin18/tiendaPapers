@@ -14,6 +14,7 @@ import allProducts from '../productsData';
 import FavouriteButton from '../../components/FavouriteButton';
 import Footer from "../../components/Footer";
 import { recommendationEngine, type Product } from '../../services/recommendationService';
+import { cartService } from '../../services/cartService';
 
 const ProductDetailPage = () => {
   // Función para mapear colores a códigos hexadecimales
@@ -182,9 +183,6 @@ const ProductDetailPage = () => {
         const recommendations = recommendationEngine.getSmartRecommendations(product.id, 3);
         setSmartRecommendations(recommendations);
         
-        console.log('🤖 Recomendaciones inteligentes cargadas para:', product.name);
-        console.log('📦 Productos recomendados:', recommendations.map(r => r.name));
-        
       } catch (error) {
         console.error('❌ Error al cargar recomendaciones:', error);
         // En caso de error, mostrar productos aleatorios
@@ -200,6 +198,21 @@ const ProductDetailPage = () => {
 
     loadSmartRecommendations();
   }, [product?.id]);
+
+  // Migrar carrito desde localStorage cuando el usuario esté autenticado
+  useEffect(() => {
+    const migrateCartIfNeeded = async () => {
+      if (!user?.uid) return;
+      
+      try {
+        await cartService.migrateFromLocalStorage(user.uid);
+      } catch (error) {
+        console.error('❌ Error durante la migración del carrito:', error);
+      }
+    };
+
+    migrateCartIfNeeded();
+  }, [user?.uid]);
 
 
 
@@ -397,7 +410,7 @@ const ProductDetailPage = () => {
 
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     // Clear any previous error messages
     setErrorMessage('');
     
@@ -427,40 +440,29 @@ const ProductDetailPage = () => {
     }
     
     try {
-      const cartKey = `cartItems_${user.uid}`;
-      const cartItems = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      console.log('Current cart items:', cartItems);
+      const cartItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0] || '/placeholder.jpg',
+        quantity,
+        size: selectedSize,
+        color: selectedColor
+      };
+
+      const success = await cartService.addToCart(user.uid, cartItem);
       
-      const existingIndex = cartItems.findIndex((item: any) => 
-        item.id === product.id && item.size === selectedSize && item.color === selectedColor
-      );
-      
-      if (existingIndex !== -1) {
-        cartItems[existingIndex].quantity += quantity;
-        console.log('Updated existing item quantity');
+      if (success) {
+        setAddSuccess(true);
+        setTimeout(() => setAddSuccess(false), 3000);
+        
+        // Limpiar campos después de agregar exitosamente
+        setSelectedSize('');
+        setSelectedColor('');
+        setQuantity(1);
       } else {
-        const newItem = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images[0] || '/placeholder.jpg',
-          quantity,
-          size: selectedSize,
-          color: selectedColor
-        };
-        cartItems.push(newItem);
-        console.log('Added new item to cart:', newItem);
+        setErrorMessage('Error al agregar el producto al carrito');
       }
-      
-      localStorage.setItem(cartKey, JSON.stringify(cartItems));
-      console.log('Cart saved to localStorage:', { cartKey, cartItems });
-      
-      // Dispatch event to update navbar and other components
-      window.dispatchEvent(new Event('cart-updated'));
-      console.log('Cart updated event dispatched');
-      
-      setAddSuccess(true);
-      setTimeout(() => setAddSuccess(false), 3000);
       
     } catch (error) {
       console.error('Error adding to cart:', error);

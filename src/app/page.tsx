@@ -201,6 +201,8 @@ export default function Home() {
         <main className="flex-grow-1 w-100">
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
             <h1 className="fw-bold text-center mb-5">Bienvenido a Fashion Store</h1>
+            <h3 className="fw-bold text-center mb-5">Aqui te presentamos los productos destacados</h3>
+
             <Row className="g-4">
               {featuredProducts.map((product) => (
                 <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>

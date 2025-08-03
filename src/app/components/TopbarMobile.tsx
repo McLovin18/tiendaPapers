@@ -84,8 +84,8 @@ const TopbarMobile = () => {
                   fontWeight: isActiveLink(item.path) ? 600 : 500,
                   fontSize: '0.75rem',
                   minHeight: '60px',
-                  backgroundColor: isActiveLink(item.path) ? '#e7f3ff' : 'transparent',
-                  color: isActiveLink(item.path) ? '#0d6efd' : '#6c757d',
+                  backgroundColor: isActiveLink(item.path) ? '#0d6efd' : 'transparent',
+                  color: isActiveLink(item.path) ? 'white' : '#6c757d',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -93,14 +93,14 @@ const TopbarMobile = () => {
                   className={`bi ${item.icon}`} 
                   style={{ 
                     fontSize: '1.1rem',
-                    color: isActiveLink(item.path) ? '#0d6efd' : '#6c757d'
+                    color: isActiveLink(item.path) ? 'white' : '#6c757d'
                   }}
                 ></i>
                 <span 
                   className="small" 
                   style={{ 
                     fontSize: '0.7rem',
-                    color: isActiveLink(item.path) ? '#0d6efd' : '#6c757d'
+                    color: isActiveLink(item.path) ? 'white' : '#6c757d'
                   }}
                 >
                   {item.name}
@@ -109,7 +109,7 @@ const TopbarMobile = () => {
                 {/* Indicador visual para el item activo */}
                 {isActiveLink(item.path) && (
                   <div 
-                    className="position-absolute rounded-circle bg-primary"
+                    className="position-absolute rounded-circle bg-white"
                     style={{
                       width: '4px',
                       height: '4px',
@@ -134,8 +134,8 @@ const TopbarMobile = () => {
         }
 
         .topbar-mobile .nav-link.active {
-          background-color: #e7f3ff !important;
-          color: #0d6efd !important;
+          background-color: #0d6efd !important;
+          color: white !important;
         }
 
         .topbar-mobile .nav-link {

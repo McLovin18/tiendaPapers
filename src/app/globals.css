@@ -457,3 +457,278 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   80% { opacity: 1; }
   100% { opacity: 0; transform: scale(0.7) translateY(-10px); }
 }
+
+/* Estilos para paginación mejorada */
+.pagination {
+  --bs-pagination-color: #6c757d;
+  --bs-pagination-bg: #fff;
+  --bs-pagination-border-color: #dee2e6;
+  --bs-pagination-focus-color: #0066cc;
+  --bs-pagination-focus-bg: #e7f1ff;
+  --bs-pagination-focus-border-color: #86b7fe;
+  --bs-pagination-hover-color: #0066cc;
+  --bs-pagination-hover-bg: #e7f1ff;
+  --bs-pagination-hover-border-color: #86b7fe;
+  --bs-pagination-active-color: #fff;
+  --bs-pagination-active-bg: #0066cc;
+  --bs-pagination-active-border-color: #0066cc;
+  --bs-pagination-disabled-color: #6c757d;
+  --bs-pagination-disabled-bg: #fff;
+  --bs-pagination-disabled-border-color: #dee2e6;
+}
+
+.pagination .page-link {
+  border-radius: 0.5rem !important;
+  margin: 0 2px;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+  border-radius: 0.5rem !important;
+}
+
+.pagination .page-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.15);
+}
+
+.pagination .page-item.active .page-link {
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+  font-weight: 600;
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.5;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Responsive pagination */
+@media (max-width: 576px) {
+  .pagination .page-link {
+    min-width: 2.2rem;
+    height: 2.2rem;
+    font-size: 0.9rem;
+    margin: 0 1px;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Mantener los textos de los botones de navegación en móvil */
+  .pagination .page-item .page-link span {
+    display: inline;
+  }
+  
+  .pagination .page-item .page-link i {
+    font-size: 0.8rem;
+  }
+  
+  /* Ajustar el contenedor de paginación en móvil */
+  .pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+}
+
+/* Animación para cambio de página */
+.products-container {
+  animation: fadeInProducts 0.3s ease-in-out;
+}
+
+@keyframes fadeInProducts {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Indicador de carga para paginación */
+.pagination-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.pagination-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Estilos para la paginación */
+.pagination {
+  --bs-pagination-padding-x: 0.75rem;
+  --bs-pagination-padding-y: 0.5rem;
+  --bs-pagination-font-size: 0.9rem;
+  --bs-pagination-color: #6c757d;
+  --bs-pagination-bg: #fff;
+  --bs-pagination-border-width: 1px;
+  --bs-pagination-border-color: #dee2e6;
+  --bs-pagination-border-radius: 0.375rem;
+  --bs-pagination-hover-color: #0056b3;
+  --bs-pagination-hover-bg: #e9ecef;
+  --bs-pagination-hover-border-color: #dee2e6;
+  --bs-pagination-focus-color: #0056b3;
+  --bs-pagination-focus-bg: #e9ecef;
+  --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  --bs-pagination-active-color: #fff;
+  --bs-pagination-active-bg: #0d6efd;
+  --bs-pagination-active-border-color: #0d6efd;
+  --bs-pagination-disabled-color: #6c757d;
+  --bs-pagination-disabled-bg: #fff;
+  --bs-pagination-disabled-border-color: #dee2e6;
+}
+
+.pagination .page-item {
+  margin: 0 2px;
+}
+
+.pagination .page-item .page-link {
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.pagination .page-item.active .page-link {
+  background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+  border-color: #0d6efd;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.pagination .page-item:hover .page-link {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.5;
+}
+
+/* Responsive pagination */
+@media (max-width: 576px) {
+  .pagination {
+    --bs-pagination-padding-x: 0.5rem;
+    --bs-pagination-padding-y: 0.375rem;
+    --bs-pagination-font-size: 0.8rem;
+  }
+  
+  .pagination .page-item {
+    margin: 0 1px;
+  }
+}
+
+/* Estilos para recomendaciones de productos */
+.product-recommendation-card {
+  transition: all 0.3s ease;
+}
+
+.product-recommendation-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.product-recommendation-card .product-image {
+  transition: transform 0.3s ease;
+}
+
+.product-recommendation-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.color-indicator {
+  transition: transform 0.2s ease;
+}
+
+.color-indicator:hover {
+  transform: scale(1.2);
+}
+
+/* Estilos para recomendaciones inteligentes */
+.product-recommendation-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.product-recommendation-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.product-recommendation-card .product-image {
+  transition: transform 0.3s ease;
+}
+
+.product-recommendation-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.color-indicator {
+  transition: transform 0.2s ease;
+}
+
+.color-indicator:hover {
+  transform: scale(1.2);
+}
+
+/* Función para mapear colores */
+.color-white { background-color: #ffffff !important; border: 1px solid #ddd !important; }
+.color-negro { background-color: #000000 !important; }
+.color-black { background-color: #000000 !important; }
+.color-azul { background-color: #007bff !important; }
+.color-blue { background-color: #007bff !important; }
+.color-rojo { background-color: #dc3545 !important; }
+.color-red { background-color: #dc3545 !important; }
+.color-verde { background-color: #28a745 !important; }
+.color-green { background-color: #28a745 !important; }
+.color-gris { background-color: #6c757d !important; }
+.color-gray { background-color: #6c757d !important; }
+.color-rosa { background-color: #e91e63 !important; }
+.color-pink { background-color: #e91e63 !important; }
+.color-amarillo { background-color: #ffc107 !important; }
+.color-yellow { background-color: #ffc107 !important; }
+.color-beige { background-color: #f5f5dc !important; }
+.color-celeste { background-color: #87ceeb !important; }
+.color-plomo { background-color: #708090 !important; }
+
+/* Loading animation para recomendaciones */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.recommendation-loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Badge de recomendación con brillo */
+.recommendation-badge {
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+  animation: subtle-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes subtle-glow {
+  from { box-shadow: 0 2px 4px rgba(0,123,255,0.3); }
+  to { box-shadow: 0 2px 8px rgba(0,123,255,0.5); }
+}

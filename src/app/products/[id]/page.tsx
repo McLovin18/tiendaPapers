@@ -13,35 +13,48 @@ import { addFavourite, removeFavourite, getUserFavourites, addProductComment, ge
 import allProducts from '../productsData';
 import FavouriteButton from '../../components/FavouriteButton';
 import Footer from "../../components/Footer";
-
-
-
-// Productos relacionados
-const relatedProducts = [
-  {
-    id: 6,
-    name: 'Jeans Regular',
-    price: 44.99,
-    image: '/images/product2.svg',
-    category: 'jeans'
-  },
-  {
-    id: 7,
-    name: 'Camiseta Básica',
-    price: 14.99,
-    image: '/images/product3.svg',
-    category: 'camisas'
-  },
-  {
-    id: 8,
-    name: 'Pantalón Deportivo',
-    price: 29.99,
-    image: '/images/product4.svg',
-    category: 'pantalones'
-  },
-];
+import { recommendationEngine, type Product } from '../../services/recommendationService';
 
 const ProductDetailPage = () => {
+  // Función para mapear colores a códigos hexadecimales
+  const getColorCode = (colorName: string): string => {
+    const colorMap: { [key: string]: string } = {
+      'blanco': '#ffffff',
+      'white': '#ffffff',
+      'negro': '#000000',
+      'black': '#000000',
+      'azul': '#007bff',
+      'blue': '#007bff',
+      'azul marino': '#001f3f',
+      'navy': '#001f3f',
+      'rojo': '#dc3545',
+      'red': '#dc3545',
+      'verde': '#28a745',
+      'green': '#28a745',
+      'verde oscuro': '#155724',
+      'gris': '#6c757d',
+      'gray': '#6c757d',
+      'grey': '#6c757d',
+      'plomo': '#708090',
+      'rosa': '#e91e63',
+      'pink': '#e91e63',
+      'amarillo': '#ffc107',
+      'yellow': '#ffc107',
+      'beige': '#f5f5dc',
+      'celeste': '#87ceeb',
+      'naranja': '#fd7e14',
+      'orange': '#fd7e14',
+      'morado': '#6f42c1',
+      'purple': '#6f42c1',
+      'violeta': '#6f42c1',
+      'cafe': '#8b4513',
+      'brown': '#8b4513',
+      'marron': '#8b4513'
+    };
+    
+    return colorMap[colorName.toLowerCase()] || '#ccc';
+  };
+
   // Control de comentarios y respuestas visibles
   const INITIAL_COMMENTS_TO_SHOW = 3;
   const INITIAL_REPLIES_TO_SHOW = 2;
@@ -72,6 +85,8 @@ const ProductDetailPage = () => {
   const [addSuccess, setAddSuccess] = useState(false);
   const [isFavourite, setIsFavourite] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [smartRecommendations, setSmartRecommendations] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   
   // Comentarios por producto (Firestore)
   const [rating, setRating] = useState(0);
@@ -153,6 +168,39 @@ const ProductDetailPage = () => {
     updateFavouriteState();
   }, [updateFavouriteState]);
 
+  // Cargar recomendaciones inteligentes cuando cambie el producto
+  useEffect(() => {
+    const loadSmartRecommendations = async () => {
+      if (!product?.id) return;
+      
+      setLoadingRecommendations(true);
+      
+      try {
+        // Simular un pequeño delay para mostrar el loading (opcional)
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const recommendations = recommendationEngine.getSmartRecommendations(product.id, 3);
+        setSmartRecommendations(recommendations);
+        
+        console.log('🤖 Recomendaciones inteligentes cargadas para:', product.name);
+        console.log('📦 Productos recomendados:', recommendations.map(r => r.name));
+        
+      } catch (error) {
+        console.error('❌ Error al cargar recomendaciones:', error);
+        // En caso de error, mostrar productos aleatorios
+        const fallbackRecommendations = allProducts
+          .filter(p => p.id !== product.id && p.inStock)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        setSmartRecommendations(fallbackRecommendations);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
+    loadSmartRecommendations();
+  }, [product?.id]);
+
 
 
   const handleAddToFavourites = async () => {
@@ -165,7 +213,7 @@ const ProductDetailPage = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images?.[0] || product.image || "/placeholder.jpg",
+        image: product.images?.[0] || "/placeholder.jpg",
       });
     }
 
@@ -1109,48 +1157,130 @@ const ProductDetailPage = () => {
         </Container>
       </div>
       
-      {/* Productos relacionados */}
+      {/* Productos recomendados inteligentes */}
       <div className="my-5">
         <Container>
-          <h3 className="fw-bold mb-4">También te puede interesar</h3>
-          <Row>
-            {relatedProducts.map((relatedProduct) => (
-              <Col key={relatedProduct.id} md={4} className="mb-4">
-                <div className="product-item">
-                  <div className="position-relative" style={{ height: '350px' }}>
-                    <Image 
-                      src={relatedProduct.image} 
-                      alt={relatedProduct.name} 
-                      fill 
-                      style={{ objectFit: 'cover' }} 
-                    />
-                    <div className="position-absolute bottom-0 start-0 w-100 p-2 d-flex justify-content-between align-items-center">
-                      <Button 
-                        as={Link} 
-                        href={`/products/${relatedProduct.id}`} 
-                        variant="light" 
-                        className="rounded-1 px-3 py-1"
-                        size="sm"
-                      >
-                        Ver Detalles
-                      </Button>
-                      <Button 
-                        variant="light" 
-                        className="rounded-circle p-1"
-                        size="sm"
-                      >
-                        <i className="bi bi-heart"></i>
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="py-2">
-                    <h5 className="mb-1">{relatedProduct.name}</h5>
-                    <p className="fw-bold mb-0">${relatedProduct.price.toFixed(2)}</p>
-                  </div>
+          <div className="d-flex align-items-center mb-4">
+            <h3 className="fw-bold mb-0 me-3">Productos recomendados para ti</h3>
+            <div className="d-flex align-items-center text-muted">
+              <i className="bi bi-robot me-2" style={{ fontSize: '1.2rem' }}></i>
+              <small>Seleccionados por IA</small>
+            </div>
+          </div>
+          
+          {loadingRecommendations ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary mb-3" role="status">
+                <span className="visually-hidden">Cargando recomendaciones...</span>
+              </div>
+              <p className="text-muted">Analizando productos similares...</p>
+            </div>
+          ) : (
+            <Row>
+              {smartRecommendations.length > 0 ? (
+                smartRecommendations.map((recommendedProduct) => (
+                  <Col key={recommendedProduct.id} md={4} className="mb-4">
+                    <Card className="h-100 shadow-sm border-0 product-recommendation-card">
+                      <div className="position-relative overflow-hidden" style={{ height: '350px' }}>
+                        <Image 
+                          src={recommendedProduct.images[0] || '/placeholder.jpg'} 
+                          alt={recommendedProduct.name} 
+                          fill 
+                          style={{ objectFit: 'cover' }}
+                          className="product-image"
+                        />
+                        {/* Badge de recomendación */}
+                        <Badge 
+                          bg="primary" 
+                          className="position-absolute top-0 start-0 m-2 px-2 py-1"
+                          style={{ fontSize: '0.7rem' }}
+                        >
+                          <i className="bi bi-stars me-1"></i>
+                          Recomendado
+                        </Badge>
+                        
+                        {/* Overlay con acciones */}
+                        <div className="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient" style={{ 
+                          background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' 
+                        }}>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <Button 
+                              as={Link} 
+                              href={`/products/${recommendedProduct.id}`} 
+                              variant="light" 
+                              className="rounded-pill px-3 py-1 fw-bold"
+                              size="sm"
+                            >
+                              Ver Detalles
+                            </Button>
+                            <FavouriteButton product={recommendedProduct} />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Card.Body className="p-3">
+                        <h6 className="fw-bold mb-1 text-truncate">{recommendedProduct.name}</h6>
+                        <p className="text-muted small mb-2">{recommendedProduct.category}</p>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span className="fw-bold text-primary fs-5">${recommendedProduct.price.toFixed(2)}</span>
+                          <div className="d-flex gap-1">
+                            {recommendedProduct.colors.slice(0, 3).map((color, index) => (
+                              <div 
+                                key={index}
+                                className="color-indicator rounded-circle border border-light-subtle"
+                                style={{ 
+                                  width: '12px', 
+                                  height: '12px',
+                                  backgroundColor: getColorCode(color)
+                                }}
+                                title={color}
+                              ></div>
+                            ))}
+                            {recommendedProduct.colors.length > 3 && (
+                              <small className="text-muted">+{recommendedProduct.colors.length - 3}</small>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Indicadores de similitud */}
+                        <div className="mt-2">
+                          <div className="d-flex flex-wrap gap-1">
+                            {recommendedProduct.category.toLowerCase() === product?.category.toLowerCase() && (
+                              <Badge bg="success" className="small">Misma categoría</Badge>
+                            )}
+                            {recommendedProduct.colors.some(color => 
+                              product?.colors.some(productColor => 
+                                color.toLowerCase() === productColor.toLowerCase()
+                              )
+                            ) && (
+                              <Badge bg="info" className="small">Colores similares</Badge>
+                            )}
+                            {Math.abs(recommendedProduct.price - (product?.price || 0)) <= (product?.price || 0) * 0.3 && (
+                              <Badge bg="warning" className="small">Precio similar</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))
+              ) : (
+                <div className="text-center py-5">
+                  <i className="bi bi-search" style={{ fontSize: '3rem', color: '#ccc' }}></i>
+                  <h5 className="mt-3 text-muted">No se encontraron recomendaciones</h5>
+                  <p className="text-muted">Intenta explorar otros productos de nuestro catálogo.</p>
+                  <Button 
+                    as={Link} 
+                    href="/products" 
+                    variant="outline-primary" 
+                    className="mt-2 rounded-pill px-4"
+                  >
+                    Ver todos los productos
+                  </Button>
                 </div>
-              </Col>
-            ))}
-          </Row>
+              )}
+            </Row>
+          )}
         </Container>
       </div>
 

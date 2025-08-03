@@ -107,7 +107,7 @@ export const SECURITY_ROLES = {
     ]
   },
   DELIVERY: {
-    emails: ['hwcobena@espol.edu.ec'],
+    emails: ['hwcobena@espol.edu.ec', 'nexel2024@outlook.com'],
     permissions: [
       'view_assigned_orders',
       'update_delivery_status',
@@ -253,7 +253,7 @@ export const validateSecurityConfig = (): boolean => {
       return false;
     }
 
-    console.log('✅ Configuración de seguridad validada correctamente');
+    // Configuración válida
     return true;
   } catch (error) {
     console.error('❌ Error validando configuración de seguridad:', error);

@@ -287,41 +287,10 @@ export const getAvailableDeliveryUsers = () => {
       maxDistance: 15 // km máximo que puede cubrir
     },
     {
-      email: 'delivery.guayaquil@tienda.com',
-      name: 'Carlos Rodríguez',
+      email: 'nexel2024@outlook.com',
+      name: 'Nexel Cobeña',
       preferredZones: ['Samborondón', 'Ceibos', 'Via a la Costa'],
       maxDistance: 25
-    },
-    {
-      email: 'delivery.centro@tienda.com', 
-      name: 'María González',
-      preferredZones: ['Centro', 'Las Peñas', 'Mapasingue'],
-      maxDistance: 12
-    },
-    {
-      email: 'delivery.norte@tienda.com',
-      name: 'Luis Martínez', 
-      preferredZones: ['Norte', 'Alborada', 'Kennedy', 'Sauces'],
-      maxDistance: 18
-    },
-    {
-      email: 'delivery.sur@tienda.com',
-      name: 'Ana López',
-      preferredZones: ['Sur'],
-      maxDistance: 20
-    },
-    // ✅ Repartidores para Santa Elena
-    {
-      email: 'delivery.santaelena@tienda.com',
-      name: 'Pedro Salinas',
-      preferredZones: ['Santa Elena', 'La Libertad'],
-      maxDistance: 15
-    },
-    {
-      email: 'delivery.peninsula@tienda.com',
-      name: 'Sofia Vera',
-      preferredZones: ['Ballenita', 'Salinas'],
-      maxDistance: 20
     }
   ];
 };

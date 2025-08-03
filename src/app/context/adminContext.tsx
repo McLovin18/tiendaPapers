@@ -22,10 +22,8 @@ const USER_ROLES = {
     'hectorcobea03@gmail.com' // Admin principal
   ],
   delivery: [
-    'hwcobena@espol.edu.ec',  // ✅ Cuenta de delivery real para testing
-    'testdelivery@gmail.com', // Para pruebas - puedes crear esta cuenta
-    'delivery1@test.com',     // Repartidor de prueba 1
-    'delivery2@test.com'      // Repartidor de prueba 2
+    'hwcobena@espol.edu.ec',  //Cuenta de delivery real
+    'nexel2024@outlook.com'    //Cuenta de delivery real
   ] as string[]
 };
 

@@ -160,131 +160,234 @@ const DeliveryOrdersPage = () => {
 
   return (
     <ProtectedRoute requiredRole="delivery">
-      <Container className="py-5">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="fw-bold">
-            <i className="bi bi-truck me-3"></i>
-            Mis Entregas
-          </h1>
-          <Badge bg="info" className="fs-6">
-            {orders.length} pedidos asignados
-          </Badge>
-      </div>
-
-      {orders.length === 0 ? (
-        <Alert variant="info" className="text-center">
-          <i className="bi bi-info-circle me-2"></i>
-          No tienes pedidos asignados en este momento.
-        </Alert>
-      ) : (
-        <Row>
-          {orders.map((order) => (
-            <Col xs={12} md={6} lg={4} key={order.id} className="mb-4">
-              <Card className="h-100 shadow-sm">
-                <Card.Header className="d-flex justify-content-between align-items-center">
-                  <small className="text-muted">
-                    {new Date(order.date).toLocaleDateString()}
-                  </small>
-                  <Badge bg={getStatusColor(order.status)}>
-                    {getStatusText(order.status)}
-                  </Badge>
-                </Card.Header>
-                
-                <Card.Body>
-                  <h6 className="fw-bold mb-2">Cliente: {order.userName}</h6>
-                  <p className="text-muted small mb-2">{order.userEmail}</p>
-                  
-                  <div className="mb-3">
-                    <strong>Productos:</strong>
-                    <ul className="list-unstyled mt-1">
-                      {order.items.map((item, index) => (
-                        <li key={index} className="small">
-                          {item.quantity}x {item.name} - ${item.price}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <strong>Total: ${order.total.toFixed(2)}</strong>
-                  </div>
-
-                  {order.deliveryNotes && (
-                    <div className="mb-3">
-                      <small className="text-muted">
-                        <strong>Notas:</strong> {order.deliveryNotes}
-                      </small>
-                    </div>
-                  )}
-                </Card.Body>
-                
-                <Card.Footer>
-                  <Button 
-                    variant="primary" 
-                    size="sm" 
-                    className="w-100"
-                    onClick={() => handleUpdateStatus(order)}
-                    disabled={order.status === 'delivered'}
-                  >
-                    <i className="bi bi-pencil-square me-2"></i>
-                    {order.status === 'delivered' ? 'Entregado' : 'Actualizar Estado'}
-                  </Button>
-                </Card.Footer>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
-
-      {/* Modal para actualizar estado */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Actualizar Estado de Entrega</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedOrder && (
-            <>
-              <div className="mb-3">
-                <strong>Cliente:</strong> {selectedOrder.userName}<br />
-                <strong>Total:</strong> ${selectedOrder.total.toFixed(2)}
+      <div className="d-flex flex-column min-vh-100">
+        <div className="d-lg-none">
+          {/* Para móvil solo mostramos contenido sin navbar adicional */}
+        </div>
+        
+        <main className="flex-grow-1" style={{ paddingTop: '1rem' }}>
+          <Container fluid className="px-2 px-md-4">
+            {/* Header - Responsive */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4">
+              <div className="mb-2 mb-md-0">
+                <h1 className="fw-bold fs-3 fs-md-1">
+                  <i className="bi bi-truck me-2 me-md-3"></i>
+                  <span className="d-none d-sm-inline">Mis Entregas</span>
+                  <span className="d-sm-none">Entregas</span>
+                </h1>
               </div>
-              
-              <Form.Group className="mb-3">
-                <Form.Label>Estado</Form.Label>
-                <Form.Select 
-                  value={newStatus} 
-                  onChange={(e) => setNewStatus(e.target.value)}
-                >
-                  <option value="assigned">Asignado</option>
-                  <option value="picked_up">Recogido</option>
-                  <option value="in_transit">En tránsito</option>
-                  <option value="delivered">Entregado</option>
-                </Form.Select>
-              </Form.Group>
-              
-              <Form.Group className="mb-3">
-                <Form.Label>Notas de entrega</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={deliveryNotes}
-                  onChange={(e) => setDeliveryNotes(e.target.value)}
-                  placeholder="Agregar notas sobre la entrega..."
-                />
-              </Form.Group>
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={saveStatusUpdate}>
-            Guardar Cambios
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+              <Badge bg="info" className="fs-6 align-self-end align-self-md-center">
+                {orders.length} 
+                <span className="d-none d-sm-inline"> pedidos asignados</span>
+                <span className="d-sm-none"> pedidos</span>
+              </Badge>
+            </div>
+
+            {orders.length === 0 ? (
+              <Alert variant="info" className="text-center mx-1">
+                <i className="bi bi-info-circle me-2"></i>
+                <span className="d-none d-md-inline">No tienes pedidos asignados en este momento.</span>
+                <span className="d-md-none">Sin pedidos asignados</span>
+              </Alert>
+            ) : (
+              <>
+                {/* Vista de cards para móvil */}
+                <div className="d-md-none">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="mb-3 shadow-sm">
+                      <Card.Header className="py-2">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <small className="text-muted">
+                            {new Date(order.date).toLocaleDateString()}
+                          </small>
+                          <Badge bg={getStatusColor(order.status)} className="small">
+                            {getStatusText(order.status)}
+                          </Badge>
+                        </div>
+                      </Card.Header>
+                      
+                      <Card.Body className="py-2">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <h6 className="fw-bold mb-1 fs-6">{order.userName}</h6>
+                            <p className="text-muted mb-2 small">{order.userEmail}</p>
+                          </div>
+                          <div className="text-end">
+                            <div className="fw-bold text-success">${order.total.toFixed(2)}</div>
+                            <small className="text-muted">{order.items.length} items</small>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-light p-2 rounded mb-2">
+                          <div className="small">
+                            <strong>Productos:</strong>
+                          </div>
+                          <div className="mt-1">
+                            {order.items.slice(0, 2).map((item, index) => (
+                              <div key={index} className="small text-muted">
+                                • {item.title} (x{item.quantity})
+                              </div>
+                            ))}
+                            {order.items.length > 2 && (
+                              <div className="small text-muted">
+                                • +{order.items.length - 2} más...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {order.deliveryNotes && (
+                          <div className="small text-muted mb-2">
+                            <strong>Notas:</strong> {order.deliveryNotes}
+                          </div>
+                        )}
+                        
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="w-100"
+                          onClick={() => handleUpdateStatus(order)}
+                        >
+                          <i className="bi bi-pencil-square me-1"></i>
+                          Actualizar Estado
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Vista de grid para desktop */}
+                <div className="d-none d-md-block">
+                  <Row>
+                    {orders.map((order) => (
+                      <Col xs={12} md={6} lg={4} key={order.id} className="mb-4">
+                        <Card className="h-100 shadow-sm">
+                          <Card.Header className="d-flex justify-content-between align-items-center">
+                            <small className="text-muted">
+                              {new Date(order.date).toLocaleDateString()}
+                            </small>
+                            <Badge bg={getStatusColor(order.status)}>
+                              {getStatusText(order.status)}
+                            </Badge>
+                          </Card.Header>
+                          
+                          <Card.Body>
+                            <h6 className="fw-bold mb-2">Cliente: {order.userName}</h6>
+                            <p className="text-muted small mb-2">{order.userEmail}</p>
+                            
+                            <div className="mb-3">
+                              <strong>Productos:</strong>
+                              <ul className="list-unstyled mt-1">
+                                {order.items.map((item, index) => (
+                                  <li key={index} className="small">
+                                    {item.quantity}x {item.name} - ${item.price}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <strong>Total: ${order.total.toFixed(2)}</strong>
+                            </div>
+
+                            {order.deliveryNotes && (
+                              <div className="mb-3">
+                                <small className="text-muted">
+                                  <strong>Notas:</strong> {order.deliveryNotes}
+                                </small>
+                              </div>
+                            )}
+                          </Card.Body>
+                          
+                          <Card.Footer>
+                            <Button 
+                              variant="primary" 
+                              size="sm" 
+                              className="w-100"
+                              onClick={() => handleUpdateStatus(order)}
+                              disabled={order.status === 'delivered'}
+                            >
+                              <i className="bi bi-pencil-square me-2"></i>
+                              {order.status === 'delivered' ? 'Entregado' : 'Actualizar Estado'}
+                            </Button>
+                          </Card.Footer>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              </>
+            )}
+
+            {/* Modal para actualizar estado - Responsive */}
+            <Modal 
+              show={showModal} 
+              onHide={() => setShowModal(false)}
+              fullscreen="sm-down"
+            >
+              <Modal.Header closeButton className="pb-2">
+                <Modal.Title className="fs-6 fs-md-5">
+                  <i className="bi bi-pencil-square me-2"></i>
+                  <span className="d-none d-sm-inline">Actualizar Estado de Entrega</span>
+                  <span className="d-sm-none">Actualizar Estado</span>
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body className="px-2 px-md-3">
+                {selectedOrder && (
+                  <>
+                    <div className="mb-3 bg-light p-3 rounded">
+                      <div className="row">
+                        <div className="col-sm-6">
+                          <strong>Cliente:</strong> {selectedOrder.userName}
+                        </div>
+                        <div className="col-sm-6">
+                          <strong>Total:</strong> ${selectedOrder.total.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-bold">Estado</Form.Label>
+                      <Form.Select 
+                        value={newStatus} 
+                        onChange={(e) => setNewStatus(e.target.value)}
+                        size="sm"
+                      >
+                        <option value="assigned">📋 Asignado</option>
+                        <option value="picked_up">📦 Recogido</option>
+                        <option value="in_transit">🚚 En tránsito</option>
+                        <option value="delivered">✅ Entregado</option>
+                      </Form.Select>
+                    </Form.Group>
+                    
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-bold">Notas de entrega</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        value={deliveryNotes}
+                        onChange={(e) => setDeliveryNotes(e.target.value)}
+                        placeholder="Agregar notas sobre la entrega..."
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </>
+                )}
+              </Modal.Body>
+              <Modal.Footer className="pt-2">
+                <Button variant="secondary" onClick={() => setShowModal(false)} size="sm">
+                  <i className="bi bi-x-circle me-1"></i>
+                  Cancelar
+                </Button>
+                <Button variant="primary" onClick={saveStatusUpdate} size="sm">
+                  <i className="bi bi-check-circle me-1"></i>
+                  Guardar
+                </Button>
+              </Modal.Footer>
+            </Modal>
+          </Container>
+        </main>
+      </div>
     </ProtectedRoute>
   );
 };

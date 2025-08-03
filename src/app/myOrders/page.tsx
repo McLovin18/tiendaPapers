@@ -117,7 +117,7 @@ const MyOrdersPage = () => {
     const getDeliveryPersonName = (email: string) => {
       const deliveryUsers = [
         { email: 'hwcobena@espol.edu.ec', name: 'Héctor Delivery' },
-        { email: 'delivery.guayaquil@tienda.com', name: 'Carlos Rodríguez' },
+        { email: 'nexel2024@outlook.com', name: 'Nexel Delivery' },
         { email: 'delivery.centro@tienda.com', name: 'María González' },
         { email: 'delivery.norte@tienda.com', name: 'Luis Martínez' },
         { email: 'delivery.sur@tienda.com', name: 'Ana López' },

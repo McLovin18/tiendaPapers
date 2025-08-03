@@ -90,12 +90,6 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
     if (!currentUser) {
       throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
     }
-
-    console.log('🔐 [DEBUG] Usuario verificado:', {
-      uid: currentUser.uid,
-      email: currentUser.email,
-      emailVerified: currentUser.emailVerified
-    });
     
     // 1. OPERACIÓN PRINCIPAL: Guardar en la subcolección del usuario
     const userCollectionRef = collection(db, `users/${purchase.userId}/purchases`);
@@ -113,21 +107,13 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
     
     // 2. OPERACIÓN OPCIONAL: Intentar guardar en la colección diaria (sin fallar si no puede)
     try {
-      console.log('🔍 [DEBUG] Usuario autenticado:', !!currentUser?.uid);
-      console.log('🔍 [DEBUG] User UID:', currentUser?.uid);
-      console.log('🔍 [DEBUG] User email:', currentUser?.email);
-      console.log('🔍 [DEBUG] Intentando guardar en dailyOrders para fecha:', dayKey);
-      
       // ✅ VERIFICAR TOKEN DE AUTENTICACIÓN
       const token = await currentUser.getIdToken();
-      console.log('🔐 [DEBUG] Token obtenido:', !!token);
       
       // ✅ ESPERAR UN POCO PARA ASEGURAR QUE LA AUTENTICACIÓN ESTÉ COMPLETAMENTE ESTABLECIDA
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
-      
-      console.log('📍 [DEBUG] Referencia del documento:', dailyOrderRef.path);
       
       // ✅ NUEVA LÓGICA: No intentar leer el documento, usar merge directo
       console.log('📄 [DEBUG] Usando merge para crear/actualizar sin necesidad de leer');
@@ -231,26 +217,17 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
             console.log('✅ [DEBUG] Orden agregada usando transacción como último recurso');
             success = true;
           } catch (transactionError: any) {
-            console.error('❌ [DEBUG] Transacción también falló:', transactionError.code);
+            // DEBUG: Transacción también falló
           }
         }
       }
       
       if (!success) {
-        console.error('❌ [DEBUG] TODAS las estrategias fallaron para guardar en dailyOrders');
+        // DEBUG: Todas las estrategias fallaron para dailyOrders
       }
       
     } catch (dailyOrderError: any) {
-      const currentUser = auth.currentUser;
-      console.error('❌ [DEBUG] Error completo:', dailyOrderError);
-      console.error('❌ [DEBUG] Error code:', dailyOrderError?.code);
-      console.error('❌ [DEBUG] Error message:', dailyOrderError?.message);
-      console.error('❌ [DEBUG] Error details:', dailyOrderError?.details);
-      console.error('❌ [DEBUG] Error stack:', dailyOrderError?.stack);
-      console.error('❌ [DEBUG] User UID:', currentUser?.uid);
-      console.error('❌ [DEBUG] User email:', currentUser?.email);
-      console.error('❌ [DEBUG] Day key:', dayKey);
-      console.error('❌ [DEBUG] Document path:', `dailyOrders/${dayKey}`);
+      // DEBUG: Error guardando en dailyOrders (no crítico)
       
       // Verificar si el usuario está autenticado
       if (!currentUser) {
@@ -381,8 +358,21 @@ export const addProductComment = async (
   }
 ) => {
   if (!productId || !comment?.text) throw new Error("productId y comentario requeridos");
+  
+  // ✅ VERIFICAR AUTENTICACIÓN Y AGREGAR userId
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Usuario no autenticado');
+  }
+  
+  // ✅ Agregar userId al comentario
+  const commentWithUserId = {
+    ...comment,
+    userId: currentUser.uid
+  };
+  
   const commentsCol = collection(db, `products/${productId}/comments`);
-  await addDoc(commentsCol, comment); // Guarda foto también
+  await addDoc(commentsCol, commentWithUserId);
 };
 
 
@@ -400,8 +390,23 @@ export const getProductComments = async (productId: string | number) => {
 };
 
 export const updateProductRating = async (productId: string | number, averageRating: number) => {
-  const productRef = doc(db, "products", String(productId));
-  await updateDoc(productRef, { averageRating });
+  try {
+    const productRef = doc(db, "products", String(productId));
+    
+    // Intentar actualizar el documento
+    await updateDoc(productRef, { averageRating });
+  } catch (error: any) {
+    // Si el documento no existe, crearlo con el rating
+    if (error.code === 'not-found') {
+      const productRef = doc(db, "products", String(productId));
+      await setDoc(productRef, { 
+        id: String(productId),
+        averageRating 
+      }, { merge: true });
+    } else {
+      console.error('❌ Error al actualizar rating del producto:', error);
+    }
+  }
 };
 
 

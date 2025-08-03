@@ -34,7 +34,7 @@ export const testDailyOrdersPermissions = async () => {
     try {
       const token = await user.getIdToken(true); // Forzar refresh
       results.tokenObtained = !!token;
-      console.log('🔐 Token obtenido correctamente');
+      // Token obtenido correctamente
     } catch (tokenError) {
       results.errors.push(`Error obteniendo token: ${tokenError.message}`);
     }
@@ -46,10 +46,10 @@ export const testDailyOrdersPermissions = async () => {
     try {
       const docSnap = await getDoc(testDocRef);
       results.canRead = true;
-      console.log('✅ Lectura exitosa. Documento existe:', docSnap.exists());
+      // Lectura exitosa
     } catch (readError) {
       results.errors.push(`Error en lectura: ${readError.message}`);
-      console.log('❌ Error en lectura:', readError.code);
+      // Error en lectura (mantener para debug)
     }
 
     // 4. Probar creación/escritura
@@ -81,7 +81,7 @@ export const testDailyOrdersPermissions = async () => {
 
       await setDoc(testDocRef, testData);
       results.canCreate = true;
-      console.log('✅ Creación exitosa');
+      // Creación exitosa
 
       // 5. Probar actualización
       const updateData = {

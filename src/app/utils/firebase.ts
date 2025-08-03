@@ -22,24 +22,10 @@ let googleProvider: any = null;
 
 if (!isBuilding) {
   try {
-    // ✅ Configuración segura - Solo en desarrollo
-    if (process.env.NODE_ENV === 'development') {
-      const configStatus = {
-        apiKey: firebaseConfig.apiKey ? 'Configurada' : 'Falta',
-        authDomain: firebaseConfig.authDomain ? 'Configurada' : 'Falta',
-        projectId: firebaseConfig.projectId ? 'Configurada' : 'Falta',
-      };
-      console.log('🔧 Firebase Config Status:', configStatus);
-    }
-    
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Firebase inicializado correctamente');
-    }
   } catch (error) {
     // ✅ Log de error seguro - sin exponer configuración sensible
     console.error('❌ Error al inicializar Firebase');

@@ -174,43 +174,52 @@ export default function AdminOrdersPage() {
         <div className="d-flex flex-grow-1">
           <Sidebar />
           
-          <main className="flex-grow-1 w-100">
-          <Container className="py-4">
-            {/* Header */}
-            <Row className="mb-4">
-              <Col>
-                <h1 className="fw-bold text-dark mb-2">Panel de Administración</h1>
-                <p className="text-muted">Gestiona pedidos y asigna entregas</p>
-              </Col>
-            </Row>
+          <main className="flex-grow-1 w-100" style={{ paddingTop: '1rem' }}>
+          <Container fluid className="px-2 px-md-4">
+            {/* Header - Responsive */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4">
+              <div className="mb-2 mb-md-0">
+                <h1 className="fw-bold text-dark mb-1 fs-3 fs-md-1">
+                  <span className="d-none d-sm-inline">Panel de Administración</span>
+                  <span className="d-sm-none">Admin Panel</span>
+                </h1>
+                <p className="text-muted mb-0 small">
+                  <span className="d-none d-md-inline">Gestiona pedidos y asigna entregas</span>
+                  <span className="d-md-none">Gestiona pedidos</span>
+                </p>
+              </div>
+            </div>
 
-            {/* ✅ Tabs de navegación */}
-            <Row className="mb-4">
-              <Col>
-                <div className="nav nav-pills" role="tablist">
-                  <Button
-                    variant={activeTab === 'orders' ? 'primary' : 'outline-primary'}
-                    className="me-2"
-                    onClick={() => setActiveTab('orders')}
-                  >
-                    <i className="bi bi-clipboard-data me-2"></i>
-                    Pedidos
-                  </Button>
-                  <Button
-                    variant={activeTab === 'deliveries' ? 'primary' : 'outline-primary'}
-                    onClick={() => setActiveTab('deliveries')}
-                  >
-                    <i className="bi bi-truck me-2"></i>
-                    Gestión Delivery
-                    {pendingDeliveries.length > 0 && (
-                      <Badge bg="danger" className="ms-2">
-                        {pendingDeliveries.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </div>
-              </Col>
-            </Row>
+            {/* Tabs de navegación - Responsive */}
+            <div className="mb-3 mb-md-4">
+              <div className="d-flex gap-2">
+                <Button
+                  variant={activeTab === 'orders' ? 'primary' : 'outline-primary'}
+                  size="sm"
+                  className="flex-fill flex-md-grow-0"
+                  onClick={() => setActiveTab('orders')}
+                >
+                  <i className="bi bi-clipboard-data me-1 me-md-2"></i>
+                  <span className="d-none d-sm-inline">Pedidos</span>
+                  <span className="d-sm-none">Orders</span>
+                </Button>
+                <Button
+                  variant={activeTab === 'deliveries' ? 'primary' : 'outline-primary'}
+                  size="sm"
+                  className="flex-fill flex-md-grow-0"
+                  onClick={() => setActiveTab('deliveries')}
+                >
+                  <i className="bi bi-truck me-1 me-md-2"></i>
+                  <span className="d-none d-sm-inline">Gestión Delivery</span>
+                  <span className="d-sm-none">Delivery</span>
+                  {pendingDeliveries.length > 0 && (
+                    <Badge bg="danger" className="ms-1 ms-md-2">
+                      {pendingDeliveries.length}
+                    </Badge>
+                  )}
+                </Button>
+              </div>
+            </div>
 
             {error && (
               <Alert variant="danger" dismissible onClose={() => setError(null)}>

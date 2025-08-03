@@ -217,7 +217,6 @@ const ProductDetailPage = () => {
 
   // Guardar comentario en Firestore
   const handleAddComment = async (e: React.FormEvent) => {
-
     e.preventDefault();
     let error = "";
     if (!user) return;
@@ -231,41 +230,51 @@ const ProductDetailPage = () => {
       return;
     }
 
-    const newComment = {
-      name: user.displayName || "Usuario",
-      text: commentText.trim(),
-      date: new Date().toISOString(),
-      rating,
-      replies: [],
-      photoURL: user.photoURL || "/new_user.png", // 🔹 Se guarda la foto de perfil
-    };
+    try {
+      const newComment = {
+        name: user.displayName || "Usuario",
+        text: commentText.trim(),
+        date: new Date().toISOString(),
+        rating,
+        replies: [],
+        photoURL: user.photoURL || "/new_user.png", // 🔹 Se guarda la foto de perfil
+      };
 
-    if (!product) return;
+      if (!product) return;
 
-    await addProductComment(product.id, newComment);
+      await addProductComment(product.id, newComment);
 
-    // Reset campos antes de actualizar comentarios
-    setCommentText("");
-    setRating(0);
-    setErrorMessage("");
+      // Reset campos antes de actualizar comentarios
+      setCommentText("");
+      setRating(0);
+      setErrorMessage("");
 
-    // 🔹 Obtener comentarios actualizados
-    const fetched = await getProductComments(product.id);
-    const mappedComments = fetched.map((c: any) => ({
-      id: c.id, // ✅ IMPORTANTE: incluir el ID
-      name: c.name || "Usuario",
-      text: c.text || "",
-      date: c.date || "",
-      rating: c.rating || 0,
-      replies: c.replies || [],
-      photoURL: c.photoURL || "/new_user.png"
-    }));
-    setComments(mappedComments);
+      // 🔹 Obtener comentarios actualizados
+      const fetched = await getProductComments(product.id);
+      const mappedComments = fetched.map((c: any) => ({
+        id: c.id, // ✅ IMPORTANTE: incluir el ID
+        name: c.name || "Usuario",
+        text: c.text || "",
+        date: c.date || "",
+        rating: c.rating || 0,
+        replies: c.replies || [],
+        photoURL: c.photoURL || "/new_user.png"
+      }));
+      setComments(mappedComments);
 
-    // 🔹 Calcular y guardar promedio
-    const avg = mappedComments.reduce((acc, c) => acc + (c.rating || 0), 0) / mappedComments.length;
-    setAverageRating(avg);
-    await updateProductRating(product.id, avg);
+      // 🔹 Calcular y guardar promedio (con manejo de errores)
+      try {
+        const avg = mappedComments.reduce((acc, c) => acc + (c.rating || 0), 0) / mappedComments.length;
+        setAverageRating(avg);
+        await updateProductRating(product.id, avg);
+      } catch (ratingError) {
+        // No mostrar error al usuario, el comentario se guardó correctamente
+      }
+      
+    } catch (error) {
+      console.error('❌ Error al enviar comentario:', error);
+      setErrorMessage('Error al enviar el comentario. Inténtalo de nuevo.');
+    }
   };
   
 
@@ -341,37 +350,30 @@ const ProductDetailPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleAddToCart = () => {
-    console.log('Add to cart clicked:', { selectedSize, selectedColor, quantity, user: user?.uid });
-    
     // Clear any previous error messages
     setErrorMessage('');
     
     if (!product) {
-      console.log('Add to cart failed: Product not loaded');
       setErrorMessage('Error: Producto no cargado');
       return;
     }
     
     if (!user?.uid) {
-      console.log('Add to cart failed: No user authenticated');
       setErrorMessage('Debes iniciar sesión para agregar productos al carrito');
       return;
     }
     
     if (!selectedSize) {
-      console.log('Add to cart failed: No size selected');
       setErrorMessage('Por favor selecciona una talla');
       return;
     }
     
     if (!selectedColor) {
-      console.log('Add to cart failed: No color selected');
       setErrorMessage('Por favor selecciona un color');
       return;
     }
     
     if (quantity < 1) {
-      console.log('Add to cart failed: Invalid quantity');
       setErrorMessage('La cantidad debe ser mayor a 0');
       return;
     }

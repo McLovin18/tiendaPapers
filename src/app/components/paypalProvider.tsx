@@ -21,13 +21,6 @@ if (isProduction && !isLocalhost) {
   clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID_SANDBOX || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
 }
 
-console.log('🔧 PayPal Provider Debug:', {
-  environment: process.env.NODE_ENV,
-  isLocalhost,
-  clientIdSource: isProduction && !isLocalhost ? 'LIVE' : 'SANDBOX',
-  clientId: clientId ? `${clientId.substring(0, 8)}...` : 'NO CONFIGURADO'
-});
-
 const initialOptions = {
   clientId: clientId,
   currency: "USD",
@@ -37,11 +30,11 @@ const initialOptions = {
 
 export default function PayPalProvider({ children }: PayPalProviderProps) {
   if (!clientId || clientId === 'test') {
-    console.warn('⚠️ PayPal Client ID no configurado');
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ PayPal Client ID no configurado');
+    }
     return <>{children}</>;
   }
-
-  console.log('🚀 Inicializando PayPal Provider con opciones:', initialOptions);
 
   return (
     <PayPalScriptProvider 

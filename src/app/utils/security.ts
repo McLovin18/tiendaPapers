@@ -111,7 +111,8 @@ export class AccessControl {
     if (!auth.currentUser) return false;
     
     const deliveryEmails = [
-      'hwcobena@espol.edu.ec'
+      'hwcobena@espol.edu.ec',
+      'nexel2024@outlook.com'
     ];
     
     const email = userEmail || auth.currentUser.email;
@@ -187,7 +188,8 @@ export class RateLimiter {
 export class SecureLogger {
   // Solo loggear en desarrollo
   static log(message: string, data?: any): void {
-    if (process.env.NODE_ENV === 'development') {
+    // Logs deshabilitados en producción
+    if (process.env.NODE_ENV === 'development' && false) {
       console.log(`🔍 [${new Date().toISOString()}] ${message}`, data);
     }
   }

@@ -12,7 +12,7 @@ import Link from 'next/link';
 import PayPalButton from '../components/paypalButton';
 import WhatsAppButton from '../components/WhatsAppButton';
 import DeliveryLocationSelector from '../components/DeliveryLocationSelector';
-import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import PayPalProvider from '../components/paypalProvider';
 import Footer from "../components/Footer";
 import PayPalDiagnostic from '../components/PayPalDiagnostic';
 
@@ -295,15 +295,7 @@ const CartPage = () => {
   }
 
   return (
-    <PayPalScriptProvider
-      options={{
-        clientId: PAYPAL_CLIENT_ID,
-        currency: "USD",
-        intent: "capture",
-        "data-sdk-integration-source": "react-paypal-js",
-        components: "buttons"
-      }}
-    >
+    <PayPalProvider>
       <div className="d-flex flex-column min-vh-100">
         {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
 
@@ -456,7 +448,7 @@ const CartPage = () => {
         {/* 🔧 Componente de diagnóstico PayPal (solo en desarrollo) */}
         <PayPalDiagnostic />
       </div>
-    </PayPalScriptProvider>
+    </PayPalProvider>
   );
 };
 

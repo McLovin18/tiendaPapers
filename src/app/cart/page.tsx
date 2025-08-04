@@ -14,6 +14,7 @@ import WhatsAppButton from '../components/WhatsAppButton';
 import DeliveryLocationSelector from '../components/DeliveryLocationSelector';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import Footer from "../components/Footer";
+import PayPalDiagnostic from '../components/PayPalDiagnostic';
 
 import { savePurchase, getUserDisplayInfo } from '../services/purchaseService';
 import { createDeliveryOrder } from '../services/deliveryService';
@@ -451,6 +452,9 @@ const CartPage = () => {
         </main>
         </div>
         <Footer />
+        
+        {/* 🔧 Componente de diagnóstico PayPal (solo en desarrollo) */}
+        <PayPalDiagnostic />
       </div>
     </PayPalScriptProvider>
   );

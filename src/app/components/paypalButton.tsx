@@ -20,7 +20,6 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   useEffect(() => {
     if (isRejected) {
       setScriptError('Error al cargar PayPal. Verifica tu conexión a internet.');
-      console.error('❌ PayPal SDK falló al cargar');
     }
   }, [isRejected]);
 
@@ -54,7 +53,6 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
   }, [onSuccess, onError]);
 
   const onErrorHandler = useCallback((error: any) => {
-    console.error('❌ Error de PayPal:', error);
     const errorMessage = error?.message || '';
     
     // Ignorar errores de ventana cerrada
@@ -64,18 +62,33 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
       return;
     }
     
-    // Detectar errores de configuración de producción
-    if (errorMessage.includes('CLIENT_ID_REQUIRED') || 
-        errorMessage.includes('INVALID_CLIENT_ID') ||
-        errorMessage.includes('sandbox') ||
-        process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID === 'test') {
+    // Detectar errores específicos de sandbox
+    if (errorMessage.includes('INVALID_CLIENT_ID')) {
       onError({
         ...error,
-        userMessage: 'Error de configuración de PayPal para producción. Contacta al administrador.'
+        userMessage: 'Error de configuración de PayPal Sandbox. Verifica el Client ID.'
       });
       return;
     }
     
+    if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('authentication')) {
+      onError({
+        ...error,
+        userMessage: 'Error de autenticación en PayPal. Intenta con otra cuenta.'
+      });
+      return;
+    }
+    
+    // Detectar errores de cuenta sandbox
+    if (errorMessage.includes('INVALID_ACCOUNT') || errorMessage.includes('account_invalid')) {
+      onError({
+        ...error,
+        userMessage: 'Cuenta de prueba inválida. Usa las credenciales correctas del sandbox.'
+      });
+      return;
+    }
+    
+    // Error genérico
     onError(error);
   }, [onError]);
 

@@ -91,7 +91,6 @@ class InventoryService {
         lastUpdated: new Date().toISOString()
       });
       
-      console.log(`✅ Stock reducido: ${currentData.name} (ID: ${productId}), Cantidad: ${quantity}, Stock restante: ${currentData.stock - quantity}`);
       return true;
     } catch (error) {
       console.error('❌ Error reduciendo stock:', error);
@@ -119,7 +118,6 @@ class InventoryService {
         lastUpdated: new Date().toISOString()
       });
       
-      console.log(`✅ Stock agregado: Producto ${productId}, Cantidad: ${quantity}, Nuevo stock: ${newStock}`);
       return true;
     } catch (error) {
       console.error('Error agregando stock:', error);
@@ -138,7 +136,6 @@ class InventoryService {
         lastUpdated: new Date().toISOString()
       }, { merge: true });
       
-      console.log(`✅ Producto ${productData.productId} actualizado en inventario`);
       return true;
     } catch (error) {
       console.error('Error creando/actualizando producto:', error);
@@ -209,7 +206,6 @@ class InventoryService {
       const docRef = doc(db, this.collectionName, productId.toString());
       await deleteDoc(docRef);
       
-      console.log(`✅ Producto ${productId} eliminado del inventario`);
       return true;
     } catch (error) {
       console.error('Error eliminando producto:', error);
@@ -242,8 +238,6 @@ class InventoryService {
     const processedItems: { productId: number; quantity: number }[] = [];
     
     try {
-      console.log('🔄 Iniciando procesamiento de orden...');
-      
       // Verificar stock de todos los productos primero
       for (const item of items) {
         const available = await this.isProductAvailable(item.productId, item.quantity);
@@ -258,7 +252,6 @@ class InventoryService {
         try {
           await this.reduceStock(item.productId, item.quantity);
           processedItems.push(item);
-          console.log(`✅ Stock reducido para producto ${item.productId}: ${item.quantity} unidades`);
         } catch (error) {
           console.error(`❌ Error reduciendo stock para producto ${item.productId}:`, error);
           
@@ -276,7 +269,6 @@ class InventoryService {
         }
       }
       
-      console.log('✅ Orden procesada exitosamente, stock actualizado para todos los productos');
       return true;
     } catch (error) {
       console.error('❌ Error procesando orden:', error);

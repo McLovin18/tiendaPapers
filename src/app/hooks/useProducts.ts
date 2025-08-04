@@ -24,10 +24,12 @@ export const useProducts = (categoryFilter?: string) => {
       categoryLink: getCategoryLink(inventoryProduct.category),
       description: inventoryProduct.description || '',
       inStock: inventoryProduct.stock > 0 && inventoryProduct.isActive !== false,
+      stockQuantity: inventoryProduct.stock || 0, // Incluir cantidad de stock
       sizes: inventoryProduct.sizes || ['ÚNICA'],
       colors: inventoryProduct.colors || ['Sin especificar'],
       details: inventoryProduct.details || [],
-      featured: false // Los productos del inventario no son featured por defecto
+      featured: false, // Los productos del inventario no son featured por defecto
+      isFromFirebase: true // Marcar que viene de Firebase
     };
   };
 
@@ -112,7 +114,7 @@ export const useProducts = (categoryFilter?: string) => {
               optimizedStaticProducts.push({
                 ...staticProduct,
                 inStock: true,
-                stockQuantity: undefined,
+                stockQuantity: 999, // Valor por defecto para productos estáticos sin inventario Firebase
                 isFromFirebase: false
               });
             }

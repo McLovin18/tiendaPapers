@@ -277,13 +277,9 @@ const ProductsPage = () => {
                             <span className="badge bg-secondary fs-6">
                               Agotado
                             </span>
-                          ) : (product as any).stockQuantity !== undefined ? (
-                            <span className="badge bg-success fs-6">
-                              Stock: {(product as any).stockQuantity}
-                            </span>
                           ) : (
-                            <span className="badge bg-info fs-6">
-                              Disponible
+                            <span className="badge bg-success fs-6">
+                              Stock: {(product as any).stockQuantity || 0}
                             </span>
                           )}
                         </div>

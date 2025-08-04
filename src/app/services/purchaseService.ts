@@ -139,7 +139,6 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
       const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
       
       // ✅ NUEVA LÓGICA: No intentar leer el documento, usar merge directo
-      console.log('📄 [DEBUG] Usando merge para crear/actualizar sin necesidad de leer');
       
       const orderData = {
         id: purchaseId,  // Usar el purchaseId generado
@@ -156,7 +155,6 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
       };
       
       // ✅ NUEVA ESTRATEGIA: Usar arrayUnion para agregar órdenes de manera atómica
-      console.log('📊 [DEBUG] Usando arrayUnion para agregar orden de manera atómica...');
       
       // Preparar los datos base del documento si no existe
       const baseDocData = {
@@ -178,7 +176,6 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
       let success = false;
       
       try {
-        console.log('🎯 [DEBUG] Intentando directamente con arrayUnion...');
         await updateDoc(dailyOrderRef, {
           orders: arrayUnion(orderData),
           totalOrdersCount: increment(1),
@@ -186,16 +183,12 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
           lastUpdated: currentDate.toISOString()
         });
         
-        console.log('✅ [DEBUG] Orden agregada exitosamente usando arrayUnion directo');
         success = true;
       } catch (updateError: any) {
-        console.log('⚠️ [DEBUG] arrayUnion falló:', updateError.code, 'Intentando crear documento base...');
-        
         // Si arrayUnion falla, probablemente el documento no existe
         try {
           // Crear documento base sin sobrescribir órdenes existentes
           await setDoc(dailyOrderRef, baseDocData, { merge: true });
-          console.log('✅ [DEBUG] Documento base creado con merge');
           
           // Intentar arrayUnion de nuevo
           await updateDoc(dailyOrderRef, {
@@ -205,11 +198,8 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
             lastUpdated: currentDate.toISOString()
           });
           
-          console.log('✅ [DEBUG] Orden agregada exitosamente después de crear base');
           success = true;
         } catch (secondError: any) {
-          console.log('⚠️ [DEBUG] Segundo intento falló:', secondError.code);
-          
           // ÚLTIMO RECURSO: Usar transacción para leer y escribir manualmente
           try {
             const { runTransaction } = await import('firebase/firestore');
@@ -237,7 +227,6 @@ export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: st
               }
             });
             
-            console.log('✅ [DEBUG] Orden agregada usando transacción como último recurso');
             success = true;
           } catch (transactionError: any) {
             // DEBUG: Transacción también falló

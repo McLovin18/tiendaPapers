@@ -96,15 +96,9 @@ const ProductsSportPage = () => {
                         />
                         {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
                         <div className="position-absolute top-0 end-0 m-2">
-                          {(product as any).stockQuantity !== undefined ? (
-                            <span className="badge bg-success fs-6">
-                              Stock: {(product as any).stockQuantity}
-                            </span>
-                          ) : (
-                            <span className="badge bg-info fs-6">
-                              Disponible
-                            </span>
-                          )}
+                          <span className="badge bg-success fs-6">
+                            Stock: {(product as any).stockQuantity || 0}
+                          </span>
                         </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">

@@ -97,16 +97,12 @@ const ProductsHombrePage = () => {
                             borderRadius: "1rem 1rem 0 0",
                           }}
                         />
-                        {/* Mostrar badge según el origen del producto */}
-                        {(product as any).stockQuantity !== undefined ? (
-                          <div className="position-absolute top-0 end-0 m-2">
-                            <span className="badge bg-success">Stock: {(product as any).stockQuantity}</span>
-                          </div>
-                        ) : (
-                          <div className="position-absolute top-0 end-0 m-2">
-                            <span className="badge bg-info">Disponible</span>
-                          </div>
-                        )}
+                        {/* Mostrar badge de stock */}
+                        <div className="position-absolute top-0 end-0 m-2">
+                          <span className="badge bg-success fs-6">
+                            Stock: {(product as any).stockQuantity || 0}
+                          </span>
+                        </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>

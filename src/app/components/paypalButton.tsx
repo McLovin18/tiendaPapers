@@ -23,6 +23,9 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     }
   }, [isRejected]);
 
+  // 🔍 Verificar que PayPal esté disponible
+  const isPayPalReady = isResolved && typeof window !== 'undefined' && window.paypal && window.paypal.Buttons;
+
   const createOrder = useCallback((data: any, actions: any) => {
     return actions.order.create({
       purchase_units: [
@@ -100,13 +103,36 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
     );
   }
 
-  if (isPending || !isResolved) {
+  if (isPending || !isPayPalReady) {
     return (
       <div className="text-center p-3">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Cargando PayPal...</span>
         </div>
+        {!isPayPalReady && isResolved && (
+          <div className="mt-2">
+            <small className="text-muted">Inicializando PayPal...</small>
+          </div>
+        )}
       </div>
+    );
+  }
+
+  if (scriptError) {
+    return (
+      <Alert variant="warning" className="text-center">
+        <i className="bi bi-exclamation-triangle me-2"></i>
+        {scriptError}
+        <div className="mt-2">
+          <Button 
+            variant="outline-warning" 
+            size="sm" 
+            onClick={() => window.location.reload()}
+          >
+            Recargar página
+          </Button>
+        </div>
+      </Alert>
     );
   }
 

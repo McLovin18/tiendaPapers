@@ -47,16 +47,9 @@ const initialOptions = {
   intent: "capture" as const,
   // 🔥 FORZAR modo sandbox cuando corresponde
   environment: (useSandbox ? "sandbox" : "production") as "sandbox" | "production",
-  // 🔥 Configuraciones adicionales para sandbox
-  components: "buttons,funding-eligibility",
-  "enable-funding": "venmo,paylater",
-  "disable-funding": "",
-  "data-sdk-integration-source": "react-paypal-js",
-  // 🔥 Configuración para cuentas sandbox con email/password
-  "buyer-country": "US",
-  locale: "en_US",
-  // 🔥 Versión específica para evitar cache - USAR TIMESTAMP
-  "data-namespace": useSandbox ? `sandbox_${Date.now()}` : `production_${Date.now()}`
+  // 🔥 Configuraciones mínimas pero efectivas
+  components: "buttons",
+  "data-sdk-integration-source": "react-paypal-js"
 };
 
 export default function PayPalProvider({ children }: PayPalProviderProps) {
@@ -78,7 +71,7 @@ export default function PayPalProvider({ children }: PayPalProviderProps) {
   return (
     <PayPalScriptProvider 
       options={initialOptions}
-      key={`paypal-${useSandbox ? 'sandbox' : 'production'}-${clientId.substring(0, 8)}`}
+      key={`paypal-${useSandbox ? 'sandbox' : 'production'}`}
     >
       {children}
     </PayPalScriptProvider>

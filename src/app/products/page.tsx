@@ -271,12 +271,22 @@ const ProductsPage = () => {
                             }}
                           />
                         )}
-                        {/* Indicador simple de disponibilidad */}
-                        {!product.inStock && (
-                          <div className="position-absolute top-0 end-0 m-2">
-                            <Badge bg="secondary">Agotado</Badge>
-                          </div>
-                        )}
+                        {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
+                        <div className="position-absolute top-0 end-0 m-2">
+                          {!product.inStock ? (
+                            <span className="badge bg-secondary fs-6">
+                              Agotado
+                            </span>
+                          ) : (product as any).stockQuantity !== undefined ? (
+                            <span className="badge bg-success fs-6">
+                              Stock: {(product as any).stockQuantity}
+                            </span>
+                          ) : (
+                            <span className="badge bg-info fs-6">
+                              Disponible
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>

@@ -4,22 +4,24 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from './context/AuthContext';
-import { Container, Row, Col, Button, Card, Carousel } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Carousel, Spinner } from 'react-bootstrap';
 import NavbarComponent from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import TopbarMobile from './components/TopbarMobile';
-import allProducts from './products/productsData';
+import { useProducts } from './hooks/useProducts';
 import FavouriteButton from "./components/FavouriteButton";
 import Footer from "./components/Footer";
-
-
-
-const featuredProducts = allProducts.filter(p => p.featured);
 
 export default function Home() {
   const { user } = useAuth();
   const [favSuccess, setFavSuccess] = useState<string | null>(null);
   const [favsUpdate, setFavsUpdate] = useState(0);
+  
+  // 🔥 USAR EL HOOK OPTIMIZADO para productos con stock
+  const { products: allProductsWithStock, loading: loadingProducts } = useProducts();
+  
+  // 🌟 FILTRAR PRODUCTOS DESTACADOS que tienen stock
+  const featuredProducts = allProductsWithStock.filter(p => p.featured && p.inStock);
 
   useEffect(() => {
     const handleFavUpdate = () => setFavsUpdate(prev => prev + 1);
@@ -104,13 +106,30 @@ export default function Home() {
       {/* Sección de productos destacados */}
       <Container className="py-5">
         <h2 className="text-center mb-4 fw-bold">Productos Destacados</h2>
-        <Row>
-          {featuredProducts.map((product) => (
-            <Col key={product.id} md={3} sm={6} className="mb-4">
-              <div className="product-card">
-                <div
-                  className="position-relative"
-                  style={{
+        {loadingProducts ? (
+          <Row className="justify-content-center">
+            <Col xs={12} className="text-center py-5">
+              <Spinner animation="border" variant="primary" />
+              <h4 className="mt-3 text-muted">Cargando productos destacados...</h4>
+              <p className="text-muted">Verificando stock disponible</p>
+            </Col>
+          </Row>
+        ) : featuredProducts.length === 0 ? (
+          <Row className="justify-content-center">
+            <Col xs={12} className="text-center py-5">
+              <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "#888" }}></i>
+              <h4 className="mt-3 text-muted">No hay productos destacados disponibles</h4>
+              <p className="text-muted">Todos los productos destacados están agotados</p>
+            </Col>
+          </Row>
+        ) : (
+          <Row>
+            {featuredProducts.map((product) => (
+              <Col key={product.id} md={3} sm={6} className="mb-4">
+                <div className="product-card">
+                  <div
+                    className="position-relative"
+                    style={{
                     width: '200px',
                     height: '300px',
                     margin: '0 auto',
@@ -136,6 +155,18 @@ export default function Home() {
                       }}
                     />
                   )}
+                  {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
+                  <div className="position-absolute top-0 end-0 m-2">
+                    {(product as any).stockQuantity !== undefined ? (
+                      <span className="badge bg-success fs-6">
+                        Stock: {(product as any).stockQuantity}
+                      </span>
+                    ) : (
+                      <span className="badge bg-info fs-6">
+                        Disponible
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="py-2">
                   <h5 className="mb-1">{product.name}</h5>
@@ -144,17 +175,18 @@ export default function Home() {
               </div>
             </Col>
           ))}
-        </Row>
-        <div className="text-center mt-4">
-          <Button 
-            as={Link} 
-            href="/products" 
-            variant="dark" 
-            className="rounded-1 px-4"
-          >
-            Ver todos los productos
-          </Button>
-        </div>
+          </Row>
+        )}
+        
+        {!loadingProducts && featuredProducts.length > 0 && (
+          <div className="text-center mt-4">
+            <Link href="/products" passHref>
+              <Button variant="dark" className="rounded-1 px-4">
+                Ver todos los productos
+              </Button>
+            </Link>
+          </div>
+        )}
       </Container>
       
 
@@ -201,18 +233,35 @@ export default function Home() {
         <main className="flex-grow-1 w-100">
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
             <h1 className="fw-bold text-center mb-5">Bienvenido a Fashion Store</h1>
-            <h3 className="fw-bold text-center mb-5">Aqui te presentamos los productos destacados</h3>
+            <h3 className="fw-bold text-center mb-5">Aquí te presentamos los productos destacados</h3>
 
-            <Row className="g-4">
-              {featuredProducts.map((product) => (
-                <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>
-                  <Card className="h-100 border-0 shadow-sm position-relative">
-                    <div
-                      className="position-relative"
-                      style={{
-                        width: 'auto',
-                        height: '300px',
-                        margin: '0 auto',
+            {loadingProducts ? (
+              <Row className="justify-content-center">
+                <Col xs={12} className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <h4 className="mt-3 text-muted">Cargando productos destacados...</h4>
+                  <p className="text-muted">Verificando stock disponible</p>
+                </Col>
+              </Row>
+            ) : featuredProducts.length === 0 ? (
+              <Row className="justify-content-center">
+                <Col xs={12} className="text-center py-5">
+                  <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "#888" }}></i>
+                  <h4 className="mt-3 text-muted">No hay productos destacados disponibles</h4>
+                  <p className="text-muted">Todos los productos destacados están agotados</p>
+                </Col>
+              </Row>
+            ) : (
+              <Row className="g-4">
+                {featuredProducts.map((product) => (
+                  <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>
+                    <Card className="h-100 border-0 shadow-sm position-relative">
+                      <div
+                        className="position-relative"
+                        style={{
+                          width: 'auto',
+                          height: '300px',
+                          margin: '0 auto',
                         background: '#fff',
                         display: 'flex',
                         alignItems: 'center',
@@ -235,6 +284,18 @@ export default function Home() {
                           }}
                         />
                       )}
+                      {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
+                      <div className="position-absolute top-0 end-0 m-2">
+                        {(product as any).stockQuantity !== undefined ? (
+                          <span className="badge bg-success fs-6">
+                            Stock: {(product as any).stockQuantity}
+                          </span>
+                        ) : (
+                          <span className="badge bg-info fs-6">
+                            Disponible
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <Card.Body className="d-flex flex-column justify-content-between">
                       <div>
@@ -245,14 +306,11 @@ export default function Home() {
                       </div>
                       
                       <div className="d-flex gap-2">
-                        <Button
-                          as={Link}
-                          href={`/products/${product.id}`}
-                          variant="dark"
-                          className="flex-grow-1 rounded-1"
-                        >
-                          Ver Detalles
-                        </Button>
+                        <Link href={`/products/${product.id}`} passHref>
+                          <Button variant="dark" className="flex-grow-1 rounded-1">
+                            Ver Detalles
+                          </Button>
+                        </Link>
 
                         <FavouriteButton
                           product={{
@@ -268,7 +326,8 @@ export default function Home() {
                   </Card>
                 </Col>
               ))}
-            </Row>
+              </Row>
+            )}
 
           </Container>
         </main>

@@ -16,7 +16,7 @@ const ProductsMujerPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   
   // Usar el hook personalizado para cargar productos de la categoría mujer
-  const { products, loading } = useProducts("mujer");
+  const { products, loading } = useProducts("/mujer");
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,6 +86,18 @@ const ProductsMujerPage = () => {
                             borderRadius: "1rem 1rem 0 0",
                           }}
                         />
+                        {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
+                        <div className="position-absolute top-0 end-0 m-2">
+                          {(product as any).stockQuantity !== undefined ? (
+                            <span className="badge bg-success fs-6">
+                              Stock: {(product as any).stockQuantity}
+                            </span>
+                          ) : (
+                            <span className="badge bg-info fs-6">
+                              Disponible
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>

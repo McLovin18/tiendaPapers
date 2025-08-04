@@ -1,27 +1,31 @@
 "use client";
 
 import React, { useState } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
 import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
 import Link from "next/link";
-import allProducts from "../productsData";
 import Footer from "../../components/Footer";
+import { useProducts } from "../../hooks/useProducts";
 
-
-const ProductsSportPage = () => {
+const ProductsNinosPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // 🔥 USAR EL HOOK UNIFICADO que filtra por stock automáticamente
+  const { products, loading } = useProducts("/ninos");
 
-  // Filtrar productos para la categoría sport
-  const products = allProducts.filter(
-    (product) => product.categoryLink === "/niños"
-  );
+  // Filtrar por término de búsqueda
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  console.log('🔍 Productos de Niños con stock:', {
+    total: filteredProducts.length,
+    conStock: filteredProducts.filter(p => p.inStock !== false).length
+  });
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -54,15 +58,24 @@ const ProductsSportPage = () => {
             </div>
 
             <Row className="g-4">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <Col xs={12} className="text-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <h4 className="mt-3 text-muted">Cargando productos...</h4>
+                  <p className="text-muted">Verificando stock disponible</p>
+                </Col>
+              ) : filteredProducts.length === 0 ? (
                 <Col xs={12} className="text-center py-5">
                   <i
                     className="bi bi-emoji-frown"
                     style={{ fontSize: "2.5rem", color: "#888" }}
                   ></i>
                   <h4 className="mt-3 text-muted">
-                    No se encontraron productos
+                    No hay productos disponibles
                   </h4>
+                  <p className="text-muted">
+                    Todos los productos están agotados o no hay productos en esta categoría
+                  </p>
                 </Col>
               ) : (
                 filteredProducts.map((product) => (
@@ -81,6 +94,18 @@ const ProductsSportPage = () => {
                             borderRadius: "1rem 1rem 0 0",
                           }}
                         />
+                        {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
+                        <div className="position-absolute top-0 end-0 m-2">
+                          {(product as any).stockQuantity !== undefined ? (
+                            <span className="badge bg-success fs-6">
+                              Stock: {(product as any).stockQuantity}
+                            </span>
+                          ) : (
+                            <span className="badge bg-info fs-6">
+                              Disponible
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
@@ -91,14 +116,14 @@ const ProductsSportPage = () => {
                             ${product.price.toFixed(2)}
                           </Card.Text>
                         </div>
-                        <Button
-                          as={Link}
-                          href={`/products/${product.id}`}
-                          variant="dark"
-                          className="w-100 mt-2 rounded-1"
-                        >
-                          Ver Detalles
-                        </Button>
+                        <Link href={`/products/${product.id}`} passHref>
+                          <Button
+                            variant="dark"
+                            className="w-100 mt-2 rounded-1"
+                          >
+                            Ver Detalles
+                          </Button>
+                        </Link>
                       </Card.Body>
                     </Card>
                   </Col>
@@ -113,4 +138,4 @@ const ProductsSportPage = () => {
   );
 };
 
-export default ProductsSportPage;
+export default ProductsNinosPage;

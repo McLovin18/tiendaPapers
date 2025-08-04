@@ -1,85 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import React, { useState } from "react";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
 import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
 import Link from "next/link";
-import allProducts from "../productsData";
 import Footer from "../../components/Footer";
-import { inventoryService, type ProductInventory } from "../../services/inventoryService";
-
-// Tipo combinado para productos estáticos y dinámicos
-interface CombinedProduct {
-  id: number;
-  name: string;
-  price: number;
-  images: string[];
-  categoryLink?: string;
-  category?: string;
-  isFromFirebase?: boolean;
-}
+import { useProducts } from "../../hooks/useProducts";
 
 const ProductsHombrePage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [firebaseProducts, setFirebaseProducts] = useState<ProductInventory[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Cargar productos de Firebase al montar el componente
-  useEffect(() => {
-    const loadFirebaseProducts = async () => {
-      try {
-        // Usar el método específico para obtener productos de la categoría "hombre"
-        const products = await inventoryService.getProductsByCategory("hombre");
-        console.log('📦 Productos de Firebase para categoría "hombre":', products);
-        setFirebaseProducts(products);
-      } catch (error) {
-        console.error('❌ Error cargando productos de Firebase:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFirebaseProducts();
-  }, []);
-
-  // Combinar productos estáticos y dinámicos
-  const allCombinedProducts: CombinedProduct[] = [
-    // Productos estáticos filtrados por categoría "hombre"
-    ...allProducts
-      .filter(product => product.categoryLink === "/hombre")
-      .map(product => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        images: product.images,
-        categoryLink: product.categoryLink,
-        isFromFirebase: false
-      })),
-    // Productos de Firebase (ya filtrados por categoría "hombre" en la consulta)
-    ...firebaseProducts
-      .map(product => ({
-        id: product.productId,
-        name: product.name,
-        price: product.price,
-        images: product.images,
-        category: product.category,
-        isFromFirebase: true
-      }))
-  ];
+  
+  // 🔥 USAR EL HOOK UNIFICADO que filtra por stock automáticamente
+  const { products, loading } = useProducts("/hombre");
 
   // Filtrar por término de búsqueda
-  const filteredProducts = allCombinedProducts.filter((product) =>
+  const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  console.log('🔍 Productos combinados para Hombre:', {
-    estaticos: allProducts.filter(p => p.categoryLink === "/hombre").length,
-    firebase: firebaseProducts.filter(p => p.category === "hombre").length,
-    total: filteredProducts.length
+  console.log('🔍 Productos de Hombre con stock:', {
+    total: filteredProducts.length,
+    conStock: filteredProducts.filter(p => p.inStock !== false).length
   });
 
   return (
@@ -137,7 +82,7 @@ const ProductsHombrePage = () => {
                 </Col>
               ) : (
                 filteredProducts.map((product) => (
-                  <Col key={`${product.isFromFirebase ? 'fb' : 'static'}-${product.id}`} xs={12} sm={6} md={3}>
+                  <Col key={product.id} xs={12} sm={6} md={3}>
                     <Card className="h-100 border-0 shadow-sm">
                       <div
                         className="position-relative"
@@ -152,9 +97,14 @@ const ProductsHombrePage = () => {
                             borderRadius: "1rem 1rem 0 0",
                           }}
                         />
-                        {product.isFromFirebase && (
+                        {/* Mostrar badge según el origen del producto */}
+                        {(product as any).stockQuantity !== undefined ? (
                           <div className="position-absolute top-0 end-0 m-2">
-                            <span className="badge bg-success">Nuevo</span>
+                            <span className="badge bg-success">Stock: {(product as any).stockQuantity}</span>
+                          </div>
+                        ) : (
+                          <div className="position-absolute top-0 end-0 m-2">
+                            <span className="badge bg-info">Disponible</span>
                           </div>
                         )}
                       </div>

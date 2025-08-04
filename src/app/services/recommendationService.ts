@@ -238,11 +238,14 @@ class RecommendationEngine {
       .filter(item => item.score > 0) // Solo productos con puntuación mayor a 0
       .sort((a, b) => b.score - a.score); // Ordenar por puntuación descendente
 
-    console.log('Recomendaciones para:', targetProduct.name);
-    console.log('Top scores:', scoredProducts.slice(0, 5).map(s => ({
-      name: s.product.name,
-      score: s.score.toFixed(3)
-    })));
+    // Solo mostrar información de debug en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Recomendaciones para:', targetProduct.name);
+      console.log('Top scores:', scoredProducts.slice(0, 5).map(s => ({
+        name: s.product.name,
+        score: s.score.toFixed(3)
+      })));
+    }
 
     return scoredProducts.slice(0, limit).map(item => item.product);
   }

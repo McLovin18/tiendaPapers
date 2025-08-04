@@ -65,7 +65,6 @@ const ProfilePage = () => {
     try {
       // Cargar compras desde Firestore
       const userPurchases = await getUserPurchases(user.uid);
-      console.log('Compras cargadas desde Firestore:', userPurchases);
       
       // Ordenar por fecha (más reciente primero)
       const sortedPurchases = userPurchases.sort((a, b) => {

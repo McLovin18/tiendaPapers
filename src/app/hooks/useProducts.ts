@@ -77,10 +77,8 @@ export const useProducts = (categoryFilter?: string) => {
         
         // � VERIFICAR CACHE antes de consultar Firebase
         if (inventoryCache && (now - cacheTimestamp) < CACHE_DURATION) {
-          console.log('🚀 Usando cache de inventario (súper rápido)');
           allInventoryProducts = inventoryCache;
         } else {
-          console.log('📦 Consultando Firebase para inventario...');
           allInventoryProducts = await inventoryService.getAllProducts();
           // Actualizar cache
           inventoryCache = allInventoryProducts;
@@ -136,12 +134,6 @@ export const useProducts = (categoryFilter?: string) => {
         
         // 🔍 PASO 7: Combinar productos estáticos optimizados + productos únicos de Firebase
         let combinedProducts = [...optimizedStaticProducts, ...newInventoryProducts];
-        
-        console.log('� Productos optimizados:', {
-          estaticosConStock: optimizedStaticProducts.length,
-          inventarioConStock: newInventoryProducts.length,
-          totalCombinados: combinedProducts.length
-        });
         
         // 🔍 PASO 8: Aplicar filtro de categoría si se especifica
         if (categoryFilter) {

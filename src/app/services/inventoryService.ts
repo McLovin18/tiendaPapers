@@ -146,6 +146,38 @@ class InventoryService {
     }
   }
 
+  // ✅ Obtener productos disponibles por categoría
+  async getProductsByCategory(category: string): Promise<ProductInventory[]> {
+    try {
+      // Consulta simplificada para evitar el error de índice compuesto
+      // Solo filtramos por categoría y luego filtramos por stock en memoria
+      const q = query(
+        collection(db, this.collectionName),
+        where('category', '==', category) // Solo filtrar por categoría
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const products: ProductInventory[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const productData = doc.data() as ProductInventory;
+        // Filtrar por stock en memoria (solo productos con stock > 0)
+        if (productData.stock > 0) {
+          products.push({
+            ...productData,
+            productId: parseInt(doc.id)
+          });
+        }
+      });
+      
+      console.log(`📦 Productos encontrados para categoría "${category}":`, products.length);
+      return products.sort((a, b) => a.productId - b.productId);
+    } catch (error) {
+      console.error(`Error obteniendo productos de categoría "${category}":`, error);
+      return [];
+    }
+  }
+
   // ✅ Obtener solo productos disponibles (para clientes) - basado en stock
   async getAvailableProducts(): Promise<ProductInventory[]> {
     try {

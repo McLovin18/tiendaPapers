@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Alert, Badge, Button, Spinner } from 'react-bootstrap';
+import { Alert, Badge, Button, Spinner, Row, Col } from 'react-bootstrap';
 import { useStockValidation } from '../hooks/useStockValidation';
 
 interface StockValidationProps {
@@ -12,10 +12,18 @@ interface StockValidationProps {
     price: number;
   }>;
   onStockValidated?: (isValid: boolean, errors: string[]) => void;
+  onQuantityAdjust?: (itemId: string, newQuantity: number) => Promise<void>;
+  onItemRemove?: (itemId: string) => Promise<void>;
   className?: string;
 }
 
-export default function StockValidation({ items, onStockValidated, className = '' }: StockValidationProps) {
+export default function StockValidation({ 
+  items, 
+  onStockValidated, 
+  onQuantityAdjust, 
+  onItemRemove, 
+  className = '' 
+}: StockValidationProps) {
   const { stockInfo, loading, lastCheck, isValid, errors, validateStock } = useStockValidation({ items });
 
   // Notificar cambios de validación al componente padre
@@ -25,6 +33,24 @@ export default function StockValidation({ items, onStockValidated, className = '
 
   const hasStockIssues = !isValid;
   const hasLowStock = stockInfo.some(info => info.isValid && info.available <= 5);
+
+  // Función para ajustar cantidad a la disponible
+  const handleAdjustToAvailable = async (itemId: string, available: number) => {
+    if (onQuantityAdjust && available > 0) {
+      await onQuantityAdjust(itemId, available);
+      // Re-validar stock después del ajuste
+      setTimeout(() => validateStock(), 500);
+    }
+  };
+
+  // Función para remover item completamente
+  const handleRemoveItem = async (itemId: string) => {
+    if (onItemRemove) {
+      await onItemRemove(itemId);
+      // Re-validar stock después de remover
+      setTimeout(() => validateStock(), 500);
+    }
+  };
 
   if (items.length === 0) return null;
 
@@ -55,24 +81,84 @@ export default function StockValidation({ items, onStockValidated, className = '
         </Button>
       </div>
 
-      {/* Alertas de stock */}
+      {/* Alertas de stock con opciones de ajuste */}
       {hasStockIssues && (
         <Alert variant="danger" className="mb-2">
-          <div className="d-flex align-items-center mb-2">
+          <div className="d-flex align-items-center mb-3">
             <i className="bi bi-exclamation-triangle-fill me-2"></i>
             <strong>Problemas de Stock Detectados</strong>
           </div>
-          <small>Los siguientes productos tienen problemas de disponibilidad:</small>
-          <ul className="mb-0 mt-2 small">
-            {stockInfo
-              .filter(info => !info.isValid)
-              .map(info => (
-                <li key={info.productId}>
-                  <strong>{info.name}</strong>: Disponible {info.available}, solicitado {info.requested}
-                </li>
-              ))
-            }
-          </ul>
+          <small className="mb-3 d-block">Los siguientes productos tienen problemas de disponibilidad:</small>
+          
+          {stockInfo
+            .filter(info => !info.isValid)
+            .map(info => (
+              <div key={info.productId} className="border rounded p-3 mb-2 bg-light">
+                <Row className="align-items-center">
+                  <Col md={6}>
+                    <div>
+                      <strong className="text-danger">{info.name}</strong>
+                      <br />
+                      <small className="text-muted">
+                        Disponible: <span className="fw-bold text-success">{info.available}</span> | 
+                        Solicitado: <span className="fw-bold text-danger">{info.requested}</span>
+                      </small>
+                    </div>
+                  </Col>
+                  <Col md={6} className="text-end">
+                    <div className="d-flex gap-2 justify-content-end flex-wrap">
+                      {info.available > 0 && onQuantityAdjust && (
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          onClick={() => handleAdjustToAvailable(info.productId.toString(), info.available)}
+                        >
+                          <i className="bi bi-arrow-down-circle me-1"></i>
+                          Ajustar a {info.available}
+                        </Button>
+                      )}
+                      {onItemRemove && (
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleRemoveItem(info.productId.toString())}
+                        >
+                          <i className="bi bi-trash me-1"></i>
+                          Eliminar
+                        </Button>
+                      )}
+                    </div>
+                  </Col>
+                </Row>
+                {info.available === 0 && (
+                  <div className="mt-2">
+                    <small className="text-danger">
+                      <i className="bi bi-exclamation-circle me-1"></i>
+                      <strong>Producto agotado</strong> - No hay unidades disponibles
+                    </small>
+                  </div>
+                )}
+              </div>
+            ))
+          }
+          
+          <div className="mt-3 p-2 bg-white rounded border">
+            <small className="text-danger">
+              <i className="bi bi-info-circle me-1"></i>
+              <strong>No es posible proceder con la compra:</strong>
+            </small>
+            <ul className="mb-0 mt-1 small">
+              {stockInfo
+                .filter(info => !info.isValid)
+                .map(info => (
+                  <li key={`error-${info.productId}`} className="text-danger">
+                    <strong>{info.name}</strong>: Stock insuficiente 
+                    (Disponible: {info.available}, Solicitado: {info.requested})
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
         </Alert>
       )}
 

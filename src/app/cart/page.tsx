@@ -117,6 +117,65 @@ const CartPage = () => {
     setStockErrors(errors);
   };
 
+  // Función para ajustar cantidad desde StockValidation
+  const handleQuantityAdjustFromStock = async (itemId: string, newQuantity: number) => {
+    if (!user?.uid) return;
+    
+    try {
+      // Buscar el item en el carrito para obtener size y color
+      const item = cartItems.find(cartItem => cartItem.id.toString() === itemId);
+      if (!item) {
+        console.error('Item no encontrado en el carrito');
+        return;
+      }
+      
+      await cartService.updateCartItemQuantity(
+        user.uid, 
+        item.id, 
+        item.size || '', 
+        item.color || '', 
+        newQuantity
+      );
+      
+      console.log(`Cantidad ajustada: ${item.name} -> ${newQuantity} unidades`);
+    } catch (error: any) {
+      console.error('Error al ajustar cantidad:', error);
+      setSaveError(error.message || 'Error al ajustar la cantidad del producto');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
+  // Función para remover item desde StockValidation
+  const handleItemRemoveFromStock = async (itemId: string) => {
+    if (!user?.uid) return;
+    
+    try {
+      // Buscar el item en el carrito para obtener size y color
+      const item = cartItems.find(cartItem => cartItem.id.toString() === itemId);
+      if (!item) {
+        console.error('Item no encontrado en el carrito');
+        return;
+      }
+      
+      const success = await cartService.removeFromCart(
+        user.uid, 
+        item.id, 
+        item.size || '', 
+        item.color || ''
+      );
+      
+      if (success) {
+        console.log(`Item removido: ${item.name}`);
+      } else {
+        throw new Error('Error al remover el producto del carrito');
+      }
+    } catch (error: any) {
+      console.error('Error al remover item:', error);
+      setSaveError(error.message || 'Error al remover el producto del carrito');
+      setTimeout(() => setSaveError(''), 5000);
+    }
+  };
+
   // Función para manejar el éxito del pago de PayPal
   const handlePayPalSuccess = async (details: any) => {
     if (!user?.uid) {
@@ -335,21 +394,10 @@ const CartPage = () => {
                           price: item.price
                         }))}
                         onStockValidated={handleStockValidation}
+                        onQuantityAdjust={handleQuantityAdjustFromStock}
+                        onItemRemove={handleItemRemoveFromStock}
                         className="mb-3"
                       />
-                      
-                      {/* ✅ Alertas de errores de stock */}
-                      {!stockValid && stockErrors.length > 0 && (
-                        <Alert variant="danger" className="mb-3">
-                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                          <strong>No es posible proceder con la compra:</strong>
-                          <ul className="mb-0 mt-2">
-                            {stockErrors.map((error, index) => (
-                              <li key={index}>{error}</li>
-                            ))}
-                          </ul>
-                        </Alert>
-                      )}
                       
                       {/* ✅ SELECTOR DE UBICACIÓN DE ENTREGA */}
                       <DeliveryLocationSelector 

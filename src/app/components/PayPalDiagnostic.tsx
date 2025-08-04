@@ -88,6 +88,16 @@ export default function PayPalDiagnostic() {
             <ul className="small mb-0">
               <li>🧪 Sandbox: {sandboxClientId ? '✅ Configurado' : '❌ Faltante'}</li>
               <li>🌐 Live: {liveClientId ? '✅ Configurado' : '❌ Faltante'}</li>
+              <li>📄 Current: {currentClientId ? '✅ Configurado' : '❌ Faltante'}</li>
+            </ul>
+          </div>
+
+          <div className="mb-3">
+            <strong>🔍 Debug Variables:</strong>
+            <ul className="small mb-0" style={{ fontSize: '10px', fontFamily: 'monospace' }}>
+              <li>SANDBOX: {sandboxClientId?.substring(0, 15) || 'undefined'}...</li>
+              <li>LIVE: {liveClientId?.substring(0, 15) || 'undefined'}...</li>
+              <li>CURRENT: {currentClientId?.substring(0, 15) || 'undefined'}...</li>
             </ul>
           </div>
 

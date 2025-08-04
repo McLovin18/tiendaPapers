@@ -60,13 +60,15 @@ export default function PayPalProvider({ children }: PayPalProviderProps) {
     return <>{children}</>;
   }
 
-  // 🔍 DEBUG: Mostrar configuración actual en consola
-  console.log('🏦 PayPal Config:', {
-    environment: useSandbox ? 'sandbox' : 'production',
-    clientId: clientId.substring(0, 10) + '...',
-    mode: paypalMode || 'auto',
-    forced: paypalMode ? 'YES' : 'NO'
-  });
+  // ✅ DEBUG: Solo en desarrollo
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🏦 PayPal Config:', {
+      environment: useSandbox ? 'sandbox' : 'production',
+      clientId: clientId.substring(0, 10) + '...',
+      mode: paypalMode || 'auto',
+      forced: paypalMode ? 'YES' : 'NO'
+    });
+  }
 
   return (
     <PayPalScriptProvider 

@@ -35,7 +35,6 @@ const CartPage = () => {
     try {
       await cartService.updateCartItemQuantity(user.uid, id, size, color, newQuantity);
       // La actualización del estado se maneja por la suscripción en tiempo real
-      console.log('Cantidad actualizada exitosamente');
     } catch (error: any) {
       console.error('Error al actualizar cantidad:', error);
       // Mostrar alerta temporal con el error específico de stock
@@ -53,9 +52,7 @@ const CartPage = () => {
     if (!user?.uid) return;
     
     const success = await cartService.removeFromCart(user.uid, id, size, color);
-    if (success) {
-      console.log('Item removido exitosamente');
-    } else {
+    if (!success) {
       console.error('Error al remover item');
     }
   };
@@ -137,8 +134,6 @@ const CartPage = () => {
         item.color || '', 
         newQuantity
       );
-      
-      console.log(`Cantidad ajustada: ${item.name} -> ${newQuantity} unidades`);
     } catch (error: any) {
       console.error('Error al ajustar cantidad:', error);
       setSaveError(error.message || 'Error al ajustar la cantidad del producto');
@@ -165,9 +160,7 @@ const CartPage = () => {
         item.color || ''
       );
       
-      if (success) {
-        console.log(`Item removido: ${item.name}`);
-      } else {
+      if (!success) {
         throw new Error('Error al remover el producto del carrito');
       }
     } catch (error: any) {

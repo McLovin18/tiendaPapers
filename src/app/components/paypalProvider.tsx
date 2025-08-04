@@ -47,8 +47,6 @@ const initialOptions = {
   intent: "capture" as const,
   // 🔥 FORZAR modo sandbox cuando corresponde
   environment: (useSandbox ? "sandbox" : "production") as "sandbox" | "production",
-  // 🔥 Cache busting para forzar recarga de PayPal
-  "data-client-token": useSandbox ? "sandbox_force_reload" : "production_mode",
   // 🔥 Configuraciones adicionales para sandbox
   components: "buttons,funding-eligibility",
   "enable-funding": "venmo,paylater",
@@ -57,8 +55,8 @@ const initialOptions = {
   // 🔥 Configuración para cuentas sandbox con email/password
   "buyer-country": "US",
   locale: "en_US",
-  // 🔥 Versión específica para evitar cache
-  debug: useSandbox ? true : false
+  // 🔥 Versión específica para evitar cache - USAR TIMESTAMP
+  "data-namespace": useSandbox ? `sandbox_${Date.now()}` : `production_${Date.now()}`
 };
 
 export default function PayPalProvider({ children }: PayPalProviderProps) {
@@ -80,6 +78,7 @@ export default function PayPalProvider({ children }: PayPalProviderProps) {
   return (
     <PayPalScriptProvider 
       options={initialOptions}
+      key={`paypal-${useSandbox ? 'sandbox' : 'production'}-${clientId.substring(0, 8)}`}
     >
       {children}
     </PayPalScriptProvider>

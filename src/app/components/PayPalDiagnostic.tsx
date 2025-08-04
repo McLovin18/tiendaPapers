@@ -6,9 +6,10 @@ import { Card, Button, Alert, Badge, Accordion } from 'react-bootstrap';
 export default function PayPalDiagnostic() {
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   
-  if (process.env.NODE_ENV === 'production') {
-    return null; // No mostrar en producción
-  }
+  // ✅ TEMPORALMENTE HABILITADO EN PRODUCCIÓN PARA DIAGNÓSTICO
+  // if (process.env.NODE_ENV === 'production') {
+  //   return null; // No mostrar en producción
+  // }
 
   const isLocalhost = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');

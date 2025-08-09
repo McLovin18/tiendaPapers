@@ -225,7 +225,26 @@ const CartPage = () => {
       // ✅ Crear orden de delivery automáticamente con el purchaseId
       try {
         await createDeliveryOrder(purchaseData, userInfo.userName || 'Usuario', userInfo.userEmail || user.email || 'email@example.com', purchaseId);
+        
+        // 🚚 NUEVO: Crear notificación automática para delivery
+        const { notificationService } = await import('../services/notificationService');
+        await notificationService.createNotification({
+          orderId: purchaseId,
+          userName: userInfo.userName || 'Usuario',
+          userEmail: userInfo.userEmail || user.email || 'email@example.com',
+          total: purchaseData.total,
+          items: purchaseData.items,
+          deliveryLocation: purchaseData.shipping || {
+            city: 'No especificada',
+            zone: 'No especificada', 
+            address: 'Dirección por especificar',
+            phone: 'Teléfono no especificado'
+          }
+        });
+        
+        console.log('✅ Notificación de delivery creada automáticamente');
       } catch (deliveryError) {
+        console.error('⚠️ Error en creación de delivery/notificación:', deliveryError);
         // Continuar aunque falle la orden de delivery
       }
       

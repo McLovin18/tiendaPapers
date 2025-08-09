@@ -11,16 +11,27 @@ import {
   UserCredential,
   updateProfile,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../utils/firebase';
+import { auth, googleProvider, db } from '../utils/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+interface UserData {
+  email: string;
+  role?: 'admin' | 'delivery' | 'client';
+  isDelivery?: boolean;
+  deliveryZones?: string[];
+  displayName?: string;
+}
 
 interface AuthContextType {
   user: User | null;
+  userData: UserData | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<UserCredential>;
   register: (email: string, password: string, name?: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<UserCredential>;
   updateUserProfile: (displayName?: string, photoURL?: string) => Promise<void>;
+  isDelivery: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -35,7 +46,65 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Helper para cargar datos del usuario desde Firestore
+  const loadUserData = async (firebaseUser: User) => {
+    try {
+      // Solo intentar Firestore si el usuario está autenticado
+      if (!firebaseUser.email) {
+        throw new Error('Usuario sin email');
+      }
+      
+      const userDocRef = doc(db, 'users', firebaseUser.email);
+      const userDoc = await getDoc(userDocRef);
+      
+      let data: UserData = {
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName || undefined
+      };
+      
+      if (userDoc.exists()) {
+        data = { ...data, ...userDoc.data() } as UserData;
+      }
+      
+      // Guardar en localStorage
+      localStorage.setItem('user', JSON.stringify(data));
+      setUserData(data);
+      
+      console.log('👤 Usuario cargado desde Firestore:', data);
+      
+    } catch (error) {
+      console.log('⚠️ Error cargando desde Firestore, usando datos básicos:', (error as Error).message || error);
+      
+      // Fallback: usar solo datos de Firebase Auth
+      const basicData: UserData = {
+        email: firebaseUser.email!,
+        displayName: firebaseUser.displayName || undefined
+      };
+      
+      // 🔧 VERIFICAR SI YA HAY DATOS EN LOCALSTORAGE CON ROL
+      const existingData = localStorage.getItem('user');
+      if (existingData) {
+        try {
+          const parsedData = JSON.parse(existingData);
+          if (parsedData.role) {
+            // Mantener rol existente si ya está definido
+            basicData.role = parsedData.role;
+            basicData.isDelivery = parsedData.isDelivery;
+            basicData.deliveryZones = parsedData.deliveryZones;
+            console.log('👤 Manteniendo rol desde localStorage:', basicData);
+          }
+        } catch (parseError) {
+          console.log('Error parseando localStorage existente');
+        }
+      }
+      
+      localStorage.setItem('user', JSON.stringify(basicData));
+      setUserData(basicData);
+    }
+  };
 
   useEffect(() => {
     // ✅ Evita el error si auth es null (por variables de entorno mal configuradas)
@@ -50,8 +119,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      
+      if (firebaseUser) {
+        // Cargar datos del usuario cuando se autentica
+        await loadUserData(firebaseUser);
+      } else {
+        // Limpiar datos cuando se desautentica
+        setUserData(null);
+        localStorage.removeItem('user');
+      }
+      
       setLoading(false);
     });
 
@@ -83,6 +162,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!auth) throw new Error("Firebase Auth no inicializado");
     await signOut(auth);
     localStorage.removeItem("favourites_temp");
+    localStorage.removeItem("user");
+    setUserData(null);
   };
 
   const loginWithGoogle = () => {
@@ -100,10 +181,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await updateProfile(auth.currentUser, updateData);
     // Forzar actualización del estado del usuario
     setUser({ ...auth.currentUser });
+    
+    // Actualizar userData también
+    if (userData) {
+      const updatedUserData = { ...userData, displayName };
+      setUserData(updatedUserData);
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+    }
   };
 
+  // Computed property para saber si es delivery
+  const isDelivery = userData?.role === 'delivery' || userData?.isDelivery === true;
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle, updateUserProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userData, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      loginWithGoogle, 
+      updateUserProfile,
+      isDelivery 
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

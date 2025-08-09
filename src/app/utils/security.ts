@@ -3,7 +3,8 @@
  * Sistema centralizado de validación, sanitización y protección
  */
 
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 // ✅ VALIDACIÓN DE ENTRADA
 export class InputValidator {
@@ -106,17 +107,29 @@ export class AccessControl {
     return email ? adminEmails.includes(email.toLowerCase()) : false;
   }
 
-  // Verificar si el usuario es delivery
+  // Verificar si el usuario es delivery - SISTEMA DINÁMICO
   static async isDelivery(userEmail?: string): Promise<boolean> {
     if (!auth.currentUser) return false;
     
-    const deliveryEmails = [
-      'hwcobena@espol.edu.ec',
-      'nexel2024@outlook.com'
-    ];
-    
-    const email = userEmail || auth.currentUser.email;
-    return email ? deliveryEmails.includes(email.toLowerCase()) : false;
+    try {
+      const email = userEmail || auth.currentUser.email;
+      if (!email) return false;
+
+      // 🆕 CONSULTAR FIREBASE EN LUGAR DE LISTA HARDCODED
+      const deliveryUserRef = doc(db, 'deliveryUsers', email.toLowerCase());
+      const deliveryUserSnap = await getDoc(deliveryUserRef);
+      
+      // Verificar si existe y está activo
+      if (deliveryUserSnap.exists()) {
+        const deliveryData = deliveryUserSnap.data();
+        return deliveryData?.active === true;
+      }
+      
+      return false;
+    } catch (error) {
+      SecureLogger.error('Error checking delivery status', error);
+      return false;
+    }
   }
 
   // Verificar si el usuario puede acceder a un recurso

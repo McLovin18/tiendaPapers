@@ -144,7 +144,22 @@ export const assignOrderToDelivery = async (orderId: string, deliveryEmail: stri
     // ✅ Sanitizar datos
     const sanitizedDeliveryEmail = DataSanitizer.sanitizeText(deliveryEmail);
 
-    const orderRef = doc(db, 'deliveryOrders', orderId);
+    // 🔍 BUSCAR EL DOCUMENTO POR orderId EN LUGAR DEL ID DEL DOCUMENTO
+    const ordersQuery = query(
+      collection(db, 'deliveryOrders'),
+      where('orderId', '==', orderId)
+    );
+    
+    const querySnapshot = await getDocs(ordersQuery);
+    
+    if (querySnapshot.empty) {
+      throw new Error(`No se encontró la orden con ID: ${orderId}`);
+    }
+
+    // Tomar el primer documento encontrado
+    const orderDoc = querySnapshot.docs[0];
+    const orderRef = doc(db, 'deliveryOrders', orderDoc.id);
+
     await updateDoc(orderRef, {
       status: 'assigned',
       assignedTo: sanitizedDeliveryEmail,
@@ -241,15 +256,22 @@ export const updateOrderStatus = async (
       notes
     });
 
-    const orderRef = doc(db, 'deliveryOrders', orderId);
+    // 🔍 BUSCAR EL DOCUMENTO POR orderId EN LUGAR DEL ID DEL DOCUMENTO
+    const ordersQuery = query(
+      collection(db, 'deliveryOrders'),
+      where('orderId', '==', orderId)
+    );
     
-    // ✅ Primero verificar el documento actual
-    const currentDoc = await getDoc(orderRef);
-    if (!currentDoc.exists()) {
-      throw new Error('Orden no encontrada');
+    const querySnapshot = await getDocs(ordersQuery);
+    
+    if (querySnapshot.empty) {
+      throw new Error(`No se encontró la orden con ID: ${orderId}`);
     }
-    
-    const currentData = currentDoc.data();
+
+    // Tomar el primer documento encontrado
+    const orderDoc = querySnapshot.docs[0];
+    const orderRef = doc(db, 'deliveryOrders', orderDoc.id);
+    const currentData = orderDoc.data();
     console.log('📋 [DEBUG] Datos actuales de la orden:', {
       currentStatus: currentData.status,
       assignedTo: currentData.assignedTo,
@@ -277,22 +299,21 @@ export const updateOrderStatus = async (
   }
 };
 
-// ✅ Obtener lista de repartidores disponibles con sus zonas
-export const getAvailableDeliveryUsers = () => {
-  return [
-    { 
-      email: 'hwcobena@espol.edu.ec', 
-      name: 'Héctor Delivery',
-      preferredZones: ['Centro', 'Norte', 'Urdesa'],
-      maxDistance: 15 // km máximo que puede cubrir
-    },
-    {
-      email: 'nexel2024@outlook.com',
-      name: 'Nexel Cobeña',
-      preferredZones: ['Samborondón', 'Ceibos', 'Via a la Costa'],
-      maxDistance: 25
-    }
-  ];
+// ✅ Obtener lista de repartidores disponibles dinámicamente desde Firebase
+export const getAvailableDeliveryUsers = async () => {
+  try {
+    const deliveryUsersSnapshot = await getDocs(collection(db, 'deliveryUsers'));
+    const deliveryUsers = deliveryUsersSnapshot.docs.map(doc => ({
+      email: doc.id,
+      ...doc.data()
+    }));
+    
+    console.log(`📋 ${deliveryUsers.length} repartidores activos encontrados`);
+    return deliveryUsers;
+  } catch (error) {
+    console.error('Error obteniendo repartidores:', error);
+    return [];
+  }
 };
 
 // ✅ Función para determinar zona de entrega basada en dirección
@@ -538,13 +559,13 @@ export const getDeliveryPersonRatings = async (deliveryPersonEmail: string): Pro
     const ratingsSnapshot = await getDocs(ratingsQuery);
     
     if (ratingsSnapshot.empty) {
-      // ✅ Obtener información básica del repartidor
-      const deliveryUsers = getAvailableDeliveryUsers();
-      const deliveryUser = deliveryUsers.find(user => user.email === deliveryPersonEmail);
+      // ✅ Obtener información básica del repartidor dinámicamente
+      const deliveryUsers = await getAvailableDeliveryUsers();
+      const deliveryUser = deliveryUsers.find((user: any) => user.email === deliveryPersonEmail);
       
       return {
         email: deliveryPersonEmail,
-        name: deliveryUser?.name || 'Repartidor Desconocido',
+        name: (deliveryUser as any)?.name || 'Repartidor Desconocido',
         totalRatings: 0,
         averageRating: 0,
         totalDeliveries: 0,
@@ -591,13 +612,13 @@ export const getDeliveryPersonRatings = async (deliveryPersonEmail: string): Pro
       totalDeliveries = 0;
     }
 
-    // ✅ Obtener nombre del repartidor
-    const deliveryUsers = getAvailableDeliveryUsers();
-    const deliveryUser = deliveryUsers.find(user => user.email === deliveryPersonEmail);
+    // ✅ Obtener nombre del repartidor dinámicamente
+    const deliveryUsers = await getAvailableDeliveryUsers();
+    const deliveryUser = deliveryUsers.find((user: any) => user.email === deliveryPersonEmail);
 
     return {
       email: deliveryPersonEmail,
-      name: deliveryUser?.name || 'Repartidor Desconocido',
+      name: (deliveryUser as any)?.name || 'Repartidor Desconocido',
       totalRatings,
       averageRating: Math.round(averageRating * 100) / 100,
       totalDeliveries,
@@ -629,7 +650,7 @@ export const hasOrderBeenRated = async (orderId: string, userId: string): Promis
 // ✅ NUEVO: Obtener todas las estadísticas de repartidores (para admin)
 export const getAllDeliveryPersonsStats = async (): Promise<DeliveryPersonStats[]> => {
   try {
-    const deliveryUsers = getAvailableDeliveryUsers();
+    const deliveryUsers = await getAvailableDeliveryUsers();
     
     // ✅ Manejar cada repartidor individualmente para evitar que un error rompa todo
     const stats: DeliveryPersonStats[] = [];
@@ -642,7 +663,7 @@ export const getAllDeliveryPersonsStats = async (): Promise<DeliveryPersonStats[
         // ✅ Si falla un repartidor específico, crear stats vacías
         stats.push({
           email: user.email,
-          name: user.name,
+          name: (user as any).name || 'Repartidor Desconocido',
           totalRatings: 0,
           averageRating: 0,
           totalDeliveries: 0,

@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRole } from '../../context/adminContext';
 import { ProtectedRoute } from '../../utils/securityMiddleware';
 import LoginRequired from '../../components/LoginRequired';
+import DeliveryNotificationPanel from '../../components/DeliveryNotificationPanel';
 import { db } from '../../utils/firebase';
 import { collection, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
 
@@ -134,6 +135,17 @@ const DeliveryOrdersPage = () => {
     }
   };
 
+  // 🎯 FUNCIÓN PARA OBTENER ZONAS DE DELIVERY
+  const getDeliveryZones = (email: string): string[] => {
+    // Mapear emails a sus zonas preferidas
+    const zoneMapping: { [key: string]: string[] } = {
+      'hwcobena@espol.edu.ec': ['guayaquil-general', 'guayaquil-centro', 'guayaquil-norte'],
+      'nexel2024@outlook.com': ['santa-elena-general', 'santa-elena-centro', 'guayaquil-sur']
+    };
+    
+    return zoneMapping[email] || ['general'];
+  };
+
   // Verificar acceso después de todos los hooks
   if (!user) {
     return <LoginRequired />;
@@ -182,6 +194,15 @@ const DeliveryOrdersPage = () => {
                 <span className="d-sm-none"> pedidos</span>
               </Badge>
             </div>
+
+            {/* 🚚 NUEVO: Panel de Notificaciones */}
+            <Row className="mb-4">
+              <Col>
+                <DeliveryNotificationPanel 
+                  deliveryZones={getDeliveryZones(user?.email || '')}
+                />
+              </Col>
+            </Row>
 
             {orders.length === 0 ? (
               <div className="text-center py-5">

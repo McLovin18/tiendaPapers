@@ -5,7 +5,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: "standalone",
   experimental: {
     forceSwcTransforms: true,
   },

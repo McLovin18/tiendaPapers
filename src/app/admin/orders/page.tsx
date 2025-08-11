@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Form, Alert, Spinner, Modal } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { useRole } from '../../context/adminContext';
+import jsPDF from 'jspdf';
 // import { ProtectedRoute } from '../../utils/securityMiddleware';
 
 // Componente temporal ProtectedRoute
@@ -20,13 +21,15 @@ import {
 } from '../../services/purchaseService';
 import { 
   getPendingOrders, 
+  getAllDeliveryOrders, // 🆕 Importar función para TODAS las órdenes
   assignOrderToDelivery, 
   getAvailableDeliveryUsers,
   DeliveryOrder 
 } from '../../services/deliveryService';
 import { db } from '../../utils/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { notificationService } from '../../services/notificationService';
+import { EmailService } from '../../services/emailService';
 import NavbarComponent from '../../components/Navbar';
 import Sidebar from '../../components/Sidebar';
 import DeliverySettings from '../../components/DeliverySettings';
@@ -47,18 +50,35 @@ export default function AdminOrdersPage() {
   
   // ✅ Estados para delivery management
   const [pendingDeliveries, setPendingDeliveries] = useState<DeliveryOrder[]>([]);
+  const [allDeliveries, setAllDeliveries] = useState<DeliveryOrder[]>([]); // 🆕 TODAS las órdenes
   const [availableDeliveryUsers, setAvailableDeliveryUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'orders' | 'deliveries' | 'delivery-settings'>('orders');
   
   // 🆕 Estados para monitoreo avanzado
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<DeliveryOrder | null>(null);
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  
+  // 🆕 Estados para filtro de fechas y exportación
+  const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filteredDeliveries, setFilteredDeliveries] = useState<DeliveryOrder[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (user && isAdmin) {
       loadOrderData();
     }
   }, [user, isAdmin]);
+
+  // 🆕 Filtrar entregas por fecha seleccionada
+  useEffect(() => {
+    if (allDeliveries.length > 0) {
+      const filtered = allDeliveries.filter(delivery => {
+        const deliveryDate = new Date(delivery.date).toISOString().split('T')[0];
+        return deliveryDate === selectedDeliveryDate;
+      });
+      setFilteredDeliveries(filtered);
+    }
+  }, [allDeliveries, selectedDeliveryDate]);
 
   const loadOrderData = async () => {
     try {
@@ -83,8 +103,21 @@ export default function AdminOrdersPage() {
       const pending = await getPendingOrders();
       setPendingDeliveries(pending);
       
+      // 🆕 Cargar TODAS las órdenes de delivery para estadísticas correctas
+      const allOrders = await getAllDeliveryOrders();
+      setAllDeliveries(allOrders);
+      
       const deliveryUsers = await getAvailableDeliveryUsers();
       setAvailableDeliveryUsers(deliveryUsers);
+
+      // 🧹 LIMPIEZA AUTOMÁTICA DE NOTIFICACIONES AL CARGAR LA PÁGINA
+      try {
+        await notificationService.cleanupExpiredNotifications();
+        console.log('🧹 Limpieza automática de notificaciones completada');
+      } catch (cleanupError) {
+        console.error('Error en limpieza automática:', cleanupError);
+        // No fallar la carga principal por esto
+      }
 
     } catch (error: any) {
       console.error('Error al cargar datos de pedidos:', error);
@@ -120,6 +153,10 @@ export default function AdminOrdersPage() {
       
       // Actualizar la lista local
       setPendingDeliveries(prev => prev.filter(order => order.id !== orderId));
+      
+      // 🆕 Recargar todas las órdenes para estadísticas actualizadas
+      const allOrders = await getAllDeliveryOrders();
+      setAllDeliveries(allOrders);
       
       // Mostrar éxito
       alert('✅ Orden asignada correctamente al repartidor');
@@ -197,7 +234,8 @@ export default function AdminOrdersPage() {
     switch(status) {
       case 'pending': return 'warning';
       case 'assigned': return 'info';
-      case 'in-transit': return 'primary';
+      case 'picked_up': return 'primary';
+      case 'in_transit': return 'primary';
       case 'delivered': return 'success';
       case 'cancelled': return 'danger';
       default: return 'secondary';
@@ -209,7 +247,8 @@ export default function AdminOrdersPage() {
     switch(status) {
       case 'pending': return 'Pendiente';
       case 'assigned': return 'Asignado';
-      case 'in-transit': return 'En tránsito';
+      case 'picked_up': return 'Recogido en Almacén';
+      case 'in_transit': return 'En tránsito';
       case 'delivered': return 'Entregado';
       case 'cancelled': return 'Cancelado';
       default: return 'Desconocido';
@@ -257,9 +296,236 @@ export default function AdminOrdersPage() {
       // Recargar datos
       const orders = await getPendingOrders();
       setPendingDeliveries(orders);
+      
+      // 🆕 También recargar todas las órdenes para estadísticas
+      const allOrders = await getAllDeliveryOrders();
+      setAllDeliveries(allOrders);
     } catch (error) {
       console.error('Error marking order as urgent:', error);
       alert('❌ Error al marcar como urgente');
+    }
+  };
+
+  // 🆕 Función para exportar PDF del día seleccionado
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      
+      const doc = new jsPDF();
+      const selectedDateFormatted = new Date(selectedDeliveryDate).toLocaleDateString('es-ES');
+      
+      // Configurar fuente para mejor compatibilidad
+      doc.setFont('helvetica');
+      
+      // Header con logo y título
+      doc.setFontSize(24);
+      doc.setTextColor(44, 62, 80); // Color azul oscuro
+      doc.text('REPORTE DE ENTREGAS', 105, 25, { align: 'center' });
+      
+      // Línea decorativa
+      doc.setDrawColor(52, 152, 219); // Color azul
+      doc.setLineWidth(2);
+      doc.line(20, 30, 190, 30);
+      
+      // Fecha
+      doc.setFontSize(16);
+      doc.setTextColor(52, 73, 94);
+      doc.text(`Fecha: ${selectedDateFormatted}`, 20, 45);
+      
+      // Estadísticas del día en cajas
+      const dayStats = {
+        total: filteredDeliveries.length,
+        entregadas: filteredDeliveries.filter(d => d.status === 'delivered').length,
+        pendientes: filteredDeliveries.filter(d => 
+          d.status === 'pending' || d.status === 'assigned' || d.status === 'picked_up' || d.status === 'in_transit'
+        ).length,
+        canceladas: filteredDeliveries.filter(d => d.status === 'cancelled').length
+      };
+
+      // Sección de resumen
+      doc.setFontSize(14);
+      doc.setTextColor(44, 62, 80);
+      doc.text('RESUMEN DEL DIA', 20, 65);
+      
+      // Cajas de estadísticas
+      let boxY = 75;
+      const boxWidth = 40;
+      const boxHeight = 25;
+      const boxSpacing = 45;
+      
+      // Caja Total
+      doc.setFillColor(52, 152, 219); // Azul
+      doc.rect(20, boxY, boxWidth, boxHeight, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.text(dayStats.total.toString(), 40, boxY + 12, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('TOTAL', 40, boxY + 20, { align: 'center' });
+      
+      // Caja Entregadas
+      doc.setFillColor(46, 204, 113); // Verde
+      doc.rect(20 + boxSpacing, boxY, boxWidth, boxHeight, 'F');
+      doc.setFontSize(20);
+      doc.text(dayStats.entregadas.toString(), 40 + boxSpacing, boxY + 12, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('ENTREGADAS', 40 + boxSpacing, boxY + 20, { align: 'center' });
+      
+      // Caja Pendientes
+      doc.setFillColor(241, 196, 15); // Amarillo
+      doc.rect(20 + boxSpacing * 2, boxY, boxWidth, boxHeight, 'F');
+      doc.setFontSize(20);
+      doc.text(dayStats.pendientes.toString(), 40 + boxSpacing * 2, boxY + 12, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('PENDIENTES', 40 + boxSpacing * 2, boxY + 20, { align: 'center' });
+      
+      // Caja Canceladas
+      doc.setFillColor(231, 76, 60); // Rojo
+      doc.rect(20 + boxSpacing * 3, boxY, boxWidth, boxHeight, 'F');
+      doc.setFontSize(20);
+      doc.text(dayStats.canceladas.toString(), 40 + boxSpacing * 3, boxY + 12, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('CANCELADAS', 40 + boxSpacing * 3, boxY + 20, { align: 'center' });
+
+      // Tabla de órdenes
+      let yPosition = 120;
+      
+      if (filteredDeliveries.length > 0) {
+        // Título de la tabla
+        doc.setTextColor(44, 62, 80);
+        doc.setFontSize(14);
+        doc.text('DETALLE DE ORDENES', 20, yPosition);
+        yPosition += 15;
+
+        // Header de la tabla con fondo
+        doc.setFillColor(236, 240, 241); // Gris claro
+        doc.rect(20, yPosition - 5, 170, 12, 'F');
+        
+        doc.setTextColor(44, 62, 80);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('HORA', 25, yPosition + 3);
+        doc.text('CLIENTE', 55, yPosition + 3);
+        doc.text('TOTAL', 105, yPosition + 3);
+        doc.text('REPARTIDOR', 125, yPosition + 3);
+        doc.text('ESTADO', 165, yPosition + 3);
+        yPosition += 15;
+
+        // Línea separadora
+        doc.setDrawColor(189, 195, 199);
+        doc.setLineWidth(0.5);
+        doc.line(20, yPosition - 5, 190, yPosition - 5);
+
+        // Datos de las órdenes
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        
+        filteredDeliveries
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .forEach((order, index) => {
+            if (yPosition > 260) {
+              doc.addPage();
+              yPosition = 30;
+              
+              // Repetir header en nueva página
+              doc.setFillColor(236, 240, 241);
+              doc.rect(20, yPosition - 5, 170, 12, 'F');
+              doc.setTextColor(44, 62, 80);
+              doc.setFontSize(10);
+              doc.setFont('helvetica', 'bold');
+              doc.text('HORA', 25, yPosition + 3);
+              doc.text('CLIENTE', 55, yPosition + 3);
+              doc.text('TOTAL', 105, yPosition + 3);
+              doc.text('REPARTIDOR', 125, yPosition + 3);
+              doc.text('ESTADO', 165, yPosition + 3);
+              yPosition += 15;
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(9);
+            }
+
+            // Alternar color de fondo para filas
+            if (index % 2 === 0) {
+              doc.setFillColor(249, 249, 249);
+              doc.rect(20, yPosition - 3, 170, 10, 'F');
+            }
+
+            const orderTime = new Date(order.date).toLocaleTimeString('es-ES', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            doc.setTextColor(52, 73, 94);
+            doc.text(orderTime, 25, yPosition + 2);
+            
+            // Nombre del cliente (máximo 20 caracteres)
+            const clientName = (order.userName || 'Sin nombre').substring(0, 20);
+            doc.text(clientName, 55, yPosition + 2);
+            
+            // Total con formato de moneda
+            doc.text(`$${order.total.toFixed(2)}`, 105, yPosition + 2);
+            
+            // Repartidor (solo nombre, sin @domain)
+            const deliveryPerson = order.assignedTo 
+              ? order.assignedTo.split('@')[0].substring(0, 15)
+              : 'Sin asignar';
+            doc.text(deliveryPerson, 125, yPosition + 2);
+            
+            // Estado con color
+            const statusText = getStatusText(order.status);
+            switch(order.status) {
+              case 'delivered':
+                doc.setTextColor(46, 204, 113); // Verde
+                break;
+              case 'pending':
+                doc.setTextColor(241, 196, 15); // Amarillo
+                break;
+              case 'cancelled':
+                doc.setTextColor(231, 76, 60); // Rojo
+                break;
+              default:
+                doc.setTextColor(52, 152, 219); // Azul
+            }
+            doc.text(statusText.substring(0, 12), 165, yPosition + 2);
+            
+            yPosition += 12;
+            
+            // Línea sutil entre filas
+            doc.setDrawColor(236, 240, 241);
+            doc.setLineWidth(0.2);
+            doc.line(20, yPosition - 6, 190, yPosition - 6);
+          });
+      } else {
+        doc.setTextColor(149, 165, 166);
+        doc.setFontSize(12);
+        doc.text('No hay ordenes para mostrar en esta fecha.', 105, yPosition, { align: 'center' });
+      }
+
+      // Footer con información del sistema
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        
+        // Línea decorativa en footer
+        doc.setDrawColor(52, 152, 219);
+        doc.setLineWidth(1);
+        doc.line(20, 280, 190, 280);
+        
+        // Información del footer
+        doc.setTextColor(127, 140, 141);
+        doc.setFontSize(8);
+        doc.text(`Generado el ${new Date().toLocaleString('es-ES')}`, 20, 290);
+        doc.text('Sistema de Gestion de Entregas - Tienda Online', 105, 290, { align: 'center' });
+        doc.text(`Pagina ${i} de ${pageCount}`, 190, 290, { align: 'right' });
+      }
+
+      // Descargar el PDF
+      const fileName = `entregas-${selectedDateFormatted.replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+      
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -317,19 +583,178 @@ export default function AdminOrdersPage() {
       // Recargar datos
       const orders = await getPendingOrders();
       setPendingDeliveries(orders);
+      
+      // 🆕 También recargar todas las órdenes para estadísticas
+      const allOrders = await getAllDeliveryOrders();
+      setAllDeliveries(allOrders);
     } catch (error) {
       console.error('Error marking order as urgent:', error);
       alert('❌ Error al marcar como urgente');
     }
   };
 
-  // ✅ Función para contactar repartidor
-  const contactDeliveryPerson = (deliveryPersonId: string) => {
-    const delivery = availableDeliveryUsers.find(d => d.uid === deliveryPersonId);
-    if (delivery?.phone) {
-      window.open(`tel:${delivery.phone}`, '_self');
-    } else {
-      alert('No hay número de teléfono disponible');
+  // ✅ Función para contactar repartidor con notificación y email
+  const contactDeliveryPerson = async (order: DeliveryOrder) => {
+    if (!order.assignedTo) {
+      alert('Esta orden no tiene repartidor asignado');
+      return;
+    }
+
+    try {
+      const repartidor = availableDeliveryUsers.find(d => d.email === order.assignedTo);
+      const repartidorName = repartidor?.name || order.assignedTo?.split('@')[0] || 'Repartidor';
+
+      const confirmed = confirm(
+        `¿Contactar a ${repartidorName} sobre la entrega urgente?\n\n` +
+        `Se enviará:\n` +
+        `• Notificación push en la app\n` +
+        `• Email al repartidor\n` +
+        `• Marcará la orden como prioritaria`
+      );
+
+      if (!confirmed) return;
+
+      // 1. Marcar orden como urgente en Firestore
+      await updateDoc(doc(db, 'deliveryOrders', order.id || ''), {
+        isUrgent: true,
+        urgentMarkedAt: new Date(),
+        priority: 'high',
+        adminContactedAt: new Date(),
+        adminContactReason: 'Seguimiento urgente solicitado por administrador'
+      });
+
+      // 2. Crear notificación específica para el repartidor asignado
+      try {
+        await addDoc(collection(db, 'deliveryNotifications'), {
+          type: 'urgent_delivery', // Cambiar tipo para indicar que es para entrega urgente
+          orderId: order.id,
+          targetDeliveryEmail: order.assignedTo,
+          targetDeliveryName: repartidorName,
+          targetZones: [order.assignedTo], // Usar email como zona específica
+          title: '🚨 ENTREGA URGENTE REQUERIDA',
+          message: `El administrador solicita que entregues URGENTEMENTE el pedido #${order.id?.substring(0, 8)} asignado a ti. Cliente: ${order.userName}. Total: $${order.total}. Procede con la entrega inmediatamente.`,
+          orderData: {
+            userName: order.userName,
+            userEmail: order.userEmail,
+            total: order.total,
+            items: order.items,
+            deliveryLocation: order.deliveryLocation || {
+              city: order.shipping?.city || 'No especificada',
+              zone: order.shipping?.zone || 'No especificada', 
+              address: order.shipping?.address || 'No especificada',
+              phone: order.shipping?.phone || 'No especificado'
+            },
+            currentStatus: order.status // Incluir estado actual
+          },
+          adminMessage: `Este pedido YA ESTÁ ASIGNADO a ti. Solo necesitas acelerar la entrega. No requiere nueva aceptación.`,
+          actionRequired: 'URGENT_DELIVERY', // Acción específica: entregar urgente
+          currentOrderStatus: order.status,
+          isAssignedOrder: true, // Marcar que ya está asignado
+          status: 'pending',
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 horas para entrega urgente
+          priority: 'critical',
+          isUrgent: true,
+          assignedDeliveryPerson: order.assignedTo
+        });
+
+        console.log('📱 Notificación específica de entrega urgente enviada a:', order.assignedTo);
+      } catch (notificationError) {
+        console.error('Error enviando notificación específica:', notificationError);
+      }
+
+      // 3. NO enviar notificación general a todos si ya está asignado
+      // Solo notificamos al repartidor específico para entrega urgente
+      console.log('📱 Notificación específica enviada. No se envía a todos los repartidores porque ya está asignado.');
+
+      // 3. Enviar email profesional usando el servicio de email
+      EmailService.sendUrgentContactEmail({
+        deliveryPersonEmail: order.assignedTo,
+        deliveryPersonName: repartidorName,
+        order: {
+          id: order.id || '',
+          userName: order.userName,
+          userEmail: order.userEmail,
+          total: order.total,
+          shipping: order.shipping
+        },
+        adminMessage: 'Este pedido YA ESTÁ ASIGNADO a ti. Solo necesitas acelerar la entrega - no requiere nueva aceptación. Entregar lo antes posible.'
+      });
+
+      // 4. Mostrar confirmación al admin
+      alert(`✅ Notificación de entrega urgente enviada a ${repartidorName}\n\n` +
+            `• Notificación push enviada (entrega urgente)\n` +
+            `• Email enviado al repartidor\n` +
+            `• Orden marcada como urgente\n\n` +
+            `El repartidor recibirá instrucciones para acelerar la entrega del pedido ya asignado.`);
+
+      // 5. Recargar datos para mostrar el estado actualizado
+      const orders = await getPendingOrders();
+      setPendingDeliveries(orders);
+      
+      const allOrders = await getAllDeliveryOrders();
+      setAllDeliveries(allOrders);
+
+    } catch (error) {
+      console.error('Error contactando repartidor:', error);
+      alert('❌ Error al contactar repartidor. Inténtalo de nuevo.');
+    }
+  };
+
+  // 📧 Función para enviar email simple de seguimiento (sin marcar como urgente)
+  const sendFollowUpEmail = (order: DeliveryOrder) => {
+    if (!order.assignedTo) {
+      alert('Esta orden no tiene repartidor asignado');
+      return;
+    }
+
+    const repartidor = availableDeliveryUsers.find(d => d.email === order.assignedTo);
+    const repartidorName = repartidor?.name || order.assignedTo?.split('@')[0] || 'Repartidor';
+
+    const template = EmailService.createFollowUpTemplate(order.assignedTo, {
+      id: order.id,
+      userName: order.userName,
+      total: order.total
+    });
+
+    // Abrir email cliente con template simple
+    const subject = encodeURIComponent(template.subject);
+    const body = encodeURIComponent(template.text);
+    window.open(`mailto:${order.assignedTo}?subject=${subject}&body=${body}`);
+  };
+
+  // 🧹 Función para limpiar notificaciones manualmente
+  const handleCleanupNotifications = async () => {
+    const confirmed = confirm(
+      '¿Limpiar todas las notificaciones expiradas y completadas?\n\n' +
+      'Esta acción:\n' +
+      '• Marcará como expiradas las notificaciones vencidas\n' +
+      '• Eliminará notificaciones muy antiguas (>24h)\n' +
+      '• Limpiará notificaciones de pedidos ya entregados\n\n' +
+      '¿Continuar?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await notificationService.cleanupExpiredNotifications();
+      
+      // También limpiar notificaciones de todos los pedidos entregados
+      const deliveredOrders = allDeliveries.filter(order => order.status === 'delivered');
+      const cleanupPromises = deliveredOrders.map(order => 
+        notificationService.cleanupNotificationsForOrder(order.id || order.orderId || '')
+      );
+      
+      await Promise.all(cleanupPromises);
+      
+      alert(`✅ Limpieza completada exitosamente!\n\n` +
+            `• Notificaciones expiradas procesadas\n` +
+            `• ${deliveredOrders.length} pedidos entregados limpiados\n` +
+            `• Notificaciones antiguas eliminadas`);
+      
+    } catch (error) {
+      console.error('Error en limpieza:', error);
+      alert('❌ Error durante la limpieza. Ver consola para detalles.');
     }
   };
 
@@ -646,7 +1071,14 @@ export default function AdminOrdersPage() {
                         <Card className="border-warning h-100">
                           <Card.Body className="text-center">
                             <i className="bi bi-clock-fill text-warning" style={{ fontSize: '2rem' }}></i>
-                            <h4 className="mt-2 mb-1 text-warning">{pendingDeliveries.length}</h4>
+                            <h4 className="mt-2 mb-1 text-warning">
+                              {filteredDeliveries.filter(o => 
+                                o.status === 'pending' || 
+                                o.status === 'assigned' || 
+                                o.status === 'picked_up' || 
+                                o.status === 'in_transit'
+                              ).length}
+                            </h4>
                             <small className="text-muted">Pendientes</small>
                           </Card.Body>
                         </Card>
@@ -656,7 +1088,7 @@ export default function AdminOrdersPage() {
                           <Card.Body className="text-center">
                             <i className="bi bi-truck text-info" style={{ fontSize: '2rem' }}></i>
                             <h4 className="mt-2 mb-1 text-info">
-                              {pendingDeliveries.filter(o => o.status === 'assigned').length}
+                              {filteredDeliveries.filter(o => o.status === 'assigned').length}
                             </h4>
                             <small className="text-muted">Asignadas</small>
                           </Card.Body>
@@ -667,7 +1099,7 @@ export default function AdminOrdersPage() {
                           <Card.Body className="text-center">
                             <i className="bi bi-arrow-right-circle text-primary" style={{ fontSize: '2rem' }}></i>
                             <h4 className="mt-2 mb-1 text-primary">
-                              {pendingDeliveries.filter(o => o.status === 'in_transit').length}
+                              {filteredDeliveries.filter(o => o.status === 'in_transit' || o.status === 'picked_up').length}
                             </h4>
                             <small className="text-muted">En tránsito</small>
                           </Card.Body>
@@ -678,7 +1110,7 @@ export default function AdminOrdersPage() {
                           <Card.Body className="text-center">
                             <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '2rem' }}></i>
                             <h4 className="mt-2 mb-1 text-success">
-                              {pendingDeliveries.filter(o => o.status === 'delivered').length}
+                              {filteredDeliveries.filter(o => o.status === 'delivered').length}
                             </h4>
                             <small className="text-muted">Entregadas</small>
                           </Card.Body>
@@ -687,7 +1119,7 @@ export default function AdminOrdersPage() {
                     </Row>
 
                     {/* 🚨 Alertas de Problemas */}
-                    {pendingDeliveries.filter(o => {
+                    {filteredDeliveries.filter(o => {
                       const orderDate = new Date(o.date);
                       const hoursSinceOrder = (Date.now() - orderDate.getTime()) / (1000 * 60 * 60);
                       return hoursSinceOrder > 24 && o.status !== 'delivered';
@@ -698,7 +1130,7 @@ export default function AdminOrdersPage() {
                           Órdenes con Retraso
                         </Alert.Heading>
                         <p className="mb-0">
-                          Hay {pendingDeliveries.filter(o => {
+                          Hay {filteredDeliveries.filter(o => {
                             const orderDate = new Date(o.date);
                             const hoursSinceOrder = (Date.now() - orderDate.getTime()) / (1000 * 60 * 60);
                             return hoursSinceOrder > 24 && o.status !== 'delivered';
@@ -710,31 +1142,63 @@ export default function AdminOrdersPage() {
 
                     {/* 📋 Tabla Completa de Monitoreo */}
                     <Card className="mb-4">
-                      <Card.Header className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">
-                          📋 Monitoreo Completo de Entregas
-                        </h5>
-                        <div className="d-flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline-primary"
-                            onClick={() => window.location.reload()}
-                          >
-                            <i className="bi bi-arrow-clockwise me-1"></i>
-                            Actualizar
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline-success"
-                            onClick={() => {
-                              // Exportar datos (implementar si necesario)
-                              console.log('Exportar datos de delivery');
-                            }}
-                          >
-                            <i className="bi bi-download me-1"></i>
-                            Exportar
-                          </Button>
-                        </div>
+                      <Card.Header>
+                        <Row className="align-items-center">
+                          <Col md={6}>
+                            <h5 className="mb-0">
+                              📋 Monitoreo de Entregas
+                            </h5>
+                            <small className="text-muted">
+                              Mostrando {filteredDeliveries.length} órdenes del {new Date(selectedDeliveryDate).toLocaleDateString('es-ES')}
+                            </small>
+                          </Col>
+                          <Col md={6}>
+                            <div className="d-flex gap-2 justify-content-end align-items-center">
+                              <Form.Group className="mb-0">
+                                <Form.Label className="small mb-1">Fecha:</Form.Label>
+                                <Form.Control
+                                  type="date"
+                                  size="sm"
+                                  value={selectedDeliveryDate}
+                                  onChange={(e) => setSelectedDeliveryDate(e.target.value)}
+                                  style={{ width: '150px' }}
+                                />
+                              </Form.Group>
+                              <Button 
+                                size="sm" 
+                                variant="outline-primary"
+                                onClick={() => window.location.reload()}
+                                title="Actualizar datos"
+                              >
+                                <i className="bi bi-arrow-clockwise me-1"></i>
+                                Actualizar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline-success"
+                                onClick={handleExportPDF}
+                                disabled={isExporting}
+                                title="Exportar PDF del día seleccionado"
+                              >
+                                {isExporting ? (
+                                  <Spinner size="sm" />
+                                ) : (
+                                  <i className="bi bi-download me-1"></i>
+                                )}
+                                Exportar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline-warning"
+                                onClick={handleCleanupNotifications}
+                                title="Limpiar notificaciones expiradas y completadas"
+                              >
+                                <i className="bi bi-trash3 me-1"></i>
+                                Limpiar
+                              </Button>
+                            </div>
+                          </Col>
+                        </Row>
                       </Card.Header>
                       <Card.Body className="p-0">
                         <div className="table-responsive">
@@ -752,16 +1216,16 @@ export default function AdminOrdersPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {pendingDeliveries.length === 0 ? (
+                              {filteredDeliveries.length === 0 ? (
                                 <tr>
                                   <td colSpan={8} className="text-center py-4 text-muted">
                                     <i className="bi bi-inbox" style={{ fontSize: '2rem' }}></i>
                                     <br />
-                                    No hay entregas para mostrar
+                                    No hay entregas para mostrar en esta fecha
                                   </td>
                                 </tr>
                               ) : (
-                                pendingDeliveries
+                                filteredDeliveries
                                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                   .map((order) => {
                                     const orderDate = new Date(order.date);
@@ -888,17 +1352,24 @@ export default function AdminOrdersPage() {
                                               <i className="bi bi-eye"></i>
                                             </Button>
                                             {order.assignedTo && order.status !== 'delivered' && (
-                                              <Button
-                                                size="sm"
-                                                variant="outline-warning"
-                                                onClick={() => {
-                                                  // Función para contactar al repartidor
-                                                  window.open(`mailto:${order.assignedTo}?subject=Seguimiento de Entrega - ${order.id}&body=Hola, necesito seguimiento de la entrega del pedido ${order.id}`);
-                                                }}
-                                                title="Contactar repartidor"
-                                              >
-                                                <i className="bi bi-envelope"></i>
-                                              </Button>
+                                              <>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline-info"
+                                                  onClick={() => sendFollowUpEmail(order)}
+                                                  title="Enviar email de seguimiento"
+                                                >
+                                                  <i className="bi bi-envelope"></i>
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline-warning"
+                                                  onClick={() => contactDeliveryPerson(order)}
+                                                  title="Contactar repartidor urgentemente"
+                                                >
+                                                  <i className="bi bi-exclamation-circle"></i>
+                                                </Button>
+                                              </>
                                             )}
                                             {isDelayed && (
                                               <Button
@@ -934,28 +1405,24 @@ export default function AdminOrdersPage() {
                           <Card.Header>
                             <h6 className="mb-0">
                               <i className="bi bi-bar-chart me-2"></i>
-                              Rendimiento Hoy
+                              Rendimiento del Día Seleccionado
                             </h6>
                           </Card.Header>
                           <Card.Body>
                             <div className="row text-center">
                               <div className="col-4">
-                                <h4 className="text-primary">{pendingDeliveries.filter(o => 
-                                  new Date(o.date).toDateString() === new Date().toDateString()
-                                ).length}</h4>
-                                <small className="text-muted">Órdenes Hoy</small>
+                                <h4 className="text-primary">{filteredDeliveries.length}</h4>
+                                <small className="text-muted">Órdenes Total</small>
                               </div>
                               <div className="col-4">
-                                <h4 className="text-success">{pendingDeliveries.filter(o => 
-                                  new Date(o.date).toDateString() === new Date().toDateString() && 
+                                <h4 className="text-success">{filteredDeliveries.filter(o => 
                                   o.status === 'delivered'
                                 ).length}</h4>
                                 <small className="text-muted">Entregadas</small>
                               </div>
                               <div className="col-4">
-                                <h4 className="text-warning">{pendingDeliveries.filter(o => 
-                                  new Date(o.date).toDateString() === new Date().toDateString() && 
-                                  o.status === 'pending'
+                                <h4 className="text-warning">{filteredDeliveries.filter(o => 
+                                  (o.status === 'pending' || o.status === 'assigned' || o.status === 'picked_up' || o.status === 'in_transit')
                                 ).length}</h4>
                                 <small className="text-muted">Pendientes</small>
                               </div>
@@ -985,8 +1452,8 @@ export default function AdminOrdersPage() {
                                       <div className="fw-bold">{delivery.name}</div>
                                       <small className="text-muted">{delivery.email}</small>
                                     </div>
-                                    <Badge bg="success" pill>
-                                      {pendingDeliveries.filter(o => o.assignedTo === delivery.email && o.status !== 'delivered').length} activas
+                                    <Badge bg={delivery.active ? "success" : "secondary"} pill>
+                                      {delivery.active ? "Activo" : "Inactivo"}
                                     </Badge>
                                   </div>
                                 ))}

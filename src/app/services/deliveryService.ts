@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { InputValidator, DataSanitizer } from '../utils/security';
 import { VALIDATION_RULES } from '../utils/securityConfig';
+import { notificationService } from './notificationService';
 
 export interface DeliveryOrder {
   id?: string;
@@ -23,7 +24,7 @@ export interface DeliveryOrder {
   date: string;
   items: any[];
   total: number;
-  status: 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered';
+  status: 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
   assignedTo?: string; // Email del delivery
   assignedAt?: string;
   deliveryNotes?: string;
@@ -246,7 +247,7 @@ export const getAllDeliveryOrders = async () => {
 // ✅ Actualizar estado de orden (delivery o admin)
 export const updateOrderStatus = async (
   orderId: string, 
-  status: 'assigned' | 'picked_up' | 'in_transit' | 'delivered',
+  status: 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled',
   notes?: string
 ) => {
   try {
@@ -291,6 +292,51 @@ export const updateOrderStatus = async (
     console.log('📤 [DEBUG] Datos a actualizar:', updateData);
     
     await updateDoc(orderRef, updateData);
+    
+    // 🔄 TAMBIÉN ACTUALIZAR EL PEDIDO ORIGINAL EN LA SUBCOLECCIÓN DEL USUARIO
+    try {
+      // Usar el orderId del delivery order para buscar la compra original
+      const deliveryOrderData = currentData;
+      const originalOrderId = deliveryOrderData.orderId;
+      const userId = deliveryOrderData.userId;
+      
+      console.log(`🔍 [DEBUG] Buscando compra original: userId=${userId}, purchaseId=${originalOrderId}`);
+      
+      // La compra está en users/{userId}/purchases/{purchaseId}
+      const originalPurchaseRef = doc(db, 'users', userId, 'purchases', originalOrderId);
+      const originalPurchaseDoc = await getDoc(originalPurchaseRef);
+      
+      if (originalPurchaseDoc.exists()) {
+        const originalUpdateData: any = {
+          status: status === 'delivered' ? 'delivered' : 'processing',
+          lastUpdated: new Date().toISOString()
+        };
+        
+        if (status === 'delivered') {
+          originalUpdateData.deliveredAt = new Date().toISOString();
+          originalUpdateData.deliveryNotes = notes || '';
+        }
+        
+        await updateDoc(originalPurchaseRef, originalUpdateData);
+        console.log(`✅ Compra original actualizada: ${originalOrderId} -> ${originalUpdateData.status}`);
+      } else {
+        console.log(`⚠️ Compra original no encontrada: users/${userId}/purchases/${originalOrderId}`);
+      }
+    } catch (originalOrderError) {
+      console.error('❌ Error actualizando compra original:', originalOrderError);
+      // No fallar la actualización principal por esto
+    }
+    
+    // 🧹 LIMPIAR NOTIFICACIONES AUTOMÁTICAMENTE CUANDO SE ENTREGA
+    if (status === 'delivered') {
+      try {
+        await notificationService.cleanupNotificationsForOrder(orderId);
+        console.log(`🗑️ Notificaciones limpiadas para pedido entregado: ${orderId}`);
+      } catch (cleanupError) {
+        console.error('Error limpiando notificaciones:', cleanupError);
+        // No fallar la actualización principal por esto
+      }
+    }
     
     console.log('✅ [DEBUG] Estado actualizado exitosamente');
   } catch (error) {
@@ -479,6 +525,12 @@ export const getDeliveryStatusInfo = (status: string | null) => {
         text: 'Entregado',
         color: 'success',
         icon: 'check-circle'
+      };
+    case 'cancelled':
+      return {
+        text: 'Cancelado',
+        color: 'danger',
+        icon: 'x-circle'
       };
     default:
       return {

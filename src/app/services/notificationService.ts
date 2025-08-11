@@ -1,7 +1,7 @@
 // 🔔 SERVICIO DE NOTIFICACIONES PARA DELIVERY
 // Sistema automatizado de asignación de pedidos
 
-import { db } from '../utils/firebase';
+import { db, auth } from '../utils/firebase';
 import { 
   collection, 
   addDoc, 
@@ -249,14 +249,30 @@ export class NotificationService {
     }
   }
 
-  // 🚨 CREAR NOTIFICACIÓN URGENTE PARA TODOS LOS DELIVERY
+  // 🚨 CREAR NOTIFICACIÓN URGENTE PARA TODOS LOS DELIVERY (CON PREVENCIÓN DE DUPLICADOS)
   async createUrgentNotificationForAll(orderData: any): Promise<string> {
     try {
+      const orderId = orderData.orderId || orderData.id || `ORDER_${Date.now()}`;
+      
+      // 🛡️ VERIFICAR SI YA EXISTE UNA NOTIFICACIÓN ACTIVA PARA ESTE PEDIDO
+      const existingNotificationsQuery = query(
+        collection(db, 'deliveryNotifications'),
+        where('orderId', '==', orderId),
+        where('status', '==', 'pending')
+      );
+      
+      const existingNotifications = await getDocs(existingNotificationsQuery);
+      
+      if (!existingNotifications.empty) {
+        console.log(`⚠️ Ya existe una notificación activa para el pedido ${orderId}. No se creará duplicada.`);
+        return existingNotifications.docs[0].id;
+      }
+
       // Para pedidos urgentes, notificar a TODAS las zonas
       const targetZones = ['general', 'guayaquil-general', 'santa-elena-general', 'guayaquil-centro', 'guayaquil-norte', 'guayaquil-sur', 'guayaquil-urdesa', 'guayaquil-samborondon', 'santa-elena-centro', 'santa-elena-libertad', 'santa-elena-ballenita', 'santa-elena-salinas'];
 
       const notificationData: Omit<DeliveryNotification, 'id'> = {
-        orderId: orderData.orderId || orderData.id || `ORDER_${Date.now()}`,
+        orderId: orderId,
         orderData: {
           userName: orderData.userName,
           userEmail: orderData.userEmail,
@@ -276,6 +292,7 @@ export class NotificationService {
       };
 
       const docRef = await addDoc(collection(db, 'deliveryNotifications'), notificationData);
+      console.log(`✅ Notificación urgente creada para pedido ${orderId}: ${docRef.id}`);
       
       // Para pedidos urgentes, expiración más larga
       this.scheduleUrgentNotificationExpiry(docRef.id);
@@ -532,41 +549,137 @@ export class NotificationService {
   // 📊 OBTENER NOTIFICACIONES ACTIVAS
   async getActiveNotifications(deliveryEmail?: string): Promise<DeliveryNotification[]> {
     try {
-      let q;
+      let notifications: DeliveryNotification[] = [];
       
       if (deliveryEmail) {
-        // Filtrar por zonas del delivery específico
+        // 1. Obtener notificaciones por zonas del delivery
         const deliveryZones = await this.getDeliveryUserZones(deliveryEmail);
         
-        if (deliveryZones.length === 0) {
-          return [];
+        if (deliveryZones.length > 0) {
+          const zonesQuery = query(
+            collection(db, 'deliveryNotifications'),
+            where('status', '==', 'pending'),
+            where('targetZones', 'array-contains-any', deliveryZones)
+          );
+          
+          const zonesSnapshot = await getDocs(zonesQuery);
+          zonesSnapshot.forEach(doc => {
+            const data = doc.data();
+            notifications.push({
+              id: doc.id,
+              ...data
+            } as DeliveryNotification);
+          });
         }
 
-        q = query(
+        // 2. Obtener notificaciones específicas para este repartidor (por email)
+        const specificQuery = query(
           collection(db, 'deliveryNotifications'),
           where('status', '==', 'pending'),
-          where('targetZones', 'array-contains-any', deliveryZones)
+          where('targetDeliveryEmail', '==', deliveryEmail)
         );
+        
+        const specificSnapshot = await getDocs(specificQuery);
+        specificSnapshot.forEach(doc => {
+          const data = doc.data();
+          const notificationId = doc.id;
+          
+          // Evitar duplicados
+          if (!notifications.find(n => n.id === notificationId)) {
+            notifications.push({
+              id: notificationId,
+              ...data
+            } as DeliveryNotification);
+          }
+        });
+
+        // 3. También buscar notificaciones donde targetZones incluye el email del delivery
+        const emailZoneQuery = query(
+          collection(db, 'deliveryNotifications'),
+          where('status', '==', 'pending'),
+          where('targetZones', 'array-contains', deliveryEmail)
+        );
+        
+        const emailZoneSnapshot = await getDocs(emailZoneQuery);
+        emailZoneSnapshot.forEach(doc => {
+          const data = doc.data();
+          const notificationId = doc.id;
+          
+          // Evitar duplicados
+          if (!notifications.find(n => n.id === notificationId)) {
+            notifications.push({
+              id: notificationId,
+              ...data
+            } as DeliveryNotification);
+          }
+        });
+        
       } else {
         // Sin filtro, para admin
-        q = query(
+        const q = query(
           collection(db, 'deliveryNotifications'),
           where('status', '==', 'pending')
         );
+        
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          notifications.push({
+            id: doc.id,
+            ...data
+          } as DeliveryNotification);
+        });
       }
+
+      // 🔍 FILTRAR NOTIFICACIONES DE PEDIDOS YA ENTREGADOS O CANCELADOS
+      const validNotifications: DeliveryNotification[] = [];
       
-      const snapshot = await getDocs(q);
-      const notifications: DeliveryNotification[] = [];
-      
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        notifications.push({
-          id: doc.id,
-          ...data
-        } as DeliveryNotification);
+      for (const notification of notifications) {
+        if (notification.orderId) {
+          try {
+            // Verificar el estado actual del pedido en deliveryOrders
+            const orderQuery = query(
+              collection(db, 'deliveryOrders'),
+              where('orderId', '==', notification.orderId),
+              limit(1)
+            );
+            
+            const orderSnapshot = await getDocs(orderQuery);
+            
+            if (!orderSnapshot.empty) {
+              const orderData = orderSnapshot.docs[0].data();
+              const orderStatus = orderData.status;
+              
+              // Solo incluir notificaciones de pedidos que NO estén entregados o cancelados
+              if (orderStatus !== 'delivered' && orderStatus !== 'cancelled') {
+                validNotifications.push(notification);
+              } else {
+                // Marcar automáticamente como completada si el pedido ya está entregado
+                console.log(`🗑️ Limpiando notificación de pedido ${orderStatus}: ${notification.orderId}`);
+                await this.cleanupNotificationsForOrder(notification.orderId);
+              }
+            } else {
+              // Si no encontramos el pedido, mantener la notificación (podría ser un pedido nuevo)
+              validNotifications.push(notification);
+            }
+          } catch (verifyError) {
+            console.error('Error verificando estado del pedido:', verifyError);
+            // En caso de error, mantener la notificación
+            validNotifications.push(notification);
+          }
+        } else {
+          // Si no tiene orderId, mantener la notificación
+          validNotifications.push(notification);
+        }
+      }
+
+      // Ordenar por fecha de creación (más recientes primero)
+      return validNotifications.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt as any);
+        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt as any);
+        return dateB.getTime() - dateA.getTime();
       });
       
-      return notifications;
     } catch (error) {
       console.error('Error obteniendo notificaciones:', error);
       return [];
@@ -619,61 +732,111 @@ export class NotificationService {
     callback: (notification: DeliveryNotification) => void
   ): Promise<() => void> {
     try {
-      // Obtener zonas del usuario dinámicamente desde Firebase
+      const unsubscribeFunctions: (() => void)[] = [];
+
+      // 1. Suscripción a notificaciones por zonas
       const deliveryZones = await this.getDeliveryUserZones(deliveryEmail);
       
-      if (deliveryZones.length === 0) {
-        return () => {};
+      if (deliveryZones.length > 0) {
+        const zonesQuery = query(
+          collection(db, 'deliveryNotifications'),
+          where('status', '==', 'pending'),
+          where('targetZones', 'array-contains-any', deliveryZones)
+        );
+
+        const zonesUnsubscribe = onSnapshot(zonesQuery, (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added' || change.type === 'modified') {
+              this.handleNotificationChange(change, callback);
+            }
+          });
+        }, (error) => {
+          console.error('Error en suscripción a notificaciones por zonas:', error);
+        });
+        
+        unsubscribeFunctions.push(zonesUnsubscribe);
       }
 
-      // Cargar notificaciones existentes para este delivery
-      await this.loadNotifications(deliveryEmail);
-
-      // Crear query para notificaciones pendientes dirigidas a las zonas del delivery
-      const q = query(
+      // 2. Suscripción a notificaciones específicas para este email
+      const specificQuery = query(
         collection(db, 'deliveryNotifications'),
         where('status', '==', 'pending'),
-        where('targetZones', 'array-contains-any', deliveryZones)
+        where('targetDeliveryEmail', '==', deliveryEmail)
       );
 
-      // Escuchar cambios en tiempo real
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      const specificUnsubscribe = onSnapshot(specificQuery, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added' || change.type === 'modified') {
-            const notification: DeliveryNotification = {
-              id: change.doc.id,
-              ...change.doc.data()
-            } as DeliveryNotification;
-
-            if (change.type === 'modified' && notification.isUrgent) {
-              this.showNotification(notification);
-            }
-
-            // Para nuevos pedidos, solo notificar si es reciente
-            if (change.type === 'added') {
-              const notificationTime = notification.createdAt.toDate();
-              const now = new Date();
-              const timeDiff = now.getTime() - notificationTime.getTime();
-              
-              // Si la notificación es reciente (menos de 30 segundos) o es urgente
-              if (timeDiff < 30000 || notification.isUrgent) {
-                this.showNotification(notification);
-              }
-            }
-
-            // Llamar al callback
-            callback(notification);
+            this.handleNotificationChange(change, callback);
           }
         });
       }, (error) => {
-        console.error('Error en suscripción a notificaciones:', error);
+        console.error('Error en suscripción a notificaciones específicas:', error);
       });
+      
+      unsubscribeFunctions.push(specificUnsubscribe);
 
-      return unsubscribe;
+      // 3. Suscripción a notificaciones donde targetZones incluye el email
+      const emailZoneQuery = query(
+        collection(db, 'deliveryNotifications'),
+        where('status', '==', 'pending'),
+        where('targetZones', 'array-contains', deliveryEmail)
+      );
+
+      const emailZoneUnsubscribe = onSnapshot(emailZoneQuery, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added' || change.type === 'modified') {
+            this.handleNotificationChange(change, callback);
+          }
+        });
+      }, (error) => {
+        console.error('Error en suscripción a notificaciones por email:', error);
+      });
+      
+      unsubscribeFunctions.push(emailZoneUnsubscribe);
+
+      // Cargar notificaciones existentes
+      await this.loadNotifications(deliveryEmail);
+
+      // Retornar función para cancelar todas las suscripciones
+      return () => {
+        unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+      };
+
     } catch (error) {
       console.error('Error creando suscripción:', error);
       return () => {}; // Retornar función vacía si hay error
     }
+  }
+
+  // 🔔 Función auxiliar para manejar cambios de notificaciones
+  private handleNotificationChange(
+    change: any,
+    callback: (notification: DeliveryNotification) => void
+  ): void {
+    const notification: DeliveryNotification = {
+      id: change.doc.id,
+      ...change.doc.data()
+    } as DeliveryNotification;
+
+    if (change.type === 'modified' && notification.isUrgent) {
+      this.showNotification(notification);
+    }
+
+    // Para nuevos pedidos, solo notificar si es reciente
+    if (change.type === 'added') {
+      const notificationTime = notification.createdAt.toDate();
+      const now = new Date();
+      const timeDiff = now.getTime() - notificationTime.getTime();
+      
+      // Si la notificación es reciente (menos de 30 segundos) o es urgente
+      if (timeDiff < 30000 || notification.isUrgent) {
+        this.showNotification(notification);
+      }
+    }
+
+    // Llamar al callback
+    callback(notification);
   }
 
   // 📱 SUSCRIBIRSE A NOTIFICACIONES URGENTES (para todos)
@@ -710,6 +873,44 @@ export class NotificationService {
     } catch (error) {
       console.error('Error en suscripción urgente:', error);
       return () => {};
+    }
+  }
+
+  // 🗑️ LIMPIAR NOTIFICACIONES DE UN PEDIDO ESPECÍFICO (cuando se entrega)
+  async cleanupNotificationsForOrder(orderId: string): Promise<void> {
+    try {
+      const notificationsQuery = query(
+        collection(db, 'deliveryNotifications'),
+        where('orderId', '==', orderId),
+        where('status', '==', 'pending')
+      );
+      
+      const notifications = await getDocs(notificationsQuery);
+      
+      const deletePromises = notifications.docs.map(doc => 
+        updateDoc(doc.ref, { status: 'completed_delivery' })
+      );
+      
+      await Promise.all(deletePromises);
+      console.log(`🗑️ Limpiadas ${notifications.size} notificaciones para pedido ${orderId}`);
+    } catch (error) {
+      console.error('Error limpiando notificaciones:', error);
+    }
+  }
+
+  // ✅ MARCAR NOTIFICACIÓN COMO LEÍDA
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'deliveryNotifications', notificationId), {
+        status: 'read',
+        readAt: new Date(),
+        readBy: auth.currentUser?.email || 'unknown'
+      });
+      
+      console.log(`📖 Notificación ${notificationId} marcada como leída`);
+    } catch (error) {
+      console.error('Error marcando notificación como leída:', error);
+      throw error;
     }
   }
 }

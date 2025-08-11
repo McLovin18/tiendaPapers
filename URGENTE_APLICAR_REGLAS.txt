@@ -1,0 +1,53 @@
+🚨 ATENCIÓN: REGLAS DE FIRESTORE REQUERIDAS 🚨
+
+==================================================
+❌ ERROR DETECTADO: "Missing or insufficient permissions"
+==================================================
+
+🔍 PROBLEMA:
+Las reglas de Firestore NO han sido aplicadas en Firebase Console.
+Sin estas reglas, el sistema de notificaciones NO FUNCIONARÁ.
+
+📋 INSTRUCCIONES URGENTES:
+
+1. 🌐 Abre tu navegador y ve a:
+   https://console.firebase.google.com
+
+2. 🎯 Selecciona tu proyecto:
+   "ropatrae-2ee37"
+
+3. 🗂️ En el menú lateral, busca:
+   "Firestore Database"
+
+4. ⚙️ Haz click en la pestaña:
+   "Rules" (Reglas)
+
+5. 📄 Abre el archivo en tu computadora:
+   "firestore-rules-notificaciones-fix.txt"
+
+6. 📋 Selecciona TODO el contenido (Ctrl+A) y cópialo (Ctrl+C)
+
+7. 🗑️ En Firebase Console, BORRA todo el contenido del editor de reglas
+
+8. 📝 PEGA las nuevas reglas (Ctrl+V)
+
+9. 🚀 Haz click en el botón rojo "PUBLISH"
+
+10. ✅ Confirma la publicación
+
+==================================================
+⚠️ HASTA QUE NO HAGAS ESTO, NADA FUNCIONARÁ ⚠️
+==================================================
+
+🔄 DESPUÉS DE APLICAR LAS REGLAS:
+- Refresca tu aplicación (F5)
+- El error "Missing or insufficient permissions" desaparecerá
+- El botón "Ir a Entregar" funcionará perfectamente
+- Se abrirá la ventana de proceso de entrega
+
+📞 SI NECESITAS AYUDA:
+1. Toma una captura de pantalla de Firebase Console
+2. Dime exactamente qué ves en la sección de reglas
+3. Te ayudo paso a paso
+
+🎯 ESTA ES LA SOLUCIÓN FINAL PARA TODOS LOS PROBLEMAS

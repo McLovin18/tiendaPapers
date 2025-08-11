@@ -729,7 +729,8 @@ export class NotificationService {
   // 👂 SUSCRIBIRSE A NOTIFICACIONES EN TIEMPO REAL (MEJORADO)
   async subscribeToDeliveryNotifications(
     deliveryEmail: string,
-    callback: (notification: DeliveryNotification) => void
+    onAddCallback: (notification: DeliveryNotification) => void,
+    onDeleteCallback?: (notificationId: string) => void
   ): Promise<() => void> {
     try {
       const unsubscribeFunctions: (() => void)[] = [];
@@ -747,7 +748,10 @@ export class NotificationService {
         const zonesUnsubscribe = onSnapshot(zonesQuery, (snapshot) => {
           snapshot.docChanges().forEach((change) => {
             if (change.type === 'added' || change.type === 'modified') {
-              this.handleNotificationChange(change, callback);
+              this.handleNotificationChange(change, onAddCallback);
+            } else if (change.type === 'removed' && onDeleteCallback) {
+              console.log(`🗑️ Notificación eliminada de zona: ${change.doc.id}`);
+              onDeleteCallback(change.doc.id);
             }
           });
         }, (error) => {
@@ -767,7 +771,10 @@ export class NotificationService {
       const specificUnsubscribe = onSnapshot(specificQuery, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added' || change.type === 'modified') {
-            this.handleNotificationChange(change, callback);
+            this.handleNotificationChange(change, onAddCallback);
+          } else if (change.type === 'removed' && onDeleteCallback) {
+            console.log(`🗑️ Notificación específica eliminada: ${change.doc.id}`);
+            onDeleteCallback(change.doc.id);
           }
         });
       }, (error) => {
@@ -786,7 +793,10 @@ export class NotificationService {
       const emailZoneUnsubscribe = onSnapshot(emailZoneQuery, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added' || change.type === 'modified') {
-            this.handleNotificationChange(change, callback);
+            this.handleNotificationChange(change, onAddCallback);
+          } else if (change.type === 'removed' && onDeleteCallback) {
+            console.log(`🗑️ Notificación por email eliminada: ${change.doc.id}`);
+            onDeleteCallback(change.doc.id);
           }
         });
       }, (error) => {

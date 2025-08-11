@@ -63,6 +63,71 @@ export default function AdminOrdersPage() {
   const [filteredDeliveries, setFilteredDeliveries] = useState<DeliveryOrder[]>([]);
   const [isExporting, setIsExporting] = useState(false);
 
+  // 🔥 ESCUCHA EN TIEMPO REAL PARA ÓRDENES DE DELIVERY
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+
+    console.log('🎯 Admin: Configurando escucha en tiempo real para órdenes de delivery');
+    
+    let unsubscribe: (() => void) | null = null;
+
+    const setupRealtimeListener = async () => {
+      try {
+        const { onSnapshot, collection, query, orderBy } = await import('firebase/firestore');
+        
+        // Escuchar cambios en deliveryOrders
+        const deliveryOrdersQuery = query(
+          collection(db, 'deliveryOrders'),
+          orderBy('date', 'desc')
+        );
+        
+        unsubscribe = onSnapshot(deliveryOrdersQuery, (snapshot) => {
+          console.log(`🔄 Admin: Cambio detectado en deliveryOrders (${snapshot.docs.length} órdenes)`);
+          
+          const orders: DeliveryOrder[] = [];
+          const pending: DeliveryOrder[] = [];
+          
+          snapshot.forEach((doc) => {
+            const orderData = { id: doc.id, ...doc.data() } as DeliveryOrder;
+            orders.push(orderData);
+            
+            if (orderData.status === 'pending') {
+              pending.push(orderData);
+            }
+          });
+          
+          // Actualizar estados automáticamente
+          setAllDeliveries(orders);
+          setPendingDeliveries(pending);
+          
+          // Filtrar por fecha seleccionada
+          const filtered = orders.filter(order => {
+            if (!selectedDeliveryDate) return true;
+            const orderDate = new Date(order.date).toISOString().split('T')[0];
+            return orderDate === selectedDeliveryDate;
+          });
+          setFilteredDeliveries(filtered);
+          
+          console.log(`📊 Admin: Actualizado - ${orders.length} total, ${pending.length} pendientes, ${filtered.length} filtradas`);
+        }, (error) => {
+          console.error('❌ Error en escucha en tiempo real:', error);
+        });
+        
+      } catch (error) {
+        console.error('❌ Error configurando escucha en tiempo real:', error);
+      }
+    };
+
+    setupRealtimeListener();
+
+    return () => {
+      if (unsubscribe) {
+        console.log('🔇 Admin: Desconectando escucha en tiempo real');
+        unsubscribe();
+      }
+    };
+  }, [user, isAdmin, selectedDeliveryDate]);
+
   useEffect(() => {
     if (user && isAdmin) {
       loadOrderData();

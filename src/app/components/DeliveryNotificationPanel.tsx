@@ -12,7 +12,8 @@ import {
   query as firestoreQuery, 
   collection as firestoreCollection, 
   where as firestoreWhere, 
-  getDocs as firestoreGetDocs 
+  getDocs as firestoreGetDocs,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 
@@ -62,7 +63,7 @@ const DeliveryNotificationPanel: React.FC<DeliveryNotificationPanelProps> = ({
     initializeNotifications();
   }, [user, isDelivery]);
 
-  // 👂 ESCUCHAR NOTIFICACIONES EN TIEMPO REAL (DINÁMICO)
+  // 👂 ESCUCHAR NOTIFICACIONES EN TIEMPO REAL (MEJORADO PARA SINCRONIZACIÓN)
   useEffect(() => {
     if (!user?.email || !isDelivery || !permissionGranted) return;
 
@@ -70,15 +71,49 @@ const DeliveryNotificationPanel: React.FC<DeliveryNotificationPanelProps> = ({
 
     const setupSubscription = async () => {
       try {
+        console.log(`🔥 Configurando escucha en tiempo real para: ${user.email}`);
+        
         unsubscribe = await notificationService.subscribeToDeliveryNotifications(
           user.email!,
           (notification) => {
+            console.log(`🔔 Nueva notificación recibida: ${notification.id} (${notification.isUrgent ? 'URGENTE' : 'Normal'})`);
+            
             setNotifications(prev => {
               // Evitar duplicados
               const exists = prev.find(n => n.id === notification.id);
-              if (exists) return prev;
+              if (exists) {
+                console.log(`⚠️ Notificación duplicada ignorada: ${notification.id}`);
+                return prev;
+              }
               
-              return [notification, ...prev].slice(0, 10); // Máximo 10 notificaciones
+              const updated = [notification, ...prev].slice(0, 10); // Máximo 10 notificaciones
+              console.log(`📱 Notificaciones actualizadas: ${updated.length} total`);
+              return updated;
+            });
+            
+            // 🔊 Sonido y vibración para notificaciones urgentes
+            if (notification.isUrgent) {
+              console.log('🚨 Reproduciendo alerta urgente');
+              if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200, 100, 200]);
+              }
+              // Sonido de alerta (opcional)
+              try {
+                const audio = new Audio('/sounds/urgent-alert.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(() => console.log('No se pudo reproducir sonido'));
+              } catch (e) {
+                console.log('Audio no disponible');
+              }
+            }
+          },
+          // 🗑️ Callback para notificaciones eliminadas/procesadas
+          (deletedNotificationId) => {
+            console.log(`🗑️ Notificación eliminada: ${deletedNotificationId}`);
+            setNotifications(prev => {
+              const updated = prev.filter(n => n.id !== deletedNotificationId);
+              console.log(`📱 Notificaciones después de eliminación: ${updated.length} total`);
+              return updated;
             });
           }
         );
@@ -91,49 +126,173 @@ const DeliveryNotificationPanel: React.FC<DeliveryNotificationPanelProps> = ({
 
     return () => {
       if (unsubscribe) {
+        console.log('🔇 Desconectando escucha de notificaciones');
         unsubscribe();
       }
     };
   }, [user, isDelivery, permissionGranted]);
 
-  // 🔔 MANEJAR ACEPTAR PEDIDO O IR A ENTREGAR
+  //  MANEJAR ACEPTAR PEDIDO O IR A ENTREGAR (MEJORADO CON SINCRONIZACIÓN)
   const handleAcceptOrder = async (notification: DeliveryNotification) => {
     if (!user?.email || !notification.id) return;
     
+    // 🛡️ VERIFICAR SI LA NOTIFICACIÓN AÚN ESTÁ DISPONIBLE
+    const currentNotification = notifications.find(n => n.id === notification.id);
+    if (!currentNotification) {
+      alert('❌ Esta notificación ya fue procesada por otro repartidor.');
+      return;
+    }
+    
     setLoading(true);
+    
+    // 🔒 REMOVER INMEDIATAMENTE DE LA LISTA LOCAL (FEEDBACK VISUAL INSTANTÁNEO)
+    setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    
     try {
+      console.log(`🎯 Procesando notificación: ${notification.id} (${notification.isUrgent ? 'URGENTE' : 'Normal'})`);
+      
       if (notification.isUrgent) {
         // Si es notificación urgente, mostrar ventana de proceso de entrega
         await openDeliveryProcess(notification);
       } else {
-        // Si es notificación normal, aceptar el pedido como antes
-        await assignOrderToDelivery(notification.orderId, user.email);
-        
-        // Actualizar el estado de la notificación usando acceptDeliveryOrder
-        await notificationService.acceptDeliveryOrder(notification.id, user.email);
-        
-        // Remover la notificación de la lista
-        setNotifications(prev => prev.filter(n => n.id !== notification.id));
-        
-        // ✅ Notificación procesada exitosamente
+        // ⚡ ACEPTAR PEDIDO NORMAL CON VALIDACIÓN DE CONCURRENCIA
+        try {
+          await assignOrderToDelivery(notification.orderId, user.email);
+          
+          // Actualizar el estado de la notificación usando acceptDeliveryOrder
+          await notificationService.acceptDeliveryOrder(notification.id, user.email);
+          
+          console.log(`✅ Pedido ${notification.orderId} asignado exitosamente a ${user.email}`);
+          
+          // 🎉 Feedback positivo
+          alert(`✅ ¡Pedido asignado exitosamente!\nCliente: ${notification.orderData?.userName}\nTotal: $${notification.orderData?.total}`);
+          
+          // ✅ Los pedidos asignados se actualizarán automáticamente por el listener en tiempo real
+          
+        } catch (assignError: any) {
+          console.error('❌ Error asignando pedido:', assignError);
+          
+          // 🔄 RESTAURAR NOTIFICACIÓN SI FALLA LA ASIGNACIÓN
+          setNotifications(prev => [notification, ...prev]);
+          
+          if (assignError.message?.includes('ya está asignada') || assignError.message?.includes('already assigned')) {
+            alert('❌ Este pedido ya fue asignado a otro repartidor.');
+          } else {
+            alert('❌ Error al asignar el pedido. Inténtalo de nuevo.');
+          }
+          return;
+        }
       }
     } catch (error) {
-      console.error('Error procesando notificación:', error);
-      alert('Error al procesar la notificación. Inténtalo de nuevo.');
+      console.error('❌ Error procesando notificación:', error);
+      
+      // 🔄 RESTAURAR NOTIFICACIÓN EN CASO DE ERROR
+      setNotifications(prev => [notification, ...prev]);
+      alert('❌ Error al procesar la notificación. Inténtalo de nuevo.');
     }
     setLoading(false);
   };
 
-  // 🚚 ABRIR PROCESO DE ENTREGA (NUEVA FUNCIONALIDAD)
+  // 🚚 ABRIR PROCESO DE ENTREGA PARA NOTIFICACIONES URGENTES
   const openDeliveryProcess = async (notification: DeliveryNotification) => {
     try {
+      // ✅ DETECTAR SI ES NOTIFICACIÓN URGENTE DE PEDIDO YA ASIGNADO
+      const isUrgentAssignedOrder = notification.isUrgent ||
+                                   notification.status === 'accepted';      if (isUrgentAssignedOrder) {
+        // 🚨 FLUJO PARA PEDIDOS YA ASIGNADOS (NO CREAR NUEVOS)
+        console.log('🚨 Procesando notificación urgente de pedido ya asignado');
+        
+        const confirmed = confirm(
+          `🚨 ENTREGA URGENTE REQUERIDA\n\n` +
+          `Cliente: ${notification.orderData?.userName || 'Cliente'}\n` +
+          `Total: $${notification.orderData?.total || 0}\n` +
+          `Estado actual: ${notification.status || 'pendiente'}\n\n` +
+          `¿Vas a proceder con la entrega inmediatamente?`
+        );
+
+        if (!confirmed) {
+          // Solo marcar como vista pero no remover (para que pueda verla después)
+          await notificationService.markNotificationAsRead(notification.id!);
+          return;
+        }
+
+        // Buscar la orden EXISTENTE (no crear nueva)
+        // ✅ Para notificaciones urgentes, el orderId suele ser el document ID de deliveryOrders
+        console.log(`🔍 Buscando orden con ID: ${notification.orderId}`);
+        
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const orderDocRef = doc(db, 'deliveryOrders', notification.orderId);
+          const orderDocSnap = await getDoc(orderDocRef);
+          
+          if (orderDocSnap.exists()) {
+            // ✅ ENCONTRADO POR DOCUMENT ID DIRECTO
+            const orderData = { id: orderDocSnap.id, ...orderDocSnap.data() } as DeliveryOrder;
+            
+            console.log(`✅ Orden encontrada por document ID: ${orderData.id}`);
+            
+            // Abrir modal del pedido EXISTENTE
+            setDeliveryOrder(orderData);
+            setCurrentStatus(orderData.status);
+            setDeliveryNotes(orderData.deliveryNotes || '');
+            setShowDeliveryModal(true);
+            
+            // Marcar notificación como procesada y remover
+            await notificationService.markNotificationAsRead(notification.id!);
+            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+            
+            return;
+          } else {
+            // ✅ FALLBACK: Buscar por campo orderId
+            console.log(`🔍 No encontrado por document ID, buscando por campo orderId: ${notification.orderId}`);
+            const ordersCollection = firestoreCollection(db, 'deliveryOrders');
+            const ordersQuery = firestoreQuery(
+              ordersCollection,
+              firestoreWhere('orderId', '==', notification.orderId)
+            );
+            
+            const querySnapshot = await firestoreGetDocs(ordersQuery);
+            
+            if (!querySnapshot.empty) {
+              const orderDoc = querySnapshot.docs[0];
+              const orderData = { id: orderDoc.id, ...orderDoc.data() } as DeliveryOrder;
+              
+              console.log(`✅ Orden encontrada por campo orderId: ${orderData.id}`);
+              
+              // Abrir modal del pedido EXISTENTE
+              setDeliveryOrder(orderData);
+              setCurrentStatus(orderData.status);
+              setDeliveryNotes(orderData.deliveryNotes || '');
+              setShowDeliveryModal(true);
+              
+              // Marcar notificación como procesada y remover
+              await notificationService.markNotificationAsRead(notification.id!);
+              setNotifications(prev => prev.filter(n => n.id !== notification.id));
+              
+              return;
+            }
+          }
+        } catch (docError) {
+          console.error('Error buscando orden:', docError);
+        }
+        
+        // ❌ NO SE ENCONTRÓ LA ORDEN POR NINGÚN MÉTODO
+        console.error(`❌ No se encontró orden para orderId: ${notification.orderId}`);
+        alert('Error: No se encontró el pedido. Es posible que haya sido procesado por otro repartidor o eliminado.');
+        
+        return;
+      }
+
+      // 📦 FLUJO NORMAL PARA PEDIDOS NUEVOS (SIN ASIGNAR)
+      console.log('📦 Procesando notificación de pedido nuevo');
+      
       // Marcar notificación como vista primero
       await notificationService.markNotificationAsRead(notification.id!);
       
       // Remover la notificación de la lista
       setNotifications(prev => prev.filter(n => n.id !== notification.id));
       
-      // Buscar la orden de delivery completa usando nombres explícitos
+      // Buscar la orden de delivery completa
       const ordersCollection = firestoreCollection(db, 'deliveryOrders');
       const ordersQuery = firestoreQuery(
         ordersCollection,
@@ -189,47 +348,34 @@ const DeliveryNotificationPanel: React.FC<DeliveryNotificationPanelProps> = ({
     
     setLoading(true);
     try {
-      // Si la orden es temporal (empieza con "temp_"), primero crearla en Firebase
-      if (deliveryOrder.id.startsWith('temp_')) {
-        const { addDoc, collection } = await import('firebase/firestore');
-        
-        const realOrderData = {
-          ...deliveryOrder,
-          status: newStatus,
-          deliveryNotes: deliveryNotes,
-          updatedAt: new Date().toISOString()
-        };
-        delete (realOrderData as any).id; // Remover el ID temporal
-        
-        const docRef = await addDoc(collection(db, 'deliveryOrders'), realOrderData);
-        
-        // Actualizar el estado local con la nueva orden real
-        const updatedOrder = {
-          ...deliveryOrder,
-          id: docRef.id,
-          status: newStatus as any,
-          deliveryNotes: deliveryNotes
-        };
-        
-        setDeliveryOrder(updatedOrder);
-        setCurrentStatus(newStatus);
-      } else {
-        // Si ya es una orden real, actualizar normalmente
-        await updateOrderStatus(deliveryOrder.orderId, newStatus as any, deliveryNotes);
-        setCurrentStatus(newStatus);
-      }
+      // ✅ SOLO ACTUALIZAR ÓRDENES EXISTENTES (NO CREAR NUEVAS)
+      console.log(`🔄 Actualizando estado de orden existente ${deliveryOrder.id}: ${deliveryOrder.status} → ${newStatus}`);
       
-      // Si se entrega, cerrar modal
+      // Usar el servicio de delivery para actualizar el estado
+      const { updateOrderStatus } = await import('../services/deliveryService');
+      await updateOrderStatus(deliveryOrder.orderId, newStatus as any, deliveryNotes);
+      
+      // Actualizar estado local
+      setCurrentStatus(newStatus);
+      setDeliveryOrder(prev => prev ? { 
+        ...prev, 
+        status: newStatus as any,
+        deliveryNotes: deliveryNotes,
+        lastUpdated: new Date().toISOString()
+      } : null);
+      
+      console.log(`✅ Estado actualizado exitosamente: ${newStatus}`);
+      
+      // Si se marca como entregado, cerrar el modal
       if (newStatus === 'delivered') {
-        alert('¡Pedido marcado como entregado exitosamente!');
+        alert('✅ Pedido marcado como entregado exitosamente');
         setShowDeliveryModal(false);
         setDeliveryOrder(null);
-      } else {
-        alert(`Estado actualizado a: ${getDeliveryStatusInfo(newStatus).text}`);
       }
+      
     } catch (error) {
-      console.error('Error actualizando estado:', error);
-      alert('Error al actualizar el estado del pedido.');
+      console.error('❌ Error actualizando estado:', error);
+      alert('Error al actualizar el estado. Inténtalo de nuevo.');
     }
     setLoading(false);
   };
@@ -330,6 +476,7 @@ const DeliveryNotificationPanel: React.FC<DeliveryNotificationPanelProps> = ({
           </small>
         </Card.Header>
         <Card.Body>
+          {/*  SECCIÓN DE NOTIFICACIONES NUEVAS */}
           {notifications.length === 0 ? (
             <Alert variant="light" className="text-center">
               <h6>📬 No hay pedidos pendientes</h6>

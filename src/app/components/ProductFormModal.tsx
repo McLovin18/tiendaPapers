@@ -140,11 +140,27 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
   // Categorías disponibles con sus rutas correspondientes
   const CATEGORIES = [
     { value: '', label: 'Seleccionar categoría', link: '' },
-    { value: 'mujer', label: 'Mujer', link: 'mujer' },
-    { value: 'hombre', label: 'Hombre', link: 'hombre' },
-    { value: 'bebe', label: 'Bebé', link: 'bebe' },
-    { value: 'ninos', label: 'Niños', link: 'ninos' },
-    { value: 'sport', label: 'Sport', link: 'sport' }
+    { value: 'Base de Maquillaje', label: 'Base de Maquillaje', link: 'maquillaje' },
+    { value: 'Sombras de Ojos', label: 'Sombras de Ojos', link: 'maquillaje' },
+    { value: 'Labiales', label: 'Labiales', link: 'maquillaje' },
+    { value: 'Máscaras de Pestañas', label: 'Máscaras de Pestañas', link: 'maquillaje' },
+    { value: 'Delineadores', label: 'Delineadores', link: 'maquillaje' },
+    { value: 'Contorno', label: 'Contorno', link: 'maquillaje' },
+    { value: 'Correctores', label: 'Correctores', link: 'maquillaje' },
+    { value: 'Polvos', label: 'Polvos', link: 'maquillaje' },
+    { value: 'Serums', label: 'Serums', link: 'cuidado-piel' },
+    { value: 'Cremas Hidratantes', label: 'Cremas Hidratantes', link: 'cuidado-piel' },
+    { value: 'Limpieza Facial', label: 'Limpieza Facial', link: 'cuidado-piel' },
+    { value: 'Tónicos', label: 'Tónicos', link: 'cuidado-piel' },
+    { value: 'Mascarillas Faciales', label: 'Mascarillas Faciales', link: 'cuidado-piel' },
+    { value: 'Protección Solar', label: 'Protección Solar', link: 'cuidado-piel' },
+    { value: 'Cuidado Corporal', label: 'Cuidado Corporal', link: 'cuidado-piel' },
+    { value: 'Cuidado de Manos', label: 'Cuidado de Manos', link: 'cuidado-piel' },
+    { value: 'Fragancias', label: 'Fragancias', link: 'fragancias' },
+    { value: 'Brochas', label: 'Brochas', link: 'accesorios' },
+    { value: 'Esponjas', label: 'Esponjas', link: 'accesorios' },
+    { value: 'Cuidado de Uñas', label: 'Cuidado de Uñas', link: 'accesorios' },
+    { value: 'Pestañas', label: 'Pestañas', link: 'accesorios' }
   ];
   
   const [formData, setFormData] = useState({
@@ -157,11 +173,7 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
     details: [] as string[]
   });
 
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
-  const [newSize, setNewSize] = useState('');
-  const [newColor, setNewColor] = useState('');
   const [newDetail, setNewDetail] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
@@ -182,8 +194,6 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         description: product.description || '',
         details: product.details || []
       });
-      setSizes(product.sizes || []);
-      setColors(product.colors || []);
       setImages(product.images || []);
     } else {
       // Reset para nuevo producto
@@ -196,8 +206,6 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         description: '',
         details: []
       });
-      setSizes([]);
-      setColors([]);
       setImages([]);
     }
     // Limpiar estados de archivos y errores
@@ -239,28 +247,6 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
       ...prev,
       [field]: value
     }));
-  }, []);
-
-  const addSize = useCallback(() => {
-    if (newSize.trim() && !sizes.includes(newSize.trim().toUpperCase())) {
-      setSizes(prev => [...prev, newSize.trim().toUpperCase()]);
-      setNewSize('');
-    }
-  }, [newSize, sizes]);
-
-  const removeSize = useCallback((sizeToRemove: string) => {
-    setSizes(prev => prev.filter(size => size !== sizeToRemove));
-  }, []);
-
-  const addColor = useCallback(() => {
-    if (newColor.trim() && !colors.includes(newColor.trim())) {
-      setColors(prev => [...prev, newColor.trim()]);
-      setNewColor('');
-    }
-  }, [newColor, colors]);
-
-  const removeColor = useCallback((colorToRemove: string) => {
-    setColors(prev => prev.filter(color => color !== colorToRemove));
   }, []);
 
   const addDetail = useCallback(() => {
@@ -359,9 +345,6 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         throw new Error('Debes seleccionar una categoría para el producto');
       }
 
-      const finalSizes = sizes.length > 0 ? sizes : ['ÚNICA'];
-      const finalColors = colors.length > 0 ? colors : ['Sin especificar'];
-
       let finalImages = [...images];
       
       // Subir las nuevas imágenes seleccionadas
@@ -430,8 +413,6 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         images: finalImages,
         category: formData.category.trim(),
         description: formData.description.trim(),
-        sizes: finalSizes,
-        colors: finalColors,
         details: formData.details
       };
 
@@ -465,12 +446,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
       description: '',
       details: []
     });
-    setSizes([]);
-    setColors([]);
     setImages([]);
     setSelectedFiles([]);
-    setNewSize('');
-    setNewColor('');
     setNewDetail('');
     setError('');
     setUploadProgress(0);
@@ -589,71 +566,13 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
             />
           </Form.Group>
 
-          {/* Tallas */}
-          <Form.Group className="mb-3">
-            <Form.Label>Tallas Disponibles (opcional)</Form.Label>
-            <div className="d-flex mb-2">
-              <Form.Control
-                type="text"
-                placeholder="Ej: S, M, L, XL"
-                value={newSize}
-                onChange={(e) => setNewSize(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSize())}
-              />
-              <Button variant="outline-primary" className="ms-2" onClick={addSize}>
-                <i className="bi bi-plus"></i>
-              </Button>
-            </div>
-            <div className="d-flex flex-wrap gap-2">
-              {sizes.map((size, index) => (
-                <Badge key={index} bg="primary" className="d-flex align-items-center">
-                  {size}
-                  <i 
-                    className="bi bi-x ms-1" 
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => removeSize(size)}
-                  ></i>
-                </Badge>
-              ))}
-            </div>
-          </Form.Group>
-
-          {/* Colores */}
-          <Form.Group className="mb-3">
-            <Form.Label>Colores Disponibles (opcional)</Form.Label>
-            <div className="d-flex mb-2">
-              <Form.Control
-                type="text"
-                placeholder="Ej: Rojo, Azul, Negro"
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
-              />
-              <Button variant="outline-primary" className="ms-2" onClick={addColor}>
-                <i className="bi bi-plus"></i>
-              </Button>
-            </div>
-            <div className="d-flex flex-wrap gap-2">
-              {colors.map((color, index) => (
-                <Badge key={index} bg="success" className="d-flex align-items-center">
-                  {color}
-                  <i 
-                    className="bi bi-x ms-1" 
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => removeColor(color)}
-                  ></i>
-                </Badge>
-              ))}
-            </div>
-          </Form.Group>
-
           {/* Detalles */}
           <Form.Group className="mb-3">
             <Form.Label>Detalles del Producto</Form.Label>
             <div className="d-flex mb-2">
               <Form.Control
                 type="text"
-                placeholder="Ej: 100% algodón, Lavable a máquina"
+                placeholder="Ej: Hipoalergénico, Vitamina E, Libre de parabenos"
                 value={newDetail}
                 onChange={(e) => setNewDetail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addDetail())}

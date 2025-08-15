@@ -1,90 +1,96 @@
-import { Product } from '../services/recommendationService';
+// src/app/products/productsData.ts
 
-const allProducts: Product[] = [
+const allProducts = [
   {
     id: 1,
-    name: 'Base de Maquillaje Full Coverage',
-    price: 32.99,
-    images: ['https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80'],
+    name: 'Base de Maquillaje Líquida HD',
+    price: 24.99,
+    images: ['https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80', 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=400&fit=crop&q=80'],
     category: 'Base de Maquillaje',
     categoryLink: '/maquillaje',
-    description: 'Base de maquillaje de cobertura completa con acabado natural.',
+    description: 'Base de maquillaje líquida de alta definición con cobertura completa y acabado natural.',
     inStock: true,
     details: [
       'Cobertura completa de larga duración',
-      'SPF 15 para protección diaria',
-      'Disponible en 20 tonos',
       'Fórmula libre de aceites',
-      'Acabado natural mate'
-    ]
+      'SPF 30 incluido',
+      'Disponible en 12 tonos',
+      'Resistente al agua'
+    ],
+    featured: true
   },
   {
     id: 2,
-    name: 'Paleta de Sombras Nude',
-    price: 45.99,
-    images: ['https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&q=80'],
+    name: 'Paleta de Sombras Profesional',
+    price: 32.00,
+    images: ['https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=400&h=400&fit=crop&q=80', 'https://images.unsplash.com/photo-1567721913486-6585f069b332?w=400&h=400&fit=crop&q=80'],
     category: 'Sombras de Ojos',
     categoryLink: '/maquillaje',
-    description: 'Paleta de 12 sombras en tonos nude perfectos para cualquier ocasión.',
+    description: 'Paleta profesional con 24 sombras de ojos en tonos nude y smokey.',
     inStock: true,
     details: [
-      '12 tonos versátiles nude',
-      'Fórmula altamente pigmentada',
-      'Acabados mate y shimmer',
-      'Larga duración sin transfer',
-      'Incluye espejo y aplicadores'
-    ]
+      '24 tonos altamente pigmentados',
+      'Fórmula cremosa y sedosa',
+      'Incluye espejo y aplicadores',
+      'Larga duración sin difuminarse',
+      'Apta para uso profesional'
+    ],
+    featured: true
   },
   {
     id: 3,
-    name: 'Labial Matte Liquid',
-    price: 24.99,
-    images: ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&h=400&fit=crop&q=80'],
+    name: 'Labial Mate de Larga Duración',
+    price: 18.99,
+    images: ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&h=400&fit=crop&q=80', 'https://images.unsplash.com/photo-1596755389378-c31d5c6d44cb?w=400&h=400&fit=crop&q=80'],
     category: 'Labiales',
     categoryLink: '/maquillaje',
-    description: 'Labial líquido mate de larga duración con color intenso.',
+    description: 'Labial mate con fórmula de larga duración que no se transfiere.',
     inStock: true,
     details: [
-      'Acabado mate sedoso',
-      'Duración hasta 8 horas',
-      'No se transfiere',
-      'Aplicador de precisión',
-      'Disponible en 15 colores'
-    ]
+      'Acabado mate intenso',
+      'Hasta 12 horas de duración',
+      'No se transfiere ni se corre',
+      'Fórmula hidratante con vitamina E',
+      'Disponible en 15 tonos'
+    ],
+    featured: true
   },
   {
     id: 4,
-    name: 'Serum Facial Ácido Hialurónico',
-    price: 28.99,
-    images: ['https://images.unsplash.com/photo-1556228653-e32817cd38c0?w=400&h=400&fit=crop&q=80'],
-    category: 'Serums',
+    name: 'Sérum Anti-Edad Vitamina C',
+    price: 45.00,
+    images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop&q=80'],
+    category: 'Cuidado Facial',
     categoryLink: '/cuidado-piel',
-    description: 'Serum hidratante con ácido hialurónico puro para todo tipo de piel.',
+    description: 'Sérum facial con vitamina C pura para iluminar y rejuvenecer la piel.',
     inStock: true,
     details: [
-      'Ácido hialurónico de múltiples pesos moleculares',
-      'Hidratación profunda inmediata',
-      'Reduce líneas finas',
-      'Textura ligera de rápida absorción',
-      'Frasco con gotero de 30ml'
-    ]
+      '20% de vitamina C estabilizada',
+      'Reduce arrugas y líneas de expresión',
+      'Unifica el tono de la piel',
+      'Antioxidante natural',
+      'Apto para todo tipo de piel',
+      'Resultados visibles en 4 semanas'
+    ],
+    featured: true
   },
   {
     id: 5,
-    name: 'Crema Hidratante Día',
-    price: 35.99,
-    images: ['https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&h=400&fit=crop&q=80'],
-    category: 'Cremas Hidratantes',
+    name: 'Crema Hidratante Facial Premium',
+    price: 38.00,
+    images: ['https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop&q=80', 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&q=80'],
+    category: 'Hidratantes',
     categoryLink: '/cuidado-piel',
-    description: 'Crema hidratante de día con SPF 30 y antioxidantes.',
+    description: 'Crema hidratante facial con ácido hialurónico y colágeno para piel radiante.',
     inStock: true,
     details: [
-      'SPF 30 protección UV',
-      'Vitamina C y E antioxidantes',
-      'Textura ligera no grasa',
-      'Hidratación 24 horas',
-      'Base perfecta para maquillaje'
-    ]
+      'Ácido hialurónico de triple peso molecular',
+      'Péptidos de colágeno',
+      'Hidratación profunda 24 horas',
+      'Textura ligera de rápida absorción',
+      'Sin parabenos ni sulfatos'
+    ],
+    featured: true
   },
   {
     id: 6,
@@ -341,79 +347,138 @@ const allProducts: Product[] = [
       'Frasco de 75ml'
     ]
   },
+    details: [
+      'Arcilla bentonita y carbón activado',
+      'Elimina impurezas y toxinas',
+      'Minimiza poros',
+      'Para piel grasa y mixta',
+      'Uso 2-3 veces por semana'
+    ]
+  },
   {
-    id: 21,
-    name: 'Brillo Labial Hidratante',
-    price: 19.99,
-    images: ['https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80'],
-    category: 'Labiales',
+    id: 18,
+    name: 'Iluminador Líquido Multiuso',
+    price: 27.99,
+    images: ['/cosmeticos/iluminador-liquido.jpg'],
+    category: 'Iluminadores',
     categoryLink: '/maquillaje',
-    description: 'Brillo labial con ácido hialurónico y vitamina E.',
+    description: 'Iluminador líquido para rostro y cuerpo con acabado natural.',
     inStock: true,
     details: [
-      'Ácido hialurónico hidratante',
-      'Vitamina E nutritiva',
-      'Acabado brilloso natural',
-      'No pegajoso',
-      'Disponible en 8 tonos'
+      'Finish natural radiante',
+      'Uso en rostro y cuerpo',
+      'Mezcla fácil con base',
+      'Disponible en 3 tonos',
+      'Fórmula buildable'
+    ]
+  },
+  {
+    id: 19,
+    name: 'Agua Micelar Desmaquillante',
+    price: 21.99,
+    images: ['/cosmeticos/agua-micelar.jpg'],
+    category: 'Desmaquillantes',
+    categoryLink: '/cuidado-piel',
+    description: 'Agua micelar suave que elimina maquillaje y purifica la piel.',
+    inStock: true,
+    details: [
+      'Micelas purificantes',
+      'Sin enjuague necesario',
+      'Apta para ojos sensibles',
+      'No deja residuos grasos',
+      'Botella de 400ml'
+    ]
+  },
+  {
+    id: 20,
+    name: 'Cologne Masculino Fresh',
+    price: 55.99,
+    images: ['/cosmeticos/cologne-masculino.jpg'],
+    category: 'Fragancias Masculinas',
+    categoryLink: '/fragancias',
+    description: 'Cologne masculino con notas frescas y amaderadas.',
+    inStock: true,
+    details: [
+      'Notas de salida: Limón y menta',
+      'Notas de corazón: Lavanda y geranio',
+      'Notas de fondo: Cedro y vetiver',
+      'Duración: 6-8 horas',
+      'Frasco de 100ml'
+    ]
+  },
+  {
+    id: 21,
+    name: 'Primer Facial Perfeccionador',
+    price: 29.99,
+    images: ['/cosmeticos/primer-facial.jpg'],
+    category: 'Primers',
+    categoryLink: '/maquillaje',
+    description: 'Primer facial que minimiza poros y prepara la piel para el maquillaje.',
+    inStock: true,
+    details: [
+      'Minimiza poros y imperfecciones',
+      'Base perfecta para maquillaje',
+      'Control de grasa 12 horas',
+      'Textura sedosa',
+      'Apto para todo tipo de piel'
     ]
   },
   {
     id: 22,
-    name: 'Corrector de Ojeras',
-    price: 24.99,
-    images: ['https://images.unsplash.com/photo-1522338140262-f46f5913618a?w=400&h=400&fit=crop&q=80'],
+    name: 'Corrector Líquido Alta Cobertura',
+    price: 18.99,
+    images: ['/cosmeticos/corrector-liquido.jpg'],
     category: 'Correctores',
     categoryLink: '/maquillaje',
-    description: 'Corrector de alta cobertura para ojeras y imperfecciones.',
+    description: 'Corrector líquido de alta cobertura para ojeras e imperfecciones.',
     inStock: true,
     details: [
       'Cobertura completa',
       'Fórmula cremosa',
-      'Larga duración 12 horas',
-      'Con cafeína anti-ojeras',
-      'Disponible en 10 tonos'
+      'No se cuartea ni reseca',
+      'Disponible en 8 tonos',
+      'Aplicador de precisión'
     ]
   },
   {
     id: 23,
-    name: 'Serum Facial Vitamina C',
-    price: 34.99,
-    images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop&q=80'],
-    category: 'Serums',
+    name: 'Sérum Facial Retinol Nocturno',
+    price: 52.99,
+    images: ['/cosmeticos/serum-retinol.jpg'],
+    category: 'Tratamientos Anti-Edad',
     categoryLink: '/cuidado-piel',
-    description: 'Serum facial con vitamina C pura al 20% y ácido hialurónico.',
+    description: 'Sérum nocturno con retinol encapsulado para renovación celular.',
     inStock: true,
     details: [
-      'Vitamina C pura al 20%',
-      'Ácido hialurónico',
-      'Antioxidante potente',
-      'Ilumina y unifica el tono',
-      'Frasco con gotero de 30ml'
+      'Retinol encapsulado 0.5%',
+      'Renovación celular nocturna',
+      'Reduce arrugas profundas',
+      'Mejora textura de la piel',
+      'Solo uso nocturno'
     ]
   },
   {
     id: 24,
-    name: 'Esponja Maquillaje Premium',
+    name: 'Bálsamo Labial Nutritivo',
     price: 12.99,
-    images: ['https://images.unsplash.com/photo-1583241800698-9cb5be6c7cfc?w=400&h=400&fit=crop&q=80'],
-    category: 'Esponjas',
-    categoryLink: '/accesorios',
-    description: 'Esponja de maquillaje profesional para aplicación perfecta.',
+    images: ['/cosmeticos/balsamo-labial.jpg'],
+    category: 'Cuidado Labial',
+    categoryLink: '/cuidado-piel',
+    description: 'Bálsamo labial con manteca de karité y vitamina E.',
     inStock: true,
     details: [
-      'Material hipoalergénico',
-      'Forma ergonómica',
-      'Aplicación uniforme',
-      'Fácil de limpiar',
-      'Pack de 2 unidades'
+      'Manteca de karité pura',
+      'Vitamina E antioxidante',
+      'Hidratación profunda',
+      'Protección contra el frío',
+      'Sin parabenos'
     ]
   },
   {
     id: 25,
     name: 'Polvo Compacto Matificante',
     price: 24.99,
-    images: ['https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&q=80'],
+    images: ['/cosmeticos/polvo-compacto.jpg'],
     category: 'Polvos',
     categoryLink: '/maquillaje',
     description: 'Polvo compacto matificante para sellar el maquillaje.',
@@ -430,7 +495,7 @@ const allProducts: Product[] = [
     id: 26,
     name: 'Set de Pestañas Postizas',
     price: 15.99,
-    images: ['https://images.unsplash.com/photo-1583241800698-9cb5be6c7cfc?w=400&h=400&fit=crop&q=80'],
+    images: ['/cosmeticos/pestanas-postizas.jpg'],
     category: 'Pestañas',
     categoryLink: '/accesorios',
     description: 'Set de pestañas postizas reutilizables con pegamento incluido.',
@@ -447,8 +512,8 @@ const allProducts: Product[] = [
     id: 27,
     name: 'Tónico Facial Equilibrante',
     price: 26.99,
-    images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop&q=80'],
-    category: 'Tónicos',
+    images: ['/cosmeticos/tonico-facial.jpg'],
+    category: 'Tónicos y Brumas',
     categoryLink: '/cuidado-piel',
     description: 'Tónico facial con niacinamida para equilibrar el pH de la piel.',
     inStock: true,
@@ -464,7 +529,7 @@ const allProducts: Product[] = [
     id: 28,
     name: 'Crema de Manos Reparadora',
     price: 13.99,
-    images: ['https://images.unsplash.com/photo-1612817288484-6f916006741a?w=400&h=400&fit=crop&q=80'],
+    images: ['/cosmeticos/crema-manos.jpg'],
     category: 'Cuidado de Manos',
     categoryLink: '/cuidado-piel',
     description: 'Crema de manos intensiva con keratina y urea.',
@@ -481,7 +546,7 @@ const allProducts: Product[] = [
     id: 29,
     name: 'Gel Limpiador Facial Suave',
     price: 22.99,
-    images: ['https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&h=400&fit=crop&q=80'],
+    images: ['/cosmeticos/gel-limpiador.jpg'],
     category: 'Limpieza Facial',
     categoryLink: '/cuidado-piel',
     description: 'Gel limpiador facial suave para uso diario.',
@@ -498,8 +563,8 @@ const allProducts: Product[] = [
     id: 30,
     name: 'Perfume Unisex Citrus',
     price: 48.99,
-    images: ['https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400&h=400&fit=crop&q=80'],
-    category: 'Fragancias',
+    images: ['/cosmeticos/perfume-unisex.jpg'],
+    category: 'Fragancias Unisex',
     categoryLink: '/fragancias',
     description: 'Fragancia unisex con notas cítricas frescas.',
     inStock: true,
@@ -513,4 +578,4 @@ const allProducts: Product[] = [
   }
 ];
 
-export default allProducts;
+export default allProducts; 

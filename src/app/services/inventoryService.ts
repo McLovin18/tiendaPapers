@@ -24,8 +24,6 @@ export interface ProductInventory {
   isActive: boolean; // Controlado automáticamente por stock
   lastUpdated: string;
   description?: string;
-  sizes: string[]; // Tallas disponibles
-  colors: string[]; // Colores disponibles
   details?: string[]; // Detalles del producto
 }
 

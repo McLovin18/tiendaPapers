@@ -9,16 +9,15 @@ const Footer = () => (
         <Col md={6} className="mb-4 mb-md-0">
           <h5 className="fw-bold mb-3">Comprar</h5>
           <ul className="list-unstyled">
-            <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
-            <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
-            <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
-            <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
-            <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
+            <li className="mb-2"><Link href="/products/maquillaje" className="text-dark text-decoration-none">Maquillaje</Link></li>
+            <li className="mb-2"><Link href="/products/cuidado-piel" className="text-dark text-decoration-none">Cuidado de Piel</Link></li>
+            <li className="mb-2"><Link href="/products/fragancias" className="text-dark text-decoration-none">Fragancias</Link></li>
+            <li className="mb-2"><Link href="/products/accesorios" className="text-dark text-decoration-none">Accesorios</Link></li>
           </ul>
         </Col>
         <Col md={6}>
           <h5 className="fw-bold mb-3">Contacto</h5>
-          <p className="mb-1">Email: info@tiendaropa.com</p>
+          <p className="mb-1">Email: info@cosmeticosonline.com</p>
           <p className="mb-0">Teléfono: (123) 456-7890</p>
         </Col>
       </Row>

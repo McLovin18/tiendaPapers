@@ -11,8 +11,6 @@ export interface Product {
   categoryLink: string;
   description: string;
   inStock: boolean;
-  sizes: string[];
-  colors: string[];
   details: string[];
   featured?: boolean;
 }
@@ -138,21 +136,26 @@ class RecommendationEngine {
   }
 
   /**
-   * Calcula similitud de colores
+   * Calcula similitud de ingredientes/características para cosméticos
    */
   private calculateColorScore(target: Product, candidate: Product): number {
-    const targetColors = target.colors.map(c => c.toLowerCase());
-    const candidateColors = candidate.colors.map(c => c.toLowerCase());
+    // Para cosméticos, podemos comparar palabras clave en los detalles relacionadas con beneficios
+    const targetKeywords = target.details.join(' ').toLowerCase();
+    const candidateKeywords = candidate.details.join(' ').toLowerCase();
     
-    const commonColors = targetColors.filter(color => 
-      candidateColors.some(candidateColor => 
-        this.areColorsRelated(color, candidateColor)
-      )
-    );
+    const beautyKeywords = [
+      'hidratante', 'matificante', 'nutritivo', 'anti-edad', 'vitamina', 
+      'antioxidante', 'protección', 'natural', 'orgánico', 'hipoalergénico'
+    ];
+    
+    let commonBenefits = 0;
+    beautyKeywords.forEach(keyword => {
+      if (targetKeywords.includes(keyword) && candidateKeywords.includes(keyword)) {
+        commonBenefits++;
+      }
+    });
 
-    if (commonColors.length === 0) return 0;
-    
-    return commonColors.length / Math.max(targetColors.length, candidateColors.length);
+    return beautyKeywords.length > 0 ? commonBenefits / beautyKeywords.length : 0;
   }
 
   /**
@@ -177,14 +180,36 @@ class RecommendationEngine {
   }
 
   /**
-   * Calcula similitud de tallas
+   * Calcula similitud de tipo de producto para cosméticos
    */
   private calculateSizeScore(target: Product, candidate: Product): number {
-    const commonSizes = target.sizes.filter(size => candidate.sizes.includes(size));
+    // Para cosméticos, comparamos el tipo de producto basado en la categoría
+    const targetCategory = target.category.toLowerCase();
+    const candidateCategory = candidate.category.toLowerCase();
     
-    if (commonSizes.length === 0) return 0;
+    // Definir categorías relacionadas de cosméticos
+    const categoryGroups = [
+      ['base de maquillaje', 'primers', 'correctores', 'polvos'], // Maquillaje de base
+      ['sombras de ojos', 'delineadores', 'máscaras de pestañas'], // Maquillaje de ojos
+      ['labiales', 'cuidado labial'], // Cuidado labial
+      ['cuidado facial', 'hidratantes', 'limpieza facial', 'mascarillas faciales'], // Cuidado facial
+      ['fragancias', 'fragancias masculinas', 'fragancias unisex'], // Fragancias
+    ];
     
-    return commonSizes.length / Math.max(target.sizes.length, candidate.sizes.length);
+    // Verificar si están en el mismo grupo
+    for (const group of categoryGroups) {
+      if (group.some(cat => targetCategory.includes(cat)) && 
+          group.some(cat => candidateCategory.includes(cat))) {
+        return 0.8; // Alta similitud si están en el mismo grupo
+      }
+    }
+    
+    // Si son la misma categoría exacta
+    if (targetCategory === candidateCategory) {
+      return 1.0;
+    }
+    
+    return 0;
   }
 
   /**

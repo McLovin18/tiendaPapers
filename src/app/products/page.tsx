@@ -19,24 +19,26 @@ const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
   // Productos por página responsivo: 24 en desktop (6 filas x 4 productos), 6 en mobile (6 filas x 1 producto)
   const productsPerPage = isMobile ? 6 : 24;
 
-  // Filtrar productos por búsqueda, talla, color y disponibilidad
+  // Filtrar productos por búsqueda, beneficios y disponibilidad
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.sizes?.includes(size));
-    const matchesColor = selectedColors.length === 0 || selectedColors.some(color => 
-      product.colors?.some(productColor => productColor.toLowerCase().includes(color.toLowerCase()))
+    const matchesBenefit = selectedBenefits.length === 0 || selectedBenefits.some(benefit => 
+      product.details?.some(detail => detail.toLowerCase().includes(benefit.toLowerCase()))
+    );
+    const matchesBrand = selectedBrand.length === 0 || selectedBrand.some(brand => 
+      product.name.toLowerCase().includes(brand.toLowerCase())
     );
     // Usar directamente la propiedad inStock del producto para mejor rendimiento
     const isAvailable = product.inStock !== false;
     
-    return matchesSearch && matchesSize && matchesColor && isAvailable;
+    return matchesSearch && matchesBenefit && matchesBrand && isAvailable;
   });
 
   // Calcular productos para la página actual después del filtrado
@@ -50,7 +52,7 @@ const ProductsPage = () => {
   // Resetear a página 1 cuando cambien los filtros
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedSizes, selectedColors]);
+  }, [searchTerm, selectedBenefits, selectedBrand]);
 
   // Detectar tamaño de pantalla para paginación responsiva
   React.useEffect(() => {
@@ -75,58 +77,46 @@ const ProductsPage = () => {
     setCurrentPage(1);
   }, [isMobile]);
 
-  // Obtener todas las tallas únicas disponibles
-  const availableSizes = [...new Set(products.flatMap(product => product.sizes || []))].sort();
+  // Obtener todos los beneficios únicos disponibles de los detalles de productos
+  const availableBenefits = [...new Set(
+    products.flatMap(product => 
+      product.details?.flatMap(detail => {
+        const keywords = ['hidratante', 'anti-edad', 'nutritivo', 'protección', 'vitamina', 'natural', 'orgánico', 'matificante'];
+        return keywords.filter(keyword => detail.toLowerCase().includes(keyword));
+      }) || []
+    )
+  )].sort();
   
-  // Obtener todos los colores únicos disponibles
-  const availableColors = [...new Set(products.flatMap(product => product.colors || []))].sort();
+  // Obtener marcas/tipos únicos disponibles (basado en palabras clave del nombre)
+  const availableBrands = [...new Set(
+    products.flatMap(product => {
+      const brands = ['premium', 'profesional', 'natural', 'orgánico', 'luxury'];
+      return brands.filter(brand => product.name.toLowerCase().includes(brand));
+    })
+  )].sort();
 
-  // Manejar selección de tallas
-  const handleSizeToggle = (size: string) => {
-    setSelectedSizes(prev => 
-      prev.includes(size) 
-        ? prev.filter(s => s !== size)
-        : [...prev, size]
+  // Manejar selección de beneficios
+  const handleBenefitToggle = (benefit: string) => {
+    setSelectedBenefits(prev => 
+      prev.includes(benefit) 
+        ? prev.filter(b => b !== benefit)
+        : [...prev, benefit]
     );
   };
 
-  // Manejar selección de colores
-  const handleColorToggle = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) 
-        ? prev.filter(c => c !== color)
-        : [...prev, color]
+  // Manejar selección de marcas/tipos
+  const handleBrandToggle = (brand: string) => {
+    setSelectedBrand(prev => 
+      prev.includes(brand) 
+        ? prev.filter(b => b !== brand)
+        : [...prev, brand]
     );
   };
 
   // Limpiar filtros
   const clearFilters = () => {
-    setSelectedSizes([]);
-    setSelectedColors([]);
-  };
-
-  // Función para convertir nombres de colores a códigos hex aproximados
-  const getColorHex = (colorName: string): string => {
-    const colorMap: { [key: string]: string } = {
-      'blanco': '#FFFFFF',
-      'negro': '#000000',
-      'azul': '#0066CC',
-      'rojo': '#DC3545',
-      'verde': '#28A745',
-      'amarillo': '#FFC107',
-      'rosa': '#E83E8C',
-      'rosado': '#E83E8C',
-      'gris': '#6C757D',
-      'cafe': '#8B4513',
-      'celeste': '#87CEEB',
-      'plomo': '#696969',
-      'plata': '#C0C0C0',
-      'piel': '#F5DEB3',
-      'conchevino': '#800020'
-    };
-    
-    const normalizedColor = colorName.toLowerCase().trim();
-    return colorMap[normalizedColor] || '#6C757D'; // Gris por defecto
+    setSelectedBenefits([]);
+    setSelectedBrand([]);
   };
 
   // Cambiar página
@@ -180,38 +170,38 @@ const ProductsPage = () => {
                   >
                     <i className="bi bi-funnel me-2"></i>
                     <span className="d-none d-sm-inline">Filtros</span>
-                    {(selectedSizes.length > 0 || selectedColors.length > 0) && (
+                    {(selectedBenefits.length > 0 || selectedBrand.length > 0) && (
                       <Badge bg="danger" className="ms-2 rounded-circle" style={{ fontSize: '0.6rem' }}>
-                        {selectedSizes.length + selectedColors.length}
+                        {selectedBenefits.length + selectedBrand.length}
                       </Badge>
                     )}
                   </Button>
                 </div>
                 
                 {/* Filtros activos */}
-                {(selectedSizes.length > 0 || selectedColors.length > 0) && (
+                {(selectedBenefits.length > 0 || selectedBrand.length > 0) && (
                   <div className="mt-2 d-flex flex-wrap gap-1 align-items-center">
                     <small className="text-muted me-2">Filtros activos:</small>
-                    {selectedSizes.map(size => (
+                    {selectedBenefits.map(benefit => (
                       <Badge 
-                        key={size} 
+                        key={benefit} 
                         bg="primary" 
                         className="d-flex align-items-center"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleSizeToggle(size)}
+                        onClick={() => handleBenefitToggle(benefit)}
                       >
-                        Talla: {size} <i className="bi bi-x ms-1"></i>
+                        {benefit} <i className="bi bi-x ms-1"></i>
                       </Badge>
                     ))}
-                    {selectedColors.map(color => (
+                    {selectedBrand.map(brand => (
                       <Badge 
-                        key={color} 
+                        key={brand} 
                         bg="info" 
                         className="d-flex align-items-center"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleColorToggle(color)}
+                        onClick={() => handleBrandToggle(brand)}
                       >
-                        Color: {color} <i className="bi bi-x ms-1"></i>
+                        Tipo: {brand} <i className="bi bi-x ms-1"></i>
                       </Badge>
                     ))}
                     <Button
@@ -446,54 +436,54 @@ const ProductsPage = () => {
         </Modal.Header>
         <Modal.Body className="pt-0">
           <Row>
-            {/* Filtro por Tallas */}
+            {/* Filtro por Beneficios */}
             <Col md={6} className="mb-4">
               <h6 className="fw-bold mb-3">
-                <i className="bi bi-rulers me-2 text-info"></i>
-                Tallas Disponibles
+                <i className="bi bi-heart me-2 text-danger"></i>
+                Beneficios
               </h6>
               <div className="d-flex flex-wrap gap-2">
-                {availableSizes.map(size => (
+                {availableBenefits.map(benefit => (
                   <div
-                    key={size}
+                    key={benefit}
                     className={`badge ${
-                      selectedSizes.includes(size) 
+                      selectedBenefits.includes(benefit) 
                         ? 'bg-primary text-white' 
                         : 'bg-light text-dark border'
                     } p-2 fs-6`}
                     style={{ 
                       cursor: 'pointer',
-                      minWidth: '50px',
+                      minWidth: '80px',
                       borderRadius: '0.5rem',
                       transition: 'all 0.2s ease'
                     }}
-                    onClick={() => handleSizeToggle(size)}
+                    onClick={() => handleBenefitToggle(benefit)}
                   >
-                    {size}
+                    {benefit}
                   </div>
                 ))}
               </div>
-              {selectedSizes.length > 0 && (
+              {selectedBenefits.length > 0 && (
                 <div className="mt-2">
                   <small className="text-muted">
-                    {selectedSizes.length} talla{selectedSizes.length !== 1 ? 's' : ''} seleccionada{selectedSizes.length !== 1 ? 's' : ''}
+                    {selectedBenefits.length} beneficio{selectedBenefits.length !== 1 ? 's' : ''} seleccionado{selectedBenefits.length !== 1 ? 's' : ''}
                   </small>
                 </div>
               )}
             </Col>
 
-            {/* Filtro por Colores */}
+            {/* Filtro por Tipo/Marca */}
             <Col md={6} className="mb-4">
               <h6 className="fw-bold mb-3">
-                <i className="bi bi-palette me-2 text-warning"></i>
-                Colores Disponibles
+                <i className="bi bi-star me-2 text-warning"></i>
+                Tipos Premium
               </h6>
               <div className="d-flex flex-wrap gap-2">
-                {availableColors.map(color => (
+                {availableBrands.map(brand => (
                   <div
-                    key={color}
+                    key={brand}
                     className={`badge ${
-                      selectedColors.includes(color) 
+                      selectedBrand.includes(brand) 
                         ? 'bg-info text-white' 
                         : 'bg-light text-dark border'
                     } p-2 fs-6`}
@@ -503,28 +493,17 @@ const ProductsPage = () => {
                       transition: 'all 0.2s ease',
                       maxWidth: '120px'
                     }}
-                    onClick={() => handleColorToggle(color)}
-                    title={color}
+                    onClick={() => handleBrandToggle(brand)}
+                    title={brand}
                   >
-                    <div className="d-flex align-items-center">
-                      <div
-                        className="rounded-circle me-2"
-                        style={{
-                          width: '12px',
-                          height: '12px',
-                          backgroundColor: getColorHex(color),
-                          border: '1px solid #dee2e6'
-                        }}
-                      ></div>
-                      <span className="text-truncate">{color}</span>
-                    </div>
+                    <span className="text-truncate">{brand}</span>
                   </div>
                 ))}
               </div>
-              {selectedColors.length > 0 && (
+              {selectedBrand.length > 0 && (
                 <div className="mt-2">
                   <small className="text-muted">
-                    {selectedColors.length} color{selectedColors.length !== 1 ? 'es' : ''} seleccionado{selectedColors.length !== 1 ? 's' : ''}
+                    {selectedBrand.length} tipo{selectedBrand.length !== 1 ? 's' : ''} seleccionado{selectedBrand.length !== 1 ? 's' : ''}
                   </small>
                 </div>
               )}
@@ -544,7 +523,7 @@ const ProductsPage = () => {
                 variant="outline-secondary"
                 size="sm"
                 onClick={clearFilters}
-                disabled={selectedSizes.length === 0 && selectedColors.length === 0}
+                disabled={selectedBenefits.length === 0 && selectedBrand.length === 0}
               >
                 <i className="bi bi-arrow-clockwise me-1"></i>
                 Limpiar Filtros

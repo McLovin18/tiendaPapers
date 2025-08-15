@@ -22,14 +22,26 @@ import ProductStockIndicator from '../../components/ProductStockIndicator';
 const convertInventoryToProduct = (inventory: ProductInventory): Product => {
   // Mapeo de categorías a sus rutas correspondientes
   const categoryLinkMap: { [key: string]: string } = {
-    'mujer': 'mujer',
-    'hombre': 'hombre',
-    'bebe': 'bebe',
-    'ninos': 'ninos',
-    'sport': 'sport'
+    'Maquillaje': '/maquillaje',
+    'Cuidado de Piel': '/cuidado-piel',
+    'Fragancias': '/fragancias',
+    'Accesorios': '/accesorios',
+    'Contorno': '/maquillaje',
+    'Máscaras de Pestañas': '/maquillaje',
+    'Delineadores': '/maquillaje',
+    'Labiales': '/maquillaje',
+    'Cremas Hidratantes': '/cuidado-piel',
+    'Serums': '/cuidado-piel',
+    'Limpieza Facial': '/cuidado-piel',
+    'Tónicos': '/cuidado-piel',
+    'Mascarillas Faciales': '/cuidado-piel',
+    'Protección Solar': '/cuidado-piel',
+    'Cuidado Corporal': '/cuidado-piel',
+    'Brochas': '/accesorios',
+    'Cuidado de Uñas': '/accesorios'
   };
   
-  const categoryLink = categoryLinkMap[inventory.category?.toLowerCase() || ''] || 'general';
+  const categoryLink = categoryLinkMap[inventory.category || ''] || '/productos';
   
   return {
     id: inventory.productId,
@@ -40,53 +52,12 @@ const convertInventoryToProduct = (inventory: ProductInventory): Product => {
     categoryLink: categoryLink,
     description: inventory.description || '',
     inStock: inventory.stock > 0 && inventory.isActive,
-    sizes: inventory.sizes,
-    colors: inventory.colors,
     details: inventory.details || [],
     featured: false
   };
 };
 
 const ProductDetailPage = () => {
-  // Función para mapear colores a códigos hexadecimales
-  const getColorCode = (colorName: string): string => {
-    const colorMap: { [key: string]: string } = {
-      'blanco': '#ffffff',
-      'white': '#ffffff',
-      'negro': '#000000',
-      'black': '#000000',
-      'azul': '#007bff',
-      'blue': '#007bff',
-      'azul marino': '#001f3f',
-      'navy': '#001f3f',
-      'rojo': '#dc3545',
-      'red': '#dc3545',
-      'verde': '#28a745',
-      'green': '#28a745',
-      'verde oscuro': '#155724',
-      'gris': '#6c757d',
-      'gray': '#6c757d',
-      'grey': '#6c757d',
-      'plomo': '#708090',
-      'rosa': '#e91e63',
-      'pink': '#e91e63',
-      'amarillo': '#ffc107',
-      'yellow': '#ffc107',
-      'beige': '#f5f5dc',
-      'celeste': '#87ceeb',
-      'naranja': '#fd7e14',
-      'orange': '#fd7e14',
-      'morado': '#6f42c1',
-      'purple': '#6f42c1',
-      'violeta': '#6f42c1',
-      'cafe': '#8b4513',
-      'brown': '#8b4513',
-      'marron': '#8b4513'
-    };
-    
-    return colorMap[colorName.toLowerCase()] || '#ccc';
-  };
-
   // Control de comentarios y respuestas visibles
   const INITIAL_COMMENTS_TO_SHOW = 3;
   const INITIAL_REPLIES_TO_SHOW = 2;
@@ -144,8 +115,6 @@ const ProductDetailPage = () => {
     }
   }, [productId]);
   
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('details');
   const [addSuccess, setAddSuccess] = useState(false);
@@ -515,16 +484,6 @@ const ProductDetailPage = () => {
       return;
     }
     
-    if (!selectedSize) {
-      setErrorMessage('Por favor selecciona una talla');
-      return;
-    }
-    
-    if (!selectedColor) {
-      setErrorMessage('Por favor selecciona un color');
-      return;
-    }
-    
     if (quantity < 1) {
       setErrorMessage('La cantidad debe ser mayor a 0');
       return;
@@ -536,9 +495,7 @@ const ProductDetailPage = () => {
         name: product.name,
         price: product.price,
         image: product.images[0] || '/images/product1.svg',
-        quantity,
-        size: selectedSize,
-        color: selectedColor
+        quantity
       };
 
       await cartService.addToCart(user.uid, cartItem);
@@ -547,8 +504,6 @@ const ProductDetailPage = () => {
       setTimeout(() => setAddSuccess(false), 3000);
       
       // Limpiar campos después de agregar exitosamente
-      setSelectedSize('');
-      setSelectedColor('');
       setQuantity(1);
       
     } catch (error: any) {
@@ -761,24 +716,6 @@ const ProductDetailPage = () => {
               </div>
               <div className="mb-4">{product.description}</div>
               <div className="mb-4">
-                <Form.Group className="mb-3">
-                  <Form.Label>Talla</Form.Label>
-                  <Form.Select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} required className="rounded-1">
-                    <option value="">Selecciona una talla</option>
-                    {product.sizes && product.sizes.map((size) => (
-                      <option key={size} value={size}>{size}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Color</Form.Label>
-                  <Form.Select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} required className="rounded-1">
-                    <option value="">Selecciona un color</option>
-                    {product.colors && product.colors.map((color) => (
-                      <option key={color} value={color}>{color}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Cantidad</Form.Label>
                   <Form.Control type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="rounded-1" />

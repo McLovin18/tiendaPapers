@@ -20,8 +20,6 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
-  size: string;
-  color: string;
   userId: string;
   dateAdded: string;
 }
@@ -79,11 +77,9 @@ class CartService {
         items = cartData.items || [];
       }
 
-      // Buscar si el producto ya existe (mismo id, talla y color)
+      // Buscar si el producto ya existe (mismo id)
       const existingItemIndex = items.findIndex(cartItem => 
-        cartItem.id === item.id && 
-        cartItem.size === item.size && 
-        cartItem.color === item.color
+        cartItem.id === item.id
       );
 
       const newItem: CartItem = {
@@ -135,10 +131,10 @@ class CartService {
   /**
    * Actualizar cantidad de un producto en el carrito con validación de stock
    */
-  async updateCartItemQuantity(userId: string, itemId: number, size: string, color: string, newQuantity: number): Promise<boolean> {
+  async updateCartItemQuantity(userId: string, itemId: number, newQuantity: number): Promise<boolean> {
     try {
       if (newQuantity <= 0) {
-        return await this.removeFromCart(userId, itemId, size, color);
+        return await this.removeFromCart(userId, itemId);
       }
 
       // ✅ VALIDAR STOCK ANTES DE ACTUALIZAR CANTIDAD
@@ -159,9 +155,7 @@ class CartService {
       const items = cartData.items || [];
 
       const itemIndex = items.findIndex(item => 
-        item.id === itemId && 
-        item.size === size && 
-        item.color === color
+        item.id === itemId
       );
 
       if (itemIndex === -1) {
@@ -196,7 +190,7 @@ class CartService {
   /**
    * Remover producto del carrito
    */
-  async removeFromCart(userId: string, itemId: number, size: string, color: string): Promise<boolean> {
+  async removeFromCart(userId: string, itemId: number): Promise<boolean> {
     try {
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
       const cartDoc = await getDoc(cartRef);
@@ -209,7 +203,7 @@ class CartService {
       const items = cartData.items || [];
 
       const filteredItems = items.filter(item => 
-        !(item.id === itemId && item.size === size && item.color === color)
+        item.id !== itemId
       );
 
       // Recalcular totales

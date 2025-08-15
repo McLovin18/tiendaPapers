@@ -167,13 +167,14 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (!showEmojiPicker) return;
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
-        emojiButtonRef.current && emojiButtonRef.current.contains(event.target)
+        emojiButtonRef.current && emojiButtonRef.current.contains(target)
       ) {
         return;
       }
       if (
-        emojiPickerRef.current && emojiPickerRef.current.contains(event.target)
+        emojiPickerRef.current && emojiPickerRef.current.contains(target)
       ) {
         return;
       }
@@ -1060,7 +1061,7 @@ const ProductDetailPage = () => {
                       {/* Respuestas estilo YouTube */}
                       {c.replies && c.replies.length > 0 && (
                         <div className="mt-1 ps-3" style={{ borderLeft: "2px solid #e0e0e0" }}>
-                          {c.replies.slice(0, repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW).map((r, i) => (
+                          {c.replies.slice(0, repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW).map((r: any, i: number) => (
                             <div key={i} className="mb-1 d-flex align-items-start gap-2" style={{ borderRadius: 0, border: "none", boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)", borderLeft: "2px solid #e0e0e0", background: "#fff" }}>
                               <div style={{ width: "28px", height: "28px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7" }}>
                                 <Image src={r.photoURL || "/new_user.png"} alt={r.name} width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1343,37 +1344,28 @@ const ProductDetailPage = () => {
                         <p className="text-muted small mb-2">{recommendedProduct.category}</p>
                         <div className="d-flex justify-content-between align-items-center">
                           <span className="fw-bold text-primary fs-5">${recommendedProduct.price.toFixed(2)}</span>
-                          <div className="d-flex gap-1">
-                            {recommendedProduct.colors.slice(0, 3).map((color, index) => (
-                              <div 
-                                key={index}
-                                className="color-indicator rounded-circle border border-light-subtle"
-                                style={{ 
-                                  width: '12px', 
-                                  height: '12px',
-                                  backgroundColor: getColorCode(color)
-                                }}
-                                title={color}
-                              ></div>
-                            ))}
-                            {recommendedProduct.colors.length > 3 && (
-                              <small className="text-muted">+{recommendedProduct.colors.length - 3}</small>
-                            )}
+                          <div className="d-flex align-items-center">
+                            <Badge 
+                              bg="secondary" 
+                              className="small px-2"
+                              style={{ fontSize: '0.7rem' }}
+                            >
+                              {recommendedProduct.category}
+                            </Badge>
                           </div>
                         </div>
-                        
-                        {/* Indicadores de similitud */}
+                        {/* Indicadores de similitud para cosméticos */}
                         <div className="mt-2">
                           <div className="d-flex flex-wrap gap-1">
                             {recommendedProduct.category.toLowerCase() === product?.category.toLowerCase() && (
                               <Badge bg="success" className="small">Misma categoría</Badge>
                             )}
-                            {recommendedProduct.colors.some(color => 
-                              product?.colors.some(productColor => 
-                                color.toLowerCase() === productColor.toLowerCase()
+                            {recommendedProduct.details.some(detail => 
+                              product?.details.some(productDetail => 
+                                detail.toLowerCase().includes('hidratante') && productDetail.toLowerCase().includes('hidratante')
                               )
                             ) && (
-                              <Badge bg="info" className="small">Colores similares</Badge>
+                              <Badge bg="info" className="small">Beneficios similares</Badge>
                             )}
                             {Math.abs(recommendedProduct.price - (product?.price || 0)) <= (product?.price || 0) * 0.3 && (
                               <Badge bg="warning" className="small">Precio similar</Badge>

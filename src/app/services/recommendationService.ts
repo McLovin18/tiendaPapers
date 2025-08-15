@@ -95,29 +95,43 @@ class RecommendationEngine {
   }
 
   /**
-   * Define categorías relacionadas
+   * Define categorías relacionadas para cosméticos
    */
   private getRelatedCategories(category: string): string[] {
     const categoryMap: { [key: string]: string[] } = {
-      'vestido': ['vestidos', 'faldas', 'blazers'],
-      'vestidos': ['vestido', 'faldas', 'blazers'],
-      'buzo': ['sudaderas', 'chaquetas', 'camisas'],
-      'sudaderas': ['buzo', 'chaquetas', 'camisas'],
-      'conjunto': ['vestidos', 'faldas', 'sudaderas'],
-      'jeans': ['pantalones', 'shorts', 'leggings'],
-      'pantalones': ['jeans', 'shorts', 'leggings'],
-      'camisas': ['camisetas', 'sudaderas', 'blazers'],
-      'shorts': ['pantalones', 'jeans', 'leggings'],
-      'chaquetas': ['sudaderas', 'blazers', 'buzo'],
-      'faldas': ['vestidos', 'vestido', 'leggings'],
-      'blazers': ['chaquetas', 'camisas', 'vestidos'],
-      'leggings': ['pantalones', 'shorts', 'faldas'],
-      'bebe': ['ninos', 'pijamas'],
-      'ninos': ['bebe', 'pijamas'],
-      'pijamas': ['bebe', 'ninos']
+      // Maquillaje facial
+      'base de maquillaje': ['correctores', 'polvos', 'primers'],
+      'correctores': ['base de maquillaje', 'polvos'],
+      'polvos': ['base de maquillaje', 'correctores'],
+      
+      // Maquillaje de ojos
+      'sombras de ojos': ['delineadores', 'máscaras de pestañas', 'contorno'],
+      'delineadores': ['sombras de ojos', 'máscaras de pestañas'],
+      'máscaras de pestañas': ['sombras de ojos', 'delineadores'],
+      
+      // Labiales y cuidado labial
+      'labiales': ['cuidado labial', 'contorno'],
+      
+      // Cuidado de la piel
+      'serums': ['cremas hidratantes', 'tónicos', 'limpieza facial'],
+      'cremas hidratantes': ['serums', 'mascarillas faciales', 'protección solar'],
+      'limpieza facial': ['tónicos', 'mascarillas faciales'],
+      'tónicos': ['serums', 'limpieza facial'],
+      'mascarillas faciales': ['cremas hidratantes', 'serums'],
+      'protección solar': ['cremas hidratantes', 'base de maquillaje'],
+      
+      // Fragancias
+      'fragancias': ['fragancias masculinas', 'fragancias unisex'],
+      
+      // Accesorios y herramientas
+      'brochas': ['esponjas', 'pestañas'],
+      'esponjas': ['brochas'],
+      'cuidado de uñas': ['cuidado de manos'],
+      'cuidado de manos': ['cuidado corporal'],
+      'cuidado corporal': ['cremas hidratantes']
     };
 
-    return categoryMap[category] || [];
+    return categoryMap[category.toLowerCase()] || [];
   }
 
   /**
@@ -136,16 +150,17 @@ class RecommendationEngine {
   }
 
   /**
-   * Calcula similitud de ingredientes/características para cosméticos
+   * Calcula similitud de beneficios/ingredientes para cosméticos
    */
   private calculateColorScore(target: Product, candidate: Product): number {
-    // Para cosméticos, podemos comparar palabras clave en los detalles relacionadas con beneficios
+    // Para cosméticos, comparamos palabras clave en los detalles relacionadas con beneficios
     const targetKeywords = target.details.join(' ').toLowerCase();
     const candidateKeywords = candidate.details.join(' ').toLowerCase();
     
     const beautyKeywords = [
       'hidratante', 'matificante', 'nutritivo', 'anti-edad', 'vitamina', 
-      'antioxidante', 'protección', 'natural', 'orgánico', 'hipoalergénico'
+      'antioxidante', 'protección', 'natural', 'orgánico', 'hipoalergénico',
+      'spf', 'duración', 'resistente', 'cobertura', 'pigmentado'
     ];
     
     let commonBenefits = 0;
@@ -187,13 +202,17 @@ class RecommendationEngine {
     const targetCategory = target.category.toLowerCase();
     const candidateCategory = candidate.category.toLowerCase();
     
-    // Definir categorías relacionadas de cosméticos
+    // Definir categorías relacionadas de cosméticos por grupos de uso
     const categoryGroups = [
-      ['base de maquillaje', 'primers', 'correctores', 'polvos'], // Maquillaje de base
+      ['base de maquillaje', 'correctores', 'polvos'], // Maquillaje de base
       ['sombras de ojos', 'delineadores', 'máscaras de pestañas'], // Maquillaje de ojos
-      ['labiales', 'cuidado labial'], // Cuidado labial
-      ['cuidado facial', 'hidratantes', 'limpieza facial', 'mascarillas faciales'], // Cuidado facial
-      ['fragancias', 'fragancias masculinas', 'fragancias unisex'], // Fragancias
+      ['labiales', 'contorno'], // Maquillaje labial y facial
+      ['serums', 'cremas hidratantes', 'tónicos'], // Cuidado facial activo
+      ['limpieza facial', 'mascarillas faciales'], // Limpieza y tratamiento
+      ['fragancias'], // Fragancias
+      ['brochas', 'esponjas', 'pestañas'], // Herramientas y accesorios
+      ['cuidado de uñas', 'cuidado de manos', 'cuidado corporal'], // Cuidado corporal
+      ['protección solar'] // Protección
     ];
     
     // Verificar si están en el mismo grupo

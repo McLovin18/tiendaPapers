@@ -92,7 +92,7 @@ export default function Home() {
                 <div className="text-start text-white">
                   <h2 className="display-4 fw-bold">{img.titulo}</h2>
                   <p className="lead">{img.descripcion}</p>
-                  <Button variant="cosmetic-primary" size="lg" className="mt-3">
+                  <Button variant="cosmetic-primary" size="lg" className="bg-cosmetic-primary mt-3">
                     {img.botonTexto}
                   </Button>
                 </div>
@@ -118,7 +118,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Maquillaje</h3>
-                <Link href="/products/maquillaje" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/products/maquillaje" className="btn rounded-1 btn-cosmetic-primary px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
@@ -132,7 +132,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Cuidado de Piel</h3>
-                <Link href="/products/cuidado-piel" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/products/cuidado-piel"  className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
@@ -146,7 +146,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Fragancias</h3>
-                <Link href="/products/fragancias" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/products/fragancias" className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>

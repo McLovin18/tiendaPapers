@@ -6,6 +6,15 @@
   --cosmetic-tertiary: #3A3029;     /* Marrón oscuro - textos principales */
   --cosmetic-accent: #D28A6D;       /* Coral cálido - atención especial */
   
+
+
+  .btn-cosmetic-primary,
+  .btn-cosmetic-primary:focus,
+.btn-cosmetic-primary:active {
+  background-color: var(--cosmetic-primary) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: white !important;
+}
   /* Variaciones para hover y estados */
   --cosmetic-primary-dark: #7A8A72;
   --cosmetic-primary-light: #9CAB94;
@@ -59,8 +68,8 @@
 }
 
 .btn-cosmetic-primary:hover {
-  background-color: var(--cosmetic-primary-dark);
-  border-color: var(--cosmetic-primary-dark);
+  background-color: var(--cosmetic-primary-dark) !important;
+  border-color: var(--cosmetic-primary-dark) !important;
   color: white;
 }
 

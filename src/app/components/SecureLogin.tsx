@@ -214,7 +214,7 @@ const SecureLogin: React.FC = () => {
                     />
                     <button
                       type="button"
-                      className="btn btn-outline-secondary"
+                      className="btn btn-outline-secondary btn-cosmetic-primary"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={blocked}
                     >
@@ -253,7 +253,7 @@ const SecureLogin: React.FC = () => {
                 {/* ✅ Login con Google */}
                 <button
                   type="button"
-                  className="btn btn-outline-danger w-100"
+                  className="btn btn-outline-danger w-100 btn-profile"
                   onClick={handleGoogleLogin}
                   disabled={blocked}
                 >

@@ -90,7 +90,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       className: 'd-flex justify-content-center align-items-center',
       style: { minHeight: '50vh' }
     }, React.createElement('div', {
-      className: 'spinner-border text-primary',
+      className: 'spinner-border text-cosmetic-primary',
       role: 'status'
     }, React.createElement('span', {
       className: 'visually-hidden'
@@ -119,7 +119,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         key: 'message'
       }, 'No tienes permisos para acceder a esta sección.'),
       React.createElement('button', {
-        className: 'btn btn-primary',
+        className: 'btn btn-cosmetic-primary',
         onClick: () => window.history.back(),
         key: 'button'
       }, 'Volver')

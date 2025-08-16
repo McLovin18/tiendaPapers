@@ -63,19 +63,14 @@ const NavbarComponent = () => {
       bg="white"
       expand="lg"
       expanded={expanded}
-      className="py-2 shadow-sm"
+      className="py-2 shadow-sm navbar-cosmetic"
       ref={navbarRef}
     >
       <Container>
         {/* Logo */}
         <Navbar.Brand as={Link} href="/" className="mx-auto mx-lg-0">
-          <Image
-            src="/logoShop1.png"
-            alt="Logo Tienda"
-            width={120}
-            height={40}
-            priority
-          />
+          <b><p>Logo!</p></b>
+
         </Navbar.Brand>
 
         {/* Contenedor carrito + toggle para móviles */}
@@ -84,15 +79,15 @@ const NavbarComponent = () => {
           <Nav.Link
             as={Link}
             href="/cart"
-            className="text-dark position-relative me-2 d-lg-none"
-            style={{ fontSize: "1.5rem" }}
+            className="position-relative me-2 d-lg-none hover-cosmetic-accent"
+            style={{ fontSize: "1.5rem", color: "var(--cosmetic-tertiary)" }}
             aria-label="Carrito de compras"
           >
             <i className="bi bi-cart"></i>
             {cartCount > 0 && (
               <span
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                style={{ fontSize: "0.75rem" }}
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
               >
                 {cartCount}
               </span>
@@ -128,22 +123,22 @@ const NavbarComponent = () => {
           <div className="d-none d-lg-flex align-items-center ms-lg-4">
             {user ? (
               <>
-                <Nav.Link as={Link} href="/profile" className="text-dark px-2 me-3">
+                <Nav.Link as={Link} href="/profile" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
                   Mi cuenta
                 </Nav.Link>
 
                 <Nav.Link
                   as={Link}
                   href="/cart"
-                  className="text-dark position-relative"
-                  style={{ fontSize: "1.3rem" }}
+                  className="position-relative hover-cosmetic-accent"
+                  style={{ fontSize: "1.3rem", color: "var(--cosmetic-tertiary)" }}
                   aria-label="Carrito de compras"
                 >
                   <i className="bi bi-cart"></i>
                   {cartCount > 0 && (
                     <span
-                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                      style={{ fontSize: "0.75rem" }}
+                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                      style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
                     >
                       {cartCount}
                     </span>
@@ -152,22 +147,22 @@ const NavbarComponent = () => {
               </>
             ) : (
               <>
-                <Nav.Link as={Link} href="/auth/login" className="text-dark px-2 me-3">
+                <Nav.Link as={Link} href="/auth/login" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
                   Iniciar sesión
                 </Nav.Link>
 
                 <Nav.Link
                   as={Link}
                   href="/cart"
-                  className="text-dark position-relative"
-                  style={{ fontSize: "1.3rem" }}
+                  className="position-relative hover-cosmetic-accent"
+                  style={{ fontSize: "1.3rem", color: "var(--cosmetic-tertiary)" }}
                   aria-label="Carrito de compras"
                 >
                   <i className="bi bi-cart"></i>
                   {cartCount > 0 && (
                     <span
-                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                      style={{ fontSize: "0.75rem" }}
+                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                      style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
                     >
                       {cartCount}
                     </span>
@@ -178,13 +173,13 @@ const NavbarComponent = () => {
           </div>
 
           {/* Botón sesión visible solo en móviles dentro del menú */}
-          <div className="d-lg-none bg-light rounded p-3 shadow-sm text-center">
+          <div className="d-lg-none rounded p-3 shadow-sm text-center" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
             {user ? (
               <Nav.Link
                 as={Link}
                 href="/profile"
                 onClick={() => setExpanded(false)}
-                className="btn btn-dark w-100 mb-2"
+                className="btn btn-cosmetic-primary w-100 mb-2"
               >
                 Mi cuenta
               </Nav.Link>
@@ -193,7 +188,7 @@ const NavbarComponent = () => {
                 as={Link}
                 href="/auth/login"
                 onClick={() => setExpanded(false)}
-                className="btn btn-dark w-100 mb-2"
+                className="btn btn-cosmetic-primary w-100 mb-2"
               >
                 Iniciar sesión
               </Nav.Link>

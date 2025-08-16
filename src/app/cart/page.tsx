@@ -296,7 +296,7 @@ const CartPage = () => {
             </Alert>
           )}
           <div className="d-flex justify-content-center gap-3 mt-4">
-            <Button href="/products" variant="dark" className="px-4 py-2">Seguir comprando</Button>
+            <Button href="/products" className="btn-cosmetic-primary px-4 py-2">Seguir comprando</Button>
             <Button href="/profile?tab=orders" variant="outline-dark" className="px-4 py-2">
               <i className="bi bi-clock-history me-2"></i>Ver mis compras
             </Button>
@@ -323,7 +323,7 @@ const CartPage = () => {
               <div className="text-center py-5">
                 <i className="bi bi-bag" style={{ fontSize: '4rem' }}></i>
                 <h2 className="fw-bold mb-3">Tu carrito está vacío</h2>
-                <Button href="/products" variant="dark" className="rounded-1 px-4 py-2 mt-3">Ver Productos</Button>
+                <Button href="/products" className="btn-cosmetic-primary rounded-1 px-4 py-2 mt-3">Ver Productos</Button>
               </div>
             ) : (
               <Row className="g-4">

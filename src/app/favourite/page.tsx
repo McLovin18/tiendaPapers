@@ -48,7 +48,7 @@ const FavouritePage = () => {
   }
 
   return (
-    <Container className="py-5 text-center">
+    <Container className="py-5 text-center" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
       <h1 className="fw-bold mb-5">Mis Favoritos</h1>
 
       {favourites.length === 0 ? (
@@ -56,7 +56,7 @@ const FavouritePage = () => {
           <i className="bi bi-heart fs-1 text-danger mb-3"></i>
           <h5 className="fw-bold mb-2">Aún no tienes productos favoritos</h5>
           <Button
-            variant="dark"
+            style={{backgroundColor: "var(--cosmetic-primary)"}}
             href="/products"
             className="rounded-1 px-4 mt-3"
           >
@@ -86,9 +86,10 @@ const FavouritePage = () => {
                         {fav.description?.substring(0, 60)}...
                       </div>
                       <Button
+                      style={{backgroundColor: "var(--cosmetic-primary)"}}
+
                         as={Link}
                         href={`/products/${fav.id}`}
-                        variant="dark"
                         size="sm"
                         className="mt-2 rounded-1"
                       >

@@ -312,8 +312,7 @@ const ProfilePage = () => {
                   </div>
                   <div className="d-grid gap-2">
                     <Button 
-                      variant={activeTab === 'personal' ? 'dark' : 'outline-dark'} 
-                      className="rounded-1" 
+                      className={activeTab === 'personal' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
                       onClick={() => {
                         setActiveTab('personal');
                         router.push('/profile?tab=personal');
@@ -322,8 +321,7 @@ const ProfilePage = () => {
                       <i className="bi bi-person me-2"></i>Información personal
                     </Button>
                     <Button 
-                      variant={activeTab === 'orders' ? 'dark' : 'outline-dark'} 
-                      className="rounded-1" 
+                      className={activeTab === 'orders' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
                       onClick={() => {
                         setActiveTab('orders');
                         router.push('/profile?tab=orders');
@@ -333,8 +331,7 @@ const ProfilePage = () => {
                       <i className="bi bi-bag-check me-2"></i>Historial de pedidos
                     </Button>
                     <Button 
-                      variant={activeTab === 'favorites' ? 'dark' : 'outline-dark'} 
-                      className="rounded-1" 
+                      className={activeTab === 'favorites' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
                       onClick={() => {
                         setActiveTab('favorites');
                         router.push('/profile?tab=favorites');
@@ -343,8 +340,7 @@ const ProfilePage = () => {
                       <i className="bi bi-heart me-2"></i>Favoritos
                     </Button>
                     <Button 
-                      variant="danger" 
-                      className="rounded-1 mt-2" 
+                      className="btn-cosmetic-accent rounded-1 mt-2" 
                       onClick={handleLogout}
                     >
                       <i className="bi bi-box-arrow-right me-2"></i>Cerrar sesión
@@ -385,7 +381,7 @@ const ProfilePage = () => {
                         </div>
 
                           <Button 
-                            variant="light" 
+                            className="btn-cosmetic-secondary" 
                             size="sm" 
                             className="position-absolute bottom-0 end-0 border shadow-sm" 
                             style={{ borderRadius: '50%' }}
@@ -434,12 +430,12 @@ const ProfilePage = () => {
                             </Form.Group>
 
                             <div className="d-flex gap-2 mt-3">
-                              <Button type="submit" variant="dark" className="rounded-1">
+                              <Button type="submit" className="btn-cosmetic-primary rounded-1">
                                 Guardar cambios
                               </Button>
                               <Button
                                 type="button"
-                                variant="outline-secondary"
+                                className="btn-outline-cosmetic-secondary"
                                 className="rounded-1"
                                 onClick={() => setEditMode(false)}
                               >
@@ -474,10 +470,10 @@ const ProfilePage = () => {
                                 />
                               </Form.Group>
 
-                              <Button type="submit" variant="dark">Cambiar contraseña</Button>
+                              <Button type="submit" className="btn-cosmetic-primary">Cambiar contraseña</Button>
 
-                              {passwordError && <Alert variant="danger" className="mt-3">{passwordError}</Alert>}
-                              {passwordSuccess && <Alert variant="success" className="mt-3">{passwordSuccess}</Alert>}
+                              {passwordError && <Alert className="mt-3 alert-cosmetic-danger">{passwordError}</Alert>}
+                              {passwordSuccess && <Alert className="mt-3 alert-cosmetic-success">{passwordSuccess}</Alert>}
                             </Form>
                           )}
 
@@ -488,7 +484,7 @@ const ProfilePage = () => {
                           <div className="mb-2"><strong>Nombre:</strong> {name}</div>
                           <div className="mb-2"><strong>Email:</strong> {email}</div>
                           <Button
-                            variant="outline-dark"
+                            className="btn-outline-cosmetic-primary"
                             className="rounded-1 mt-3"
                             onClick={() => setEditMode(true)}
                           >
@@ -513,7 +509,7 @@ const ProfilePage = () => {
                         <div className="text-center py-5">
                           <i className="bi bi-box2 fs-1"></i>
                           <h5 className="fw-bold mb-2">No tienes compras recientes</h5>
-                          <Link href="/products" className="btn btn-dark rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
+                          <Link href="/products" className="btn btn-cosmetic-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </div>
                       ) : (
                         <>
@@ -522,7 +518,7 @@ const ProfilePage = () => {
                               <ListGroup.Item key={idx} className="mb-3 bg-white rounded-1 shadow-sm border-0">
                                 <div className="d-flex justify-content-between align-items-center">
                                   <div>
-                                    <h6 className="fw-bold mb-1 text-primary">
+                                    <h6 className="fw-bold mb-1" style={{ color: "var(--cosmetic-primary)" }}>
                                       <i className="bi bi-box me-2"></i>
                                       Pedido #{idx + 1}
                                     </h6>
@@ -556,7 +552,7 @@ const ProfilePage = () => {
                               </ListGroup.Item>
                             ))}
                           </ListGroup>
-                          <div className="row mt-4 p-3 bg-light rounded">
+                          <div className="row mt-4 p-3 bg-cosmetic-secondary rounded">
                             <div className="col-md-6">
                               <h6 className="fw-bold mb-2">
                                 <i className="bi bi-graph-up me-2"></i>
@@ -588,7 +584,7 @@ const ProfilePage = () => {
                         <>
                           <i className="bi bi-heart fs-1 text-danger mb-3"></i>
                           <p className="text-muted">Aún no tienes productos favoritos.</p>
-                          <Link href="/products" className="btn btn-dark rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
+                          <Link href="/products" className="btn btn-cosmetic-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </>
                       ) : (
                         <Row className="g-4 justify-content-center">
@@ -600,7 +596,7 @@ const ProfilePage = () => {
                                     <Image src={fav.image} alt={fav.name} width={60} height={60} className="me-3 rounded-1" />
                                     <div>
                                       <h5 className="fw-bold mb-1">{fav.name}</h5>
-                                      <div className="text-primary fw-bold mb-1">${fav.price.toFixed(2)}</div>
+                                      <div className="fw-bold mb-1" style={{ color: "var(--cosmetic-primary)" }}>${fav.price.toFixed(2)}</div>
                                       <div className="small text-muted mb-2">{fav.description?.substring(0, 60)}...</div>
                                     </div>
                                   </div>

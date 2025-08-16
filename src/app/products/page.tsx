@@ -6,6 +6,7 @@ import { Container, Row, Col, Card, Button, Form, Pagination, Badge, Modal, Acco
 import { useAuth } from '../context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import TopbarMobile from '../components/TopbarMobile';
 import Footer from "../components/Footer";
@@ -22,6 +23,12 @@ const ProductsPage = () => {
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+
+  // Función para manejar click en tarjeta de producto
+  const handleCardClick = (productId: number) => {
+    router.push(`/products/${productId}`);
+  };
 
   // Productos por página responsivo: 24 en desktop (6 filas x 4 productos), 6 en mobile (6 filas x 1 producto)
   const productsPerPage = isMobile ? 6 : 24;
@@ -137,9 +144,9 @@ const ProductsPage = () => {
         {/* Sidebar desktop - solo se muestra en pantallas grandes */}
         {user && <Sidebar />}
         
-        <main className="flex-grow-1 w-100">
+        <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5">Catálogo de Productos</h1>
+            <h1 className="fw-bold text-center mb-5" style={{ color: "var(--cosmetic-tertiary)" }}>Catálogo de Productos</h1>
             
             {/* Barra de búsqueda con filtros */}
             <div className="d-flex justify-content-center mb-4">
@@ -163,15 +170,14 @@ const ProductsPage = () => {
                   
                   {/* Botón de filtros */}
                   <Button
-                    variant="outline-primary"
                     onClick={() => setShowFilters(true)}
-                    className="rounded-pill px-3 d-flex align-items-center"
+                    className="rounded-pill px-3 d-flex align-items-center btn-cosmetic-primary"
                     style={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
                   >
                     <i className="bi bi-funnel me-2"></i>
                     <span className="d-none d-sm-inline">Filtros</span>
                     {(selectedBenefits.length > 0 || selectedBrand.length > 0) && (
-                      <Badge bg="danger" className="ms-2 rounded-circle" style={{ fontSize: '0.6rem' }}>
+                      <Badge className="ms-2 rounded-circle badge-cosmetic-accent" style={{ fontSize: '0.6rem' }}>
                         {selectedBenefits.length + selectedBrand.length}
                       </Badge>
                     )}
@@ -185,8 +191,7 @@ const ProductsPage = () => {
                     {selectedBenefits.map(benefit => (
                       <Badge 
                         key={benefit} 
-                        bg="primary" 
-                        className="d-flex align-items-center"
+                        className="d-flex align-items-center badge-cosmetic-primary"
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleBenefitToggle(benefit)}
                       >
@@ -196,8 +201,7 @@ const ProductsPage = () => {
                     {selectedBrand.map(brand => (
                       <Badge 
                         key={brand} 
-                        bg="info" 
-                        className="d-flex align-items-center"
+                        className="d-flex align-items-center badge-cosmetic-accent"
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleBrandToggle(brand)}
                       >
@@ -219,7 +223,7 @@ const ProductsPage = () => {
             <Row className="g-4 products-container">
               {productsLoading ? (
                 <Col xs={12} className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
+                  <Spinner animation="border" style={{ color: "var(--cosmetic-primary)" }} />
                   <h4 className="mt-3 text-muted">Cargando productos...</h4>
                   <p className="text-muted">Obteniendo productos del inventario</p>
                 </Col>
@@ -232,12 +236,28 @@ const ProductsPage = () => {
               ) : (
                 currentProducts.map((product) => (
                   <Col key={product.id} xs={12} sm={6} lg={3}>
-                    <Card className="h-100 border-0 shadow-sm">
+                    <Card 
+                      className="h-100 border-0 shadow-sm"
+                      style={{ 
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        transform: 'scale(1)'
+                      }}
+                      onClick={() => handleCardClick(product.id)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                      }}
+                    >
                       <div
                         className="position-relative"
                         style={{
                           width: 'auto',
-                          height: '300px', // o el alto que prefieras
+                          height: '300px',
                           margin: '0 auto',
                           background: '#fff',
                           display: 'flex',
@@ -251,7 +271,7 @@ const ProductsPage = () => {
                           <Image
                             src={product.images[0]}
                             alt={product.name}
-                            width={200} // o el ancho máximo que prefieras
+                            width={200}
                             height={300}
                             style={{
                               objectFit: 'contain',
@@ -261,42 +281,13 @@ const ProductsPage = () => {
                             }}
                           />
                         )}
-                        {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
-                        <div className="position-absolute top-0 end-0 m-2">
-                          {!product.inStock ? (
-                            <span className="badge bg-secondary fs-6">
-                              Agotado
-                            </span>
-                          ) : (
-                            <span className="badge bg-success fs-6">
-                              Stock: {(product as any).stockQuantity || 0}
-                            </span>
-                          )}
-                        </div>
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
                           <Card.Title className="fw-bold">{product.name}</Card.Title>
-                          <Card.Text className="text-primary fw-bold fs-5 mb-2">
+                          <Card.Text className="fw-bold fs-5 mb-2" style={{ color: "var(--cosmetic-primary)" }}>
                             ${product.price.toFixed(2)}
                           </Card.Text>
-                        </div>
-
-                        <div className="d-flex gap-2">
-                          <Link href={`/products/${product.id}`} className="btn btn-dark flex-grow-1 rounded-1 text-decoration-none">
-                            Ver Detalles
-                          </Link>
-
-                          <FavouriteButton 
-                            product={{
-                              id: product.id,
-                              name: product.name,
-                              price: product.price,
-                              images: product.images || [],
-                              description: product.description
-                            }} 
-                          />
-
                         </div>
                       </Card.Body>
                     </Card>
@@ -430,7 +421,7 @@ const ProductsPage = () => {
       >
         <Modal.Header closeButton className="border-0 pb-0">
           <Modal.Title className="d-flex align-items-center">
-            <i className="bi bi-funnel-fill me-2 text-primary"></i>
+            <i className="bi bi-funnel-fill me-2" style={{ color: "var(--cosmetic-primary)" }}></i>
             Filtrar Productos
           </Modal.Title>
         </Modal.Header>
@@ -448,7 +439,7 @@ const ProductsPage = () => {
                     key={benefit}
                     className={`badge ${
                       selectedBenefits.includes(benefit) 
-                        ? 'bg-primary text-white' 
+                        ? 'badge-cosmetic-primary text-white' 
                         : 'bg-light text-dark border'
                     } p-2 fs-6`}
                     style={{ 
@@ -484,7 +475,7 @@ const ProductsPage = () => {
                     key={brand}
                     className={`badge ${
                       selectedBrand.includes(brand) 
-                        ? 'bg-info text-white' 
+                        ? 'badge-cosmetic-accent text-white' 
                         : 'bg-light text-dark border'
                     } p-2 fs-6`}
                     style={{ 
@@ -536,7 +527,7 @@ const ProductsPage = () => {
             <i className="bi bi-x-circle me-1"></i>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={() => setShowFilters(false)}>
+          <Button className="btn-cosmetic-primary" onClick={() => setShowFilters(false)}>
             <i className="bi bi-check-circle me-1"></i>
             Aplicar Filtros ({filteredProducts.length})
           </Button>

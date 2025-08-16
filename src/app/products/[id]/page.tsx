@@ -532,50 +532,50 @@ const ProductDetailPage = () => {
           <i className="bi bi-exclamation-circle" style={{ fontSize: '3rem' }}></i>
           <h2 className="mt-3">Producto no encontrado</h2>
           <p className="text-muted">El producto que estás buscando no existe o ha sido eliminado.</p>
-          <Button as={Link} href="/products" variant="outline-dark" className="mt-3 rounded-1 px-4">
+          <Button as={Link} href="/products" className="btn-outline-cosmetic-primary mt-3 rounded-1 px-4">
             Ver todos los productos
           </Button>
         </Container>
         
-        <footer className="bg-light text-dark py-5 border-top">
+        <footer className="bg-cosmetic-secondary text-cosmetic-tertiary py-5 border-top">
           <Container>
             <Row>
               <Col md={3}>
                 <h5 className="fw-bold mb-3">Comprar</h5>
                 <ul className="list-unstyled">
-                  <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
-                  <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
-                  <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
-                  <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
-                  <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
+                  <li className="mb-2"><Link href="/products/mujer" className="text-cosmetic-tertiary text-decoration-none">Mujer</Link></li>
+                  <li className="mb-2"><Link href="/products/hombre" className="text-cosmetic-tertiary text-decoration-none">Hombre</Link></li>
+                  <li className="mb-2"><Link href="/products/ninos" className="text-cosmetic-tertiary text-decoration-none">Niños</Link></li>
+                  <li className="mb-2"><Link href="/products/bebe" className="text-cosmetic-tertiary text-decoration-none">Bebé</Link></li>
+                  <li className="mb-2"><Link href="/products/sport" className="text-cosmetic-tertiary text-decoration-none">Sport</Link></li>
                 </ul>
               </Col>
               <Col md={3}>
                 <h5 className="fw-bold mb-3">Información Corporativa</h5>
                 <ul className="list-unstyled">
-                  <li className="mb-2"><Link href="/about" className="text-dark text-decoration-none">Acerca de nosotros</Link></li>
-                  <li className="mb-2"><Link href="/sustainability" className="text-dark text-decoration-none">Sostenibilidad</Link></li>
-                  <li className="mb-2"><Link href="/press" className="text-dark text-decoration-none">Sala de prensa</Link></li>
-                  <li className="mb-2"><Link href="/investors" className="text-dark text-decoration-none">Relación con inversores</Link></li>
+                  <li className="mb-2"><Link href="/about" className="text-cosmetic-tertiary text-decoration-none">Acerca de nosotros</Link></li>
+                  <li className="mb-2"><Link href="/sustainability" className="text-cosmetic-tertiary text-decoration-none">Sostenibilidad</Link></li>
+                  <li className="mb-2"><Link href="/press" className="text-cosmetic-tertiary text-decoration-none">Sala de prensa</Link></li>
+                  <li className="mb-2"><Link href="/investors" className="text-cosmetic-tertiary text-decoration-none">Relación con inversores</Link></li>
                 </ul>
               </Col>
               <Col md={3}>
                 <h5 className="fw-bold mb-3">Ayuda</h5>
                 <ul className="list-unstyled">
-                  <li className="mb-2"><Link href="/customer-service" className="text-dark text-decoration-none">Servicio al cliente</Link></li>
-                  <li className="mb-2"><Link href="/my-account" className="text-dark text-decoration-none">Mi cuenta</Link></li>
-                  <li className="mb-2"><Link href="/store-locator" className="text-dark text-decoration-none">Encontrar tiendas</Link></li>
-                  <li className="mb-2"><Link href="/legal" className="text-dark text-decoration-none">Términos legales</Link></li>
+                  <li className="mb-2"><Link href="/customer-service" className="text-cosmetic-tertiary text-decoration-none">Servicio al cliente</Link></li>
+                  <li className="mb-2"><Link href="/my-account" className="text-cosmetic-tertiary text-decoration-none">Mi cuenta</Link></li>
+                  <li className="mb-2"><Link href="/store-locator" className="text-cosmetic-tertiary text-decoration-none">Encontrar tiendas</Link></li>
+                  <li className="mb-2"><Link href="/legal" className="text-cosmetic-tertiary text-decoration-none">Términos legales</Link></li>
                 </ul>
               </Col>
               <Col md={3}>
                 <h5 className="fw-bold mb-3">Únete a nosotros</h5>
                 <p>Recibe noticias sobre nuevas colecciones y ofertas exclusivas</p>
                 <div className="d-flex gap-3 mt-3">
-                  <Link href="#" className="text-dark fs-5"><i className="bi bi-facebook"></i></Link>
-                  <Link href="#" className="text-dark fs-5"><i className="bi bi-instagram"></i></Link>
-                  <Link href="#" className="text-dark fs-5"><i className="bi bi-twitter"></i></Link>
-                  <Link href="#" className="text-dark fs-5"><i className="bi bi-youtube"></i></Link>
+                  <Link href="#" className="text-cosmetic-tertiary fs-5"><i className="bi bi-facebook"></i></Link>
+                  <Link href="#" className="text-cosmetic-tertiary fs-5"><i className="bi bi-instagram"></i></Link>
+                  <Link href="#" className="text-cosmetic-tertiary fs-5"><i className="bi bi-twitter"></i></Link>
+                  <Link href="#" className="text-cosmetic-tertiary fs-5"><i className="bi bi-youtube"></i></Link>
                 </div>
               </Col>
             </Row>
@@ -597,7 +597,7 @@ const ProductDetailPage = () => {
         <main className="flex-grow-1 d-flex align-items-center justify-content-center">
           <Container>
             <div className="text-center">
-              <div className="spinner-border text-primary mb-3" role="status">
+              <div className="spinner-border text-cosmetic-primary mb-3" role="status">
                 <span className="visually-hidden">Cargando...</span>
               </div>
               <h5 className="text-muted">Cargando producto...</h5>
@@ -625,7 +625,7 @@ const ProductDetailPage = () => {
               <Button 
                 as={Link} 
                 href="/products" 
-                variant="primary" 
+                className="btn-cosmetic-primary" 
                 className="rounded-pill px-4"
               >
                 Ver todos los productos
@@ -639,7 +639,7 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
       <main>
         <Container className="py-5">
           <Row className="g-5 align-items-center">
@@ -712,7 +712,7 @@ const ProductDetailPage = () => {
             <Col xs={12} md={6}>
               <h2 className="fw-bold mb-3">{product.name}</h2>
               <div className="d-flex align-items-center gap-3 mb-3">
-                <div className="text-primary fw-bold fs-3">${product.price.toFixed(2)}</div>
+                <div className="fw-bold fs-3 mb-3" style={{ color: "var(--cosmetic-primary)" }}>${product.price.toFixed(2)}</div>
                 <ProductStockIndicator productId={product.id} />
               </div>
               <div className="mb-4">{product.description}</div>
@@ -750,9 +750,8 @@ const ProductDetailPage = () => {
               )}
               <div className="d-flex gap-2">
                 <Button 
-                  variant={stockAvailable ? "dark" : "secondary"} 
+                  className={stockAvailable ? "btn-cosmetic-primary w-100 rounded-1 mb-3" : "btn-cosmetic-secondary w-100 rounded-1 mb-3"} 
                   size="lg" 
-                  className="w-100 rounded-1 mb-3" 
                   onClick={handleAddToCart}
                   disabled={!stockAvailable}
                 >
@@ -825,7 +824,7 @@ const ProductDetailPage = () => {
           <h3 className="fw-bold mb-4">Comentarios</h3>
 
           {/* Formulario de nuevo comentario */}
-          <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-light">
+          <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-cosmetic-secondary">
             <Row className="g-2 align-items-center">
               <Col xs={12} className="d-flex align-items-start gap-2">
                 {/* Avatar del usuario */}
@@ -962,7 +961,7 @@ const ProductDetailPage = () => {
                           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                             <Button
                               type="button"
-                              variant="light"
+                              className="btn-cosmetic-secondary"
                               style={{ borderRadius: "1.5rem", fontWeight: 500, color: "#333", background: "#f7f7f7", border: "none", boxShadow: "none", padding: "4px 18px" }}
                               onClick={() => {
                                 setCommentText("");
@@ -972,8 +971,8 @@ const ProductDetailPage = () => {
                             >Cancelar</Button>
                             <Button
                               type="submit"
-                              variant="dark"
-                              style={{ borderRadius: "1.5rem", fontWeight: 500, background: "#e63946", border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
+                              className="btn-cosmetic-accent"
+                              style={{ borderRadius: "1.5rem", fontWeight: 500, border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
                               disabled={!commentText.trim()}
                             >
                               <i className="bi bi-chat-left-text" style={{ fontSize: "1.1rem", marginRight: 4 }}></i>
@@ -1074,7 +1073,7 @@ const ProductDetailPage = () => {
                             </div>
                           ))}
                           {c.replies.length > (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW) && (
-                            <Button variant="link" className="p-0 text-primary" style={{ fontSize: "0.92rem" }} onClick={() => handleShowMoreReplies(idx, c.replies.length)}>
+                            <Button className="p-0 text-cosmetic-primary" style={{ fontSize: "0.92rem", background: "none", border: "none" }} onClick={() => handleShowMoreReplies(idx, c.replies.length)}>
                               Ver más respuestas ({c.replies.length - (repliesToShow[idx] || INITIAL_REPLIES_TO_SHOW)})
                             </Button>
                           )}
@@ -1085,9 +1084,8 @@ const ProductDetailPage = () => {
                       <div className="mt-2">
                         <Button
                           size="sm"
-                          variant="link"
-                          className="p-0 text-primary"
-                          style={{ fontSize: "0.95rem" }}
+                          className="p-0 text-cosmetic-primary"
+                          style={{ fontSize: "0.95rem", background: "none", border: "none" }}
                           onClick={() => setReplyText((prev) => ({ ...prev, [idx]: prev[idx] === undefined ? "" : undefined }))}
                         >
                           Responder
@@ -1194,7 +1192,7 @@ const ProductDetailPage = () => {
                                 ))}
                               </div>
                             )}
-                            <Button size="sm" variant="dark" type="submit" style={{ height: "32px", fontSize: "0.95rem", alignSelf: "flex-end", boxShadow: "none", background: "#e63946", border: "none", color: "#fff", fontWeight: 500, transition: "background 0.2s" }}
+                            <Button size="sm" className="btn-cosmetic-primary" type="submit" style={{ height: "32px", fontSize: "0.95rem", alignSelf: "flex-end", boxShadow: "none", fontWeight: 500, transition: "background 0.2s" }}
                               onMouseOver={e => e.currentTarget.style.background = '#d62839'}
                               onMouseOut={e => e.currentTarget.style.background = '#e63946'}
                             >
@@ -1212,7 +1210,7 @@ const ProductDetailPage = () => {
               ))}
               {comments.length > commentsToShow && (
                 <div className="text-center mt-3">
-                  <Button variant="link" className="p-0 text-primary" style={{ fontSize: "1rem" }} onClick={handleShowMoreComments}>
+                  <Button className="p-0 text-cosmetic-primary" style={{ fontSize: "1rem", background: "none", border: "none" }} onClick={handleShowMoreComments}>
                     Ver más comentarios ({comments.length - commentsToShow})
                   </Button>
                 </div>
@@ -1342,18 +1340,7 @@ const ProductDetailPage = () => {
                       <Card.Body className="p-3">
                         <h6 className="fw-bold mb-1 text-truncate">{recommendedProduct.name}</h6>
                         <p className="text-muted small mb-2">{recommendedProduct.category}</p>
-                        <div className="d-flex justify-content-between align-items-center">
-                          <span className="fw-bold text-primary fs-5">${recommendedProduct.price.toFixed(2)}</span>
-                          <div className="d-flex align-items-center">
-                            <Badge 
-                              bg="secondary" 
-                              className="small px-2"
-                              style={{ fontSize: '0.7rem' }}
-                            >
-                              {recommendedProduct.category}
-                            </Badge>
-                          </div>
-                        </div>
+
                         {/* Indicadores de similitud para cosméticos */}
                         <div className="mt-2">
                           <div className="d-flex flex-wrap gap-1">

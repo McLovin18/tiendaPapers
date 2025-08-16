@@ -172,7 +172,7 @@ const MyOrdersPage = () => {
 
   if (!user) {
     return (
-      <Container className="py-5 text-center">
+      <Container className="py-5 text-center" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
         <h2>Debes iniciar sesión para ver tus compras</h2>
         <Link href="/auth/login">
           <Button variant="dark" className="mt-3">Iniciar sesión</Button>
@@ -182,7 +182,7 @@ const MyOrdersPage = () => {
   }
 
   return (
-    <Container className="py-5">
+    <Container className="py-5" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
       <h1 className="fw-bold text-center mb-5">Mis Compras</h1>
       {loading ? (
         <div className="text-center py-5">
@@ -193,7 +193,7 @@ const MyOrdersPage = () => {
         <div className="text-center py-5">
           <i className="bi bi-box2 fs-1"></i>
           <h5 className="fw-bold mb-2">No tienes compras recientes</h5>
-          <Button variant="dark" href="/products" className="rounded-1 px-4 mt-3">Ver Productos</Button>
+          <Button href="/products" className="rounded-1 px-4 mt-3" style={{backgroundColor: "var(--cosmetic-primary)"}}>Ver Productos</Button>
         </div>
       ) : (
         <>

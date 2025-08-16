@@ -259,7 +259,7 @@ export default function AdminOrdersPage() {
   if (!user) {
     return (
       <Container className="py-5 text-center">
-        <Alert variant="warning">
+        <Alert className="alert-cosmetic-warning">
           Debes iniciar sesión para acceder a esta página.
         </Alert>
       </Container>
@@ -270,7 +270,7 @@ export default function AdminOrdersPage() {
   if (!isAdmin) {
     return (
       <Container className="py-5 text-center">
-        <Alert variant="danger">
+        <Alert className="alert-cosmetic-danger">
           <h4>🚫 Acceso Denegado</h4>
           <p>No tienes permisos para acceder al panel de administración.</p>
           <p className="small text-muted">
@@ -845,7 +845,7 @@ export default function AdminOrdersPage() {
             {/* Header - Responsive */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4">
               <div className="mb-2 mb-md-0">
-                <h1 className="fw-bold text-dark mb-1 fs-3 fs-md-1">
+                <h1 className="fw-bold text-cosmetic-tertiary mb-1 fs-3 fs-md-1">
                   <span className="d-none d-sm-inline">Panel de Administración</span>
                   <span className="d-sm-none">Admin Panel</span>
                 </h1>
@@ -860,7 +860,7 @@ export default function AdminOrdersPage() {
             <div className="mb-3 mb-md-4">
               <div className="d-flex gap-2">
                 <Button
-                  variant={activeTab === 'orders' ? 'primary' : 'outline-primary'}
+                  className={activeTab === 'orders' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary'}
                   size="sm"
                   className="flex-fill flex-md-grow-0"
                   onClick={() => setActiveTab('orders')}
@@ -870,7 +870,7 @@ export default function AdminOrdersPage() {
                   <span className="d-sm-none">Orders</span>
                 </Button>
                 <Button
-                  variant={activeTab === 'deliveries' ? 'primary' : 'outline-primary'}
+                  className={activeTab === 'deliveries' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary'}
                   size="sm"
                   className="flex-fill flex-md-grow-0"
                   onClick={() => setActiveTab('deliveries')}
@@ -885,7 +885,7 @@ export default function AdminOrdersPage() {
                   )}
                 </Button>
                 <Button
-                  variant={activeTab === 'delivery-settings' ? 'success' : 'outline-success'}
+                  className={activeTab === 'delivery-settings' ? 'btn-cosmetic-accent' : 'btn-outline-cosmetic-accent'}
                   size="sm"
                   className="flex-fill flex-md-grow-0"
                   onClick={() => setActiveTab('delivery-settings')}
@@ -898,7 +898,7 @@ export default function AdminOrdersPage() {
             </div>
 
             {error && (
-              <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              <Alert className="alert-cosmetic-danger" dismissible onClose={() => setError(null)}>
                 {error}
               </Alert>
             )}
@@ -912,7 +912,7 @@ export default function AdminOrdersPage() {
                 <Col md={3}>
                   <Card className="text-center border-0 shadow-sm">
                     <Card.Body>
-                      <h3 className="fw-bold text-primary">{statistics.totalOrders}</h3>
+                      <h3 className="fw-bold" style={{ color: "var(--cosmetic-primary)" }}>{statistics.totalOrders}</h3>
                       <p className="text-muted mb-0 small">Pedidos (30 días)</p>
                     </Card.Body>
                   </Card>
@@ -947,7 +947,7 @@ export default function AdminOrdersPage() {
             {/* Pedidos de hoy */}
             {todayOrders && (
               <Card className="mb-4 border-0 shadow-sm">
-                <Card.Header className="bg-primary text-white">
+                <Card.Header style={{ backgroundColor: "var(--cosmetic-primary)" }} className="text-white">
                   <h5 className="mb-0">📅 Pedidos de Hoy - {todayOrders.dateFormatted}</h5>
                   <small>Total: {todayOrders.totalOrdersCount} pedidos | {formatCurrency(todayOrders.totalDayAmount)}</small>
                 </Card.Header>
@@ -968,7 +968,7 @@ export default function AdminOrdersPage() {
                           <td>
                             <div>
                               {/* Mostrar el nombre del usuario o email */}
-                              <strong className="text-primary">
+                              <strong className="text-cosmetic-primary">
                                 {order.userName || 
                                  (order.userEmail ? order.userEmail.split('@')[0] : 'Usuario')}
                               </strong>

@@ -9,6 +9,7 @@ import NavbarComponent from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import TopbarMobile from './components/TopbarMobile';
 import { useProducts } from './hooks/useProducts';
+import { useRouter } from 'next/navigation';
 import FavouriteButton from "./components/FavouriteButton";
 import Footer from "./components/Footer";
 
@@ -16,9 +17,14 @@ export default function Home() {
   const { user } = useAuth();
   const [favSuccess, setFavSuccess] = useState<string | null>(null);
   const [favsUpdate, setFavsUpdate] = useState(0);
+    const router = useRouter();
   
   // 🔥 USAR EL HOOK OPTIMIZADO para productos con stock
   const { products: allProductsWithStock, loading: loadingProducts } = useProducts();
+
+  const handleCardClick = (productId: number) => {
+    router.push(`/products/${productId}`);
+  };
   
   // 🌟 FILTRAR PRODUCTOS DESTACADOS que tienen stock
   const featuredProducts = allProductsWithStock.filter(p => p.featured && p.inStock);
@@ -32,7 +38,7 @@ export default function Home() {
 
   // Página para usuarios no autenticados (similar a la imagen de referencia)
   const UnauthenticatedHome = () => (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
       
 
       {/* Carrusel principal */}
@@ -46,9 +52,9 @@ export default function Home() {
               style={{ objectFit: 'cover' }} 
             />
             <Carousel.Caption className="text-start">
-              <h2 className="display-4 fw-bold">Nueva Colección</h2>
-              <p className="lead">Descubre las últimas tendencias</p>
-              <Button variant="dark" size="lg" className="mt-3">Comprar ahora</Button>
+              <h2 className="display-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Nueva Colección</h2>
+              <p className="lead" style={{ color: "var(--cosmetic-tertiary)" }}>Descubre las últimas tendencias en cosméticos</p>
+              <Button variant="cosmetic-primary" size="lg" className="mt-3 btn-cosmetic-primary">Comprar ahora</Button>
             </Carousel.Caption>
           </div>
         </Carousel.Item>
@@ -56,47 +62,47 @@ export default function Home() {
       
       {/* Sección de categorías */}
       <Container className="py-4">
-        <h2 className="text-center mb-4 fw-bold">Categorías Destacadas</h2>
+        <h2 className="text-center mb-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Categorías Destacadas</h2>
         <Row>
           <Col md={4} className="mb-4">
-            <div className="position-relative" style={{ height: '400px' }}>
+            <div className="position-relative hover-scale" style={{ height: '400px', borderRadius: '1rem', overflow: 'hidden' }}>
               <Image 
                 src="/images/category-women.svg" 
-                alt="Mujer" 
+                alt="Maquillaje" 
                 fill 
                 style={{ objectFit: 'cover' }} 
               />
-              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center">
-                <h3 className="text-white fw-bold mb-3">Mujer</h3>
-                <Button as={Link} href="/products/mujer" variant="dark" className="rounded-1 px-4">Ver Colección</Button>
+              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
+                <h3 className="text-white fw-bold mb-3">Maquillaje</h3>
+                <Link href="/products/maquillaje" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
           <Col md={4} className="mb-4">
-            <div className="position-relative" style={{ height: '400px' }}>
+            <div className="position-relative hover-scale" style={{ height: '400px', borderRadius: '1rem', overflow: 'hidden' }}>
               <Image 
                 src="/images/category-men.svg" 
-                alt="Hombre" 
+                alt="Cuidado de Piel" 
                 fill 
                 style={{ objectFit: 'cover' }} 
               />
-              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center">
-                <h3 className="text-white fw-bold mb-3">Hombre</h3>
-                <Button as={Link} href="/products/hombre" variant="dark" className="rounded-1 px-4">Ver Colección</Button>
+              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
+                <h3 className="text-white fw-bold mb-3">Cuidado de Piel</h3>
+                <Link href="/products/cuidado-piel" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
           <Col md={4} className="mb-4">
-            <div className="position-relative" style={{ height: '400px' }}>
+            <div className="position-relative hover-scale" style={{ height: '400px', borderRadius: '1rem', overflow: 'hidden' }}>
               <Image 
                 src="/images/category-kids.svg" 
-                alt="Niños" 
+                alt="Fragancias" 
                 fill 
                 style={{ objectFit: 'cover' }} 
               />
-              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center">
-                <h3 className="text-white fw-bold mb-3">Niños</h3>
-                <Button as={Link} href="/products/ninos" variant="dark" className="rounded-1 px-4">Ver Colección</Button>
+              <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
+                <h3 className="text-white fw-bold mb-3">Fragancias</h3>
+                <Link href="/products/fragancias" className="btn btn-cosmetic-accent rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
@@ -104,70 +110,73 @@ export default function Home() {
       </Container>
 
       {/* Sección de productos destacados */}
-      <Container className="py-5">
-        <h2 className="text-center mb-4 fw-bold">Productos Destacados</h2>
+      <Container className="py-5" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
+        <h2 className="text-center mb-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Productos Destacados</h2>
         {loadingProducts ? (
           <Row className="justify-content-center">
             <Col xs={12} className="text-center py-5">
-              <Spinner animation="border" variant="primary" />
-              <h4 className="mt-3 text-muted">Cargando productos destacados...</h4>
-              <p className="text-muted">Verificando stock disponible</p>
+              <Spinner animation="border" style={{ color: "var(--cosmetic-primary)" }} />
+              <h4 className="mt-3" style={{ color: "var(--cosmetic-tertiary)" }}>Cargando productos destacados...</h4>
+              <p style={{ color: "var(--cosmetic-tertiary-light)" }}>Verificando stock disponible</p>
             </Col>
           </Row>
         ) : featuredProducts.length === 0 ? (
           <Row className="justify-content-center">
             <Col xs={12} className="text-center py-5">
-              <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "#888" }}></i>
-              <h4 className="mt-3 text-muted">No hay productos destacados disponibles</h4>
-              <p className="text-muted">Todos los productos destacados están agotados</p>
+              <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "var(--cosmetic-accent)" }}></i>
+              <h4 className="mt-3" style={{ color: "var(--cosmetic-tertiary)" }}>No hay productos destacados disponibles</h4>
+              <p style={{ color: "var(--cosmetic-tertiary-light)" }}>Todos los productos destacados están agotados</p>
             </Col>
           </Row>
         ) : (
           <Row>
             {featuredProducts.map((product) => (
               <Col key={product.id} md={3} sm={6} className="mb-4">
-                <div className="product-card">
+                <Card 
+                  className="h-100 border-0 shadow-sm card-cosmetic hover-scale"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleCardClick(product.id)}
+                >
                   <div
                     className="position-relative"
                     style={{
-                    width: '200px',
-                    height: '300px',
-                    margin: '0 auto',
-                    background: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '1rem 1rem 0 0',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {product.images && product.images[0] && (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      width={200}
-                      height={300}
-                      style={{
-                        objectFit: 'contain',
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        margin: '0 auto'
-                      }}
-                    />
-                  )}
-                  {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
-                  <div className="position-absolute top-0 end-0 m-2">
-                    <span className="badge bg-success fs-6">
-                      Stock: {(product as any).stockQuantity || 0}
-                    </span>
+                      width: 'auto',
+                      height: '300px',
+                      margin: '0 auto',
+                      background: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '1rem 1rem 0 0',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {product.images && product.images[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        width={200}
+                        height={300}
+                        style={{
+                          objectFit: 'contain',
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          margin: '0 auto'
+                        }}
+                      />
+                    )}
                   </div>
-                </div>
-                <div className="py-2">
-                  <h5 className="mb-1">{product.name}</h5>
-                  <p className="fw-bold mb-0">${product.price.toFixed(2)}</p>
-                </div>
-              </div>
-            </Col>
+                  
+                  <Card.Body className="text-center">
+                    <Card.Title className="h6 mb-2" style={{ color: "var(--cosmetic-tertiary)" }}>
+                      {product.name}
+                    </Card.Title>
+                    <Card.Text className="fw-bold mb-2" style={{ color: "var(--cosmetic-primary)", fontSize: "1.2rem" }}>
+                      ${product.price.toFixed(2)}
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
           ))}
           </Row>
         )}
@@ -175,7 +184,7 @@ export default function Home() {
         {!loadingProducts && featuredProducts.length > 0 && (
           <div className="text-center mt-4">
             <Link href="/products" passHref>
-              <Button variant="dark" className="rounded-1 px-4">
+              <Button className="rounded-1 px-4" style={{backgroundColor: "var(--cosmetic-primary)"}}>
                 Ver todos los productos
               </Button>
             </Link>
@@ -185,29 +194,28 @@ export default function Home() {
       
 
       {/* Footer */}
-      <footer className="bg-light text-dark py-5 mt-auto border-top">
+      <footer className="footer-cosmetic py-5 mt-auto" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
         <Container>
           <Row>
             <Col md={4} className="mb-4 mb-md-0">
-              <h5 className="fw-bold mb-3">Comprar</h5>
+              <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Categorías</h5>
               <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/products/mujer" className="text-dark text-decoration-none">Mujer</Link></li>
-                <li className="mb-2"><Link href="/products/hombre" className="text-dark text-decoration-none">Hombre</Link></li>
-                <li className="mb-2"><Link href="/products/ninos" className="text-dark text-decoration-none">Niños</Link></li>
-                <li className="mb-2"><Link href="/products/bebe" className="text-dark text-decoration-none">Bebé</Link></li>
-                <li className="mb-2"><Link href="/products/sport" className="text-dark text-decoration-none">Sport</Link></li>
+                <li className="mb-2"><Link href="/products/maquillaje" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Maquillaje</Link></li>
+                <li className="mb-2"><Link href="/products/cuidado-piel" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Cuidado de Piel</Link></li>
+                <li className="mb-2"><Link href="/products/fragancias" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Fragancias</Link></li>
+                <li className="mb-2"><Link href="/products/accesorios" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Accesorios</Link></li>
               </ul>
             </Col>
 
             <Col md={4}>
-              <h5 className="fw-bold mb-3">Contacto</h5>
-              <p className="mb-1">Email: lucilaaquino79@gmail.com</p>
-              <p className="mb-0">Teléfono: (593) 99-577-0937 </p>
+              <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contacto</h5>
+              <p className="mb-1" style={{ color: "var(--cosmetic-tertiary)" }}>Email: lucilaaquino79@gmail.com</p>
+              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: (593) 99-577-0937</p>
             </Col>
           </Row>
-          <hr className="my-4" />
+          <hr className="my-4" style={{ borderColor: "var(--cosmetic-accent)" }} />
           <div className="text-center">
-            <p className="small">&copy; {new Date().getFullYear()} Lua Store. Todos los derechos reservados.</p>
+            <p className="small" style={{ color: "var(--cosmetic-tertiary)" }}>&copy; {new Date().getFullYear()} Lua Beauty. Todos los derechos reservados.</p>
           </div>
         </Container>
       </footer>
@@ -224,94 +232,91 @@ export default function Home() {
         {/* Sidebar desktop - solo se muestra en pantallas grandes */}
         <Sidebar />
         
-        <main className="flex-grow-1 w-100">
+        <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5">Bienvenido a Fashion Store</h1>
-            <h3 className="fw-bold text-center mb-5">Aquí te presentamos los productos destacados</h3>
+            <h1 className="fw-bold text-center mb-5" style={{ color: "var(--cosmetic-tertiary)" }}>Bienvenido a Lua Beauty</h1>
+            <h3 className="fw-bold text-center mb-5" style={{ color: "var(--cosmetic-primary)" }}>Aquí te presentamos los productos destacados</h3>
 
             {loadingProducts ? (
               <Row className="justify-content-center">
                 <Col xs={12} className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
-                  <h4 className="mt-3 text-muted">Cargando productos destacados...</h4>
-                  <p className="text-muted">Verificando stock disponible</p>
+                  <Spinner animation="border" style={{ color: "var(--cosmetic-primary)" }} />
+                  <h4 className="mt-3" style={{ color: "var(--cosmetic-tertiary)" }}>Cargando productos destacados...</h4>
+                  <p style={{ color: "var(--cosmetic-tertiary-light)" }}>Verificando stock disponible</p>
                 </Col>
               </Row>
             ) : featuredProducts.length === 0 ? (
               <Row className="justify-content-center">
                 <Col xs={12} className="text-center py-5">
-                  <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "#888" }}></i>
-                  <h4 className="mt-3 text-muted">No hay productos destacados disponibles</h4>
-                  <p className="text-muted">Todos los productos destacados están agotados</p>
+                  <i className="bi bi-emoji-frown" style={{ fontSize: "2.5rem", color: "var(--cosmetic-accent)" }}></i>
+                  <h4 className="mt-3" style={{ color: "var(--cosmetic-tertiary)" }}>No hay productos destacados disponibles</h4>
+                  <p style={{ color: "var(--cosmetic-tertiary-light)" }}>Todos los productos destacados están agotados</p>
                 </Col>
               </Row>
             ) : (
               <Row className="g-4">
                 {featuredProducts.map((product) => (
                   <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>
-                    <Card className="h-100 border-0 shadow-sm position-relative">
+                    <Card 
+                      className="h-100 border-0 shadow-sm card-cosmetic"
+                      style={{ 
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        transform: 'scale(1)'
+                      }}
+                      onClick={() => handleCardClick(product.id)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(140, 156, 132, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(140, 156, 132, 0.1)';
+                      }}
+                    >
+                      {/* Imagen del Producto */}
                       <div
                         className="position-relative"
                         style={{
                           width: 'auto',
                           height: '300px',
                           margin: '0 auto',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '1rem 1rem 0 0',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {product.images && product.images[0] && (
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          width={200}
-                          height={300}
-                          style={{
-                            objectFit: 'contain',
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            margin: '0 auto'
-                          }}
-                        />
-                      )}
-                      {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
-                      <div className="position-absolute top-0 end-0 m-2">
-                        <span className="badge bg-success fs-6">
-                          Stock: {(product as any).stockQuantity || 0}
-                        </span>
+                          background: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '1rem 1rem 0 0',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {product.images && product.images[0] && (
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            width={200}
+                            height={300}
+                            style={{
+                              objectFit: 'contain',
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              margin: '0 auto'
+                            }}
+                          />
+                        )}
                       </div>
-                    </div>
-                    <Card.Body className="d-flex flex-column justify-content-between">
-                      <div>
-                        <Card.Title className="fw-bold">{product.name}</Card.Title>
-                        <Card.Text className="text-primary fw-bold fs-5 mb-2">
-                          ${product.price.toFixed(2)}
-                        </Card.Text>
-                      </div>
-                      
-                      <div className="d-flex gap-2">
-                        <Link href={`/products/${product.id}`} passHref>
-                          <Button variant="dark" className="flex-grow-1 rounded-1">
-                            Ver Detalles
-                          </Button>
-                        </Link>
 
-                        <FavouriteButton
-                          product={{
-                            id: product.id,
-                            name: product.name,
-                            price: product.price,
-                            images: product.images,
-                            description: product.description,
-                          }}
-                        />
-                      </div>
-                    </Card.Body>
-                  </Card>
+                      {/* Información del Producto */}
+                      <Card.Body className="d-flex flex-column justify-content-between">
+                        <div>
+                          <Card.Title className="fw-bold h6 mb-2" style={{ lineHeight: '1.3', color: "var(--cosmetic-tertiary)" }}>
+                            {product.name}
+                          </Card.Title>
+                          <Card.Text className="fw-bold fs-5 mb-2" style={{ color: "var(--cosmetic-primary)" }}>
+                            ${product.price.toFixed(2)}
+                          </Card.Text>
+                        </div>
+                      </Card.Body>
+                    </Card>
                 </Col>
               ))}
               </Row>

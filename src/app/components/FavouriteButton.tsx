@@ -70,10 +70,14 @@ const FavouriteButton: React.FC<FavouriteButtonProps> = ({ product }) => {
       overlay={!user ? <Tooltip>Inicia sesión para guardar en favoritos</Tooltip> : <div></div>}
     >
       <Button
-        variant={isFav ? "danger" : "outline-danger"}
-        className="rounded-1"
+        className={`rounded-1 ${isFav ? 'btn-cosmetic-accent' : 'btn-outline-cosmetic-primary'}`}
         onClick={toggleFavourite}
         aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+        style={{
+          backgroundColor: isFav ? 'var(--cosmetic-accent)' : 'transparent',
+          borderColor: isFav ? 'var(--cosmetic-accent)' : 'var(--cosmetic-primary)',
+          color: isFav ? 'white' : 'var(--cosmetic-primary)'
+        }}
       >
         <i className={`bi ${isFav ? "bi-heart-fill" : "bi-heart"}`}></i>
       </Button>

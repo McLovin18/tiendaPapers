@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
+import "./styles/cosmetic-theme.css";
 import ClientLayout from "./ClientLayout";
 import NavbarComponent from './components/Navbar';
 import PayPalProvider from "./components/paypalProvider";

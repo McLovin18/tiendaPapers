@@ -174,7 +174,7 @@ export default function InventoryManagementPage() {
                     Controla el stock y disponibilidad de productos
                   </p>
                 </div>
-                <Button variant="primary" onClick={() => openProductModal()}>
+                <Button className="btn-cosmetic-primary" onClick={() => openProductModal()}>
                   <i className="bi bi-plus-circle me-2"></i>
                   Agregar Producto
                 </Button>
@@ -196,7 +196,7 @@ export default function InventoryManagementPage() {
                 <Col md={3}>
                   <Card className="text-center border-0 shadow-sm">
                     <Card.Body>
-                      <h3 className="fw-bold text-primary">{products.length}</h3>
+                      <h3 className="fw-bold" style={{ color: "var(--cosmetic-primary)" }}>{products.length}</h3>
                       <p className="text-muted mb-0 small">Total Productos</p>
                     </Card.Body>
                   </Card>
@@ -244,7 +244,7 @@ export default function InventoryManagementPage() {
                 <Card.Body className="p-0">
                   {loading ? (
                     <div className="text-center py-5">
-                      <div className="spinner-border text-primary" role="status">
+                      <div className="spinner-border" style={{ color: "var(--cosmetic-primary)" }} role="status">
                         <span className="visually-hidden">Cargando...</span>
                       </div>
                       <p className="mt-3 text-muted">Cargando inventario...</p>

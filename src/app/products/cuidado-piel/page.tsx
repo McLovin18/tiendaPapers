@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
 import TopbarMobile from "../../components/TopbarMobile";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import Footer from "../../components/Footer";
 import { useProducts } from "../../hooks/useProducts";
@@ -13,6 +14,11 @@ import { useProducts } from "../../hooks/useProducts";
 const ProductsCuidadoPielPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+
+  const handleCardClick = (productId: number) => {
+    router.push(`/products/${productId}`);
+  };
   
   // Usar el hook personalizado para cargar productos de la categoría cuidado-piel
   const { products, loading } = useProducts("/cuidado-piel");
@@ -22,7 +28,7 @@ const ProductsCuidadoPielPage = () => {
   );
 
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
       {/* ✅ Topbar solo en móviles */}
       {user && <TopbarMobile />}
 
@@ -57,7 +63,7 @@ const ProductsCuidadoPielPage = () => {
             <Row className="g-4">
               {loading ? (
                 <Col xs={12} className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
+                  <Spinner animation="border" style={{ color: "var(--cosmetic-primary)" }} />
                   <h4 className="mt-3 text-muted">Cargando productos...</h4>
                   <p className="text-muted">Obteniendo productos de cuidado de la piel</p>
                 </Col>
@@ -77,55 +83,65 @@ const ProductsCuidadoPielPage = () => {
               ) : (
                 filteredProducts.map((product) => (
                   <Col key={product.id} xs={12} sm={6} md={4} lg={3}>
-                    <Card className="h-100 border-0 shadow-sm hover-card">
+                    <Card 
+                      className="h-100 border-0 shadow-sm product-card"
+                      style={{ 
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        transform: 'scale(1)'
+                      }}
+                      onClick={() => handleCardClick(product.id)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                      }}
+                    >
+                      {/* Imagen del Producto */}
                       <div
                         className="position-relative"
-                        style={{ height: "250px" }}
+                        style={{
+                          width: 'auto',
+                          height: '300px',
+                          margin: '0 auto',
+                          background: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '1rem 1rem 0 0',
+                          overflow: 'hidden'
+                        }}
                       >
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          fill
-                          style={{
-                            objectFit: "cover",
-                            borderRadius: "1rem 1rem 0 0",
-                          }}
-                        />
-                        {/* 📦 BADGE DE STOCK en la esquina superior derecha */}
-                        <div className="position-absolute top-0 end-0 m-2">
-                          <span className="badge bg-success fs-6">
-                            Stock: {(product as any).stockQuantity || 0}
-                          </span>
-                        </div>
-                        {/* Badge de categoría */}
-                        <div className="position-absolute top-0 start-0 m-2">
-                          <span className="badge bg-info">
-                            {product.category}
-                          </span>
-                        </div>
+                        {product.images && product.images[0] && (
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            width={200}
+                            height={300}
+                            style={{
+                              objectFit: 'contain',
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              margin: '0 auto'
+                            }}
+                          />
+                        )}
+                        
                       </div>
+
+                      {/* Información del Producto */}
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
-                          <Card.Title className="fw-bold h6">
+                          <Card.Title className="fw-bold h6 mb-2" style={{ lineHeight: '1.3' }}>
                             {product.name}
                           </Card.Title>
-                          <Card.Text className="text-primary fw-bold fs-5 mb-2">
+                          <Card.Text className="fw-bold fs-5 mb-2" style={{ color: "var(--cosmetic-primary)" }}>
                             ${product.price.toFixed(2)}
                           </Card.Text>
-                          <Card.Text className="text-muted small">
-                            {product.description.length > 80 
-                              ? `${product.description.substring(0, 80)}...` 
-                              : product.description}
-                          </Card.Text>
                         </div>
-                        <Button
-                          as={Link}
-                          href={`/products/${product.id}`}
-                          variant="dark"
-                          className="w-100 mt-2 rounded-pill"
-                        >
-                          Ver Detalles
-                        </Button>
                       </Card.Body>
                     </Card>
                   </Col>

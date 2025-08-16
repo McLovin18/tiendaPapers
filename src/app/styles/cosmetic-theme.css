@@ -1,0 +1,332 @@
+/* Tema de Cosméticos - Variables CSS */
+:root {
+  /* Paleta principal de colores */
+  --cosmetic-primary: #8C9C84;      /* Verde olivo elegante - botones */
+  --cosmetic-secondary: #F4F0E8;    /* Beige crema - backgrounds */
+  --cosmetic-tertiary: #3A3029;     /* Marrón oscuro - textos principales */
+  --cosmetic-accent: #D28A6D;       /* Coral cálido - atención especial */
+  
+  /* Variaciones para hover y estados */
+  --cosmetic-primary-dark: #7A8A72;
+  --cosmetic-primary-light: #9CAB94;
+  --cosmetic-secondary-dark: #EAE6DE;
+  --cosmetic-tertiary-light: #5A4F46;
+  --cosmetic-accent-dark: #C4795C;
+  --cosmetic-accent-light: #E099A4;
+  
+  /* Sobrescribir variables de Bootstrap completamente */
+  --bs-primary: var(--cosmetic-primary);
+  --bs-primary-rgb: 140, 156, 132;
+  --bs-secondary: var(--cosmetic-secondary);
+  --bs-secondary-rgb: 244, 240, 232;
+  --bs-dark: var(--cosmetic-tertiary);
+  --bs-dark-rgb: 58, 48, 41;
+  --bs-warning: var(--cosmetic-accent);
+  --bs-warning-rgb: 210, 138, 109;
+  --bs-success: var(--cosmetic-primary);
+  --bs-success-rgb: 140, 156, 132;
+  --bs-info: var(--cosmetic-accent);
+  --bs-info-rgb: 210, 138, 109;
+  --bs-danger: var(--cosmetic-accent);
+  --bs-danger-rgb: 210, 138, 109;
+  
+  /* Backgrounds y borders */
+  --bs-body-bg: var(--cosmetic-secondary);
+  --bs-body-color: var(--cosmetic-tertiary);
+  --bs-border-color: var(--cosmetic-primary-light);
+}
+
+/* Clases de utilidad personalizadas */
+.bg-cosmetic-primary { background-color: var(--cosmetic-primary) !important; }
+.bg-cosmetic-secondary { background-color: var(--cosmetic-secondary) !important; }
+.bg-cosmetic-tertiary { background-color: var(--cosmetic-tertiary) !important; }
+.bg-cosmetic-accent { background-color: var(--cosmetic-accent) !important; }
+
+.text-cosmetic-primary { color: var(--cosmetic-primary) !important; }
+.text-cosmetic-secondary { color: var(--cosmetic-secondary) !important; }
+.text-cosmetic-tertiary { color: var(--cosmetic-tertiary) !important; }
+.text-cosmetic-accent { color: var(--cosmetic-accent) !important; }
+
+.border-cosmetic-primary { border-color: var(--cosmetic-primary) !important; }
+.border-cosmetic-secondary { border-color: var(--cosmetic-secondary) !important; }
+.border-cosmetic-accent { border-color: var(--cosmetic-accent) !important; }
+
+/* Botones personalizados */
+.btn-cosmetic-primary {
+  background-color: var(--cosmetic-primary);
+  border-color: var(--cosmetic-primary);
+  color: white;
+}
+
+.btn-cosmetic-primary:hover {
+  background-color: var(--cosmetic-primary-dark);
+  border-color: var(--cosmetic-primary-dark);
+  color: white;
+}
+
+.btn-cosmetic-accent {
+  background-color: var(--cosmetic-accent);
+  border-color: var(--cosmetic-accent);
+  color: white;
+}
+
+.btn-cosmetic-accent:hover {
+  background-color: var(--cosmetic-accent-dark);
+  border-color: var(--cosmetic-accent-dark);
+  color: white;
+}
+
+.btn-outline-cosmetic-primary {
+  color: var(--cosmetic-primary);
+  border-color: var(--cosmetic-primary);
+  background-color: transparent;
+}
+
+.btn-outline-cosmetic-primary:hover {
+  background-color: var(--cosmetic-primary);
+  border-color: var(--cosmetic-primary);
+  color: white;
+}
+
+.btn-outline-cosmetic-secondary {
+  color: var(--cosmetic-tertiary);
+  border-color: var(--cosmetic-secondary);
+  background-color: transparent;
+}
+
+.btn-outline-cosmetic-secondary:hover {
+  color: var(--cosmetic-tertiary);
+  background-color: var(--cosmetic-secondary);
+  border-color: var(--cosmetic-secondary);
+}
+
+.btn-outline-cosmetic-accent {
+  color: var(--cosmetic-accent);
+  border-color: var(--cosmetic-accent);
+  background-color: transparent;
+}
+
+.btn-outline-cosmetic-accent:hover {
+  color: var(--cosmetic-secondary);
+  background-color: var(--cosmetic-accent);
+  border-color: var(--cosmetic-accent);
+}
+
+.btn-cosmetic-accent {
+  background-color: var(--cosmetic-accent);
+  border-color: var(--cosmetic-accent);
+  color: var(--cosmetic-secondary);
+}
+
+.btn-cosmetic-accent:hover {
+  background-color: var(--cosmetic-accent-hover);
+  border-color: var(--cosmetic-accent-hover);
+  color: var(--cosmetic-secondary);
+}
+
+/* Estilos para cards y componentes */
+.card-cosmetic {
+  background-color: white;
+  border: 1px solid var(--cosmetic-primary-light);
+  border-radius: 1rem;
+}
+
+.card-cosmetic:hover {
+  box-shadow: 0 8px 25px rgba(140, 156, 132, 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+/* Navbar personalizada */
+.navbar-cosmetic {
+  background-color: white !important;
+  border-bottom: 2px solid var(--cosmetic-primary);
+  box-shadow: 0 2px 10px rgba(140, 156, 132, 0.1);
+}
+
+.navbar-cosmetic .navbar-brand {
+  color: var(--cosmetic-tertiary) !important;
+  font-weight: bold;
+}
+
+.navbar-cosmetic .nav-link {
+  color: var(--cosmetic-tertiary) !important;
+}
+
+.navbar-cosmetic .nav-link:hover {
+  color: var(--cosmetic-primary) !important;
+}
+
+/* Footer personalizado */
+.footer-cosmetic {
+  background-color: var(--cosmetic-tertiary);
+  color: var(--cosmetic-secondary);
+}
+
+.footer-cosmetic h5, .footer-cosmetic h6 {
+  color: var(--cosmetic-accent);
+}
+
+/* Efectos de hover especiales */
+.hover-cosmetic-accent:hover {
+  color: var(--cosmetic-accent) !important;
+  transition: color 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Badges personalizados */
+.badge-cosmetic-primary {
+  background-color: var(--cosmetic-primary);
+  color: white;
+}
+
+.badge-cosmetic-secondary {
+  background-color: var(--cosmetic-secondary);
+  color: var(--cosmetic-tertiary);
+}
+
+.badge-cosmetic-accent {
+  background-color: var(--cosmetic-accent);
+  color: white;
+}
+
+/* Alerts personalizados */
+.alert-cosmetic-success {
+  background-color: #d4edda;
+  border-color: var(--cosmetic-primary);
+  color: var(--cosmetic-tertiary);
+  border: 1px solid;
+}
+
+.alert-cosmetic-danger {
+  background-color: #f8d7da;
+  border-color: var(--cosmetic-accent);
+  color: var(--cosmetic-tertiary);
+  border: 1px solid;
+}
+
+.alert-cosmetic-warning {
+  background-color: #fff3cd;
+  border-color: var(--cosmetic-accent);
+  color: var(--cosmetic-tertiary);
+  border: 1px solid;
+}
+
+.alert-cosmetic-info {
+  background-color: var(--cosmetic-secondary);
+  border-color: var(--cosmetic-primary);
+  color: var(--cosmetic-tertiary);
+  border: 1px solid;
+}
+
+/* Formularios */
+.form-control:focus {
+  border-color: var(--cosmetic-primary);
+  box-shadow: 0 0 0 0.25rem rgba(140, 156, 132, 0.25);
+}
+
+/* Paginación */
+.pagination .page-link {
+  color: var(--cosmetic-primary);
+  border-color: var(--cosmetic-primary-light);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--cosmetic-primary);
+  border-color: var(--cosmetic-primary);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--cosmetic-secondary);
+  border-color: var(--cosmetic-primary);
+  color: var(--cosmetic-primary-dark);
+}
+
+/* Alertas personalizadas */
+.alert-cosmetic-success {
+  background-color: rgba(140, 156, 132, 0.1);
+  border-color: var(--cosmetic-primary);
+  color: var(--cosmetic-tertiary);
+}
+
+.alert-cosmetic-warning {
+  background-color: rgba(210, 138, 109, 0.1);
+  border-color: var(--cosmetic-accent);
+  color: var(--cosmetic-tertiary);
+}
+
+/* Sobrescribir clases de Bootstrap automáticamente */
+.text-primary { color: var(--cosmetic-primary) !important; }
+.bg-primary { background-color: var(--cosmetic-primary) !important; }
+.btn-primary { 
+  background-color: var(--cosmetic-primary) !important; 
+  border-color: var(--cosmetic-primary) !important; 
+  color: white !important;
+}
+.btn-primary:hover, .btn-primary:focus { 
+  background-color: var(--cosmetic-primary-dark) !important; 
+  border-color: var(--cosmetic-primary-dark) !important; 
+}
+
+.text-success { color: var(--cosmetic-primary) !important; }
+.bg-success { background-color: var(--cosmetic-primary) !important; }
+.btn-success { 
+  background-color: var(--cosmetic-primary) !important; 
+  border-color: var(--cosmetic-primary) !important; 
+}
+
+.text-danger { color: var(--cosmetic-accent) !important; }
+.bg-danger { background-color: var(--cosmetic-accent) !important; }
+.btn-danger { 
+  background-color: var(--cosmetic-accent) !important; 
+  border-color: var(--cosmetic-accent) !important; 
+}
+
+.text-info { color: var(--cosmetic-accent) !important; }
+.bg-info { background-color: var(--cosmetic-accent) !important; }
+.btn-info { 
+  background-color: var(--cosmetic-accent) !important; 
+  border-color: var(--cosmetic-accent) !important; 
+}
+
+.border-primary { border-color: var(--cosmetic-primary) !important; }
+.border-success { border-color: var(--cosmetic-primary) !important; }
+.border-danger { border-color: var(--cosmetic-accent) !important; }
+.border-info { border-color: var(--cosmetic-accent) !important; }
+
+/* Spinner/Loading colors */
+.spinner-border-primary { color: var(--cosmetic-primary) !important; }
+.spinner-border.text-primary { color: var(--cosmetic-primary) !important; }
+
+/* Nav pills active state */
+.nav-pills .nav-link.active { 
+  background-color: var(--cosmetic-primary) !important; 
+  color: white !important;
+}
+
+/* Badge colors */
+.badge.bg-primary { background-color: var(--cosmetic-primary) !important; }
+.badge.bg-success { background-color: var(--cosmetic-primary) !important; }
+.badge.bg-danger { background-color: var(--cosmetic-accent) !important; }
+.badge.bg-info { background-color: var(--cosmetic-accent) !important; }
+
+/* Alert colors */
+.alert-primary { 
+  background-color: rgba(140, 156, 132, 0.1) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: var(--cosmetic-tertiary) !important;
+}
+.alert-success { 
+  background-color: rgba(140, 156, 132, 0.1) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: var(--cosmetic-tertiary) !important;
+}
+.alert-danger { 
+  background-color: rgba(210, 138, 109, 0.1) !important;
+  border-color: var(--cosmetic-accent) !important;
+  color: var(--cosmetic-tertiary) !important;
+}

@@ -97,8 +97,8 @@ const TopbarMobile = () => {
               fontWeight: isActiveLink(item.path) ? 600 : 500,
               fontSize: '0.75rem',
               minHeight: '60px',
-              backgroundColor: isActiveLink(item.path) ? '#0d6efd' : 'transparent',
-              color: isActiveLink(item.path) ? 'white' : '#6c757d',
+              backgroundColor: isActiveLink(item.path) ? 'var(--cosmetic-primary)' : 'transparent',
+              color: isActiveLink(item.path) ? 'white' : 'var(--cosmetic-tertiary)',
               transition: 'all 0.2s ease'
             }}
           >
@@ -106,14 +106,14 @@ const TopbarMobile = () => {
               className={`bi ${item.icon}`} 
               style={{ 
                 fontSize: '1.1rem',
-                color: isActiveLink(item.path) ? 'white' : '#6c757d'
+                color: isActiveLink(item.path) ? 'white' : 'var(--cosmetic-tertiary)'
               }}
             ></i>
             <span 
               className="small" 
               style={{ 
                 fontSize: '0.7rem',
-                color: isActiveLink(item.path) ? 'white' : '#6c757d'
+                color: isActiveLink(item.path) ? 'white' : 'var(--cosmetic-tertiary)'
               }}
             >
               {item.name}
@@ -141,7 +141,7 @@ const TopbarMobile = () => {
   return (
     <nav className="topbar-mobile d-lg-none bg-white shadow-sm border-bottom position-sticky" 
          style={{ 
-           borderColor: '#e9ecef', 
+           borderColor: 'var(--cosmetic-primary)', 
            top: '76px', 
            zIndex: 1020
          }}>
@@ -151,7 +151,7 @@ const TopbarMobile = () => {
         
         {/* Fila secundaria solo para administradores */}
         {isAdmin && secondaryMenuItems.length > 0 && (
-          <div className="mt-2 pt-2 border-top" style={{ borderColor: '#e9ecef' }}>
+          <div className="mt-2 pt-2 border-top" style={{ borderColor: 'var(--cosmetic-primary)' }}>
             {renderNavRow(secondaryMenuItems, 'admin-secondary')}
           </div>
         )}
@@ -160,13 +160,13 @@ const TopbarMobile = () => {
       {/* Estilos CSS específicos para el componente */}
       <style jsx>{`
         .topbar-mobile .nav-link:hover {
-          background-color: #f8f9fa !important;
+          background-color: var(--cosmetic-secondary) !important;
           transform: translateY(-1px);
-          color: #0d6efd !important;
+          color: var(--cosmetic-primary) !important;
         }
 
         .topbar-mobile .nav-link.active {
-          background-color: #0d6efd !important;
+          background-color: var(--cosmetic-primary) !important;
           color: white !important;
         }
 

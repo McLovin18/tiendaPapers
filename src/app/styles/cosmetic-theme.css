@@ -330,3 +330,32 @@
   border-color: var(--cosmetic-accent) !important;
   color: var(--cosmetic-tertiary) !important;
 }
+
+
+/* Botones principales (guardar, editar, etc.) */
+.btn-profile {
+  background-color: transparent !important;
+  color: var(--cosmetic-terciary) !important;
+  border: 1px solid var(--cosmetic-accent) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-profile:hover,
+.btn-profile:focus {
+  background-color: var(--cosmetic-accent) !important;
+  color: white !important;
+}
+
+/* Botones secundarios (cancelar, acciones menos importantes) */
+.btn-profile-secondary {
+  background-color: transparent !important;
+  color: var(--cosmetic-accent) !important;
+  border: 1px solid var(--cosmetic-secondary) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-profile-secondary:hover,
+.btn-profile-secondary:focus {
+  background-color: var(--cosmetic-secondary) !important;
+  color: var(--cosmetic-tertiary) !important;
+}

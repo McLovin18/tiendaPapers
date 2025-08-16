@@ -274,10 +274,10 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100 bg-cosmetic-secondary">
       <main>
         <Container className="py-5">
-          <h1 className="fw-bold text-center mb-5">Mi Cuenta</h1>
+          <h1 className="fw-bold text-center mb-5 text-cosmetic-tertiary">Mi Cuenta</h1>
           <Row className="g-4 justify-content-center">
             <Col xs={12} md={4}>
               <Card className="border-0 shadow-sm mb-4 p-4">
@@ -311,8 +311,8 @@ const ProfilePage = () => {
                     <div className="mb-2 text-muted">{email}</div>
                   </div>
                   <div className="d-grid gap-2">
-                    <Button 
-                      className={activeTab === 'personal' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
+                    <Button
+                      className={`btn-profile rounded-1 ${activeTab === 'personal' ? 'active' : ''}`}
                       onClick={() => {
                         setActiveTab('personal');
                         router.push('/profile?tab=personal');
@@ -320,18 +320,20 @@ const ProfilePage = () => {
                     >
                       <i className="bi bi-person me-2"></i>Información personal
                     </Button>
-                    <Button 
-                      className={activeTab === 'orders' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
+
+                    <Button
+                      className={`btn-profile rounded-1 ${activeTab === 'orders' ? 'active' : ''}`}
                       onClick={() => {
                         setActiveTab('orders');
                         router.push('/profile?tab=orders');
-                        loadPurchases(); // ✅ Cargar inmediatamente al hacer clic
+                        loadPurchases();
                       }}
                     >
                       <i className="bi bi-bag-check me-2"></i>Historial de pedidos
                     </Button>
-                    <Button 
-                      className={activeTab === 'favorites' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary rounded-1'} 
+
+                    <Button
+                      className={`btn-profile rounded-1 ${activeTab === 'favorites' ? 'active' : ''}`}
                       onClick={() => {
                         setActiveTab('favorites');
                         router.push('/profile?tab=favorites');
@@ -339,12 +341,7 @@ const ProfilePage = () => {
                     >
                       <i className="bi bi-heart me-2"></i>Favoritos
                     </Button>
-                    <Button 
-                      className="btn-cosmetic-accent rounded-1 mt-2" 
-                      onClick={handleLogout}
-                    >
-                      <i className="bi bi-box-arrow-right me-2"></i>Cerrar sesión
-                    </Button>
+
                   </div>
                 </Card.Body>
               </Card>
@@ -354,7 +351,7 @@ const ProfilePage = () => {
                 <Card.Body>
                   {activeTab === 'personal' && (
                     <div className="p-3">
-                      <h5 className="fw-bold mb-3">Información personal</h5>
+                      <h5 className="fw-bold mb-3 text-cosmetic-tertiary">Información personal</h5>
                       <div className="text-center mb-4">
                         <div style={{ position: 'relative', display: 'inline-block' }}>
                         <div
@@ -380,12 +377,12 @@ const ProfilePage = () => {
                           />
                         </div>
 
-                          <Button 
-                            className="btn-cosmetic-secondary" 
+                          <Button                   
                             size="sm" 
-                            className="position-absolute bottom-0 end-0 border shadow-sm" 
+                            className="btn-cosmetic-secondary position-absolute bottom-0 end-0 border shadow-sm" 
                             style={{ borderRadius: '50%' }}
                             onClick={() => fileInputRef.current?.click()}
+                            onMouseDown={(e) => e.preventDefault()}
                           >
                             <i className="bi bi-camera"></i>
                           </Button>
@@ -395,6 +392,7 @@ const ProfilePage = () => {
                             ref={fileInputRef} 
                             style={{ display: 'none' }} 
                             onChange={handleAvatarChange}
+                            onMouseDown={(e) => e.preventDefault()}
                           />
                         </div>
                       </div>
@@ -430,13 +428,15 @@ const ProfilePage = () => {
                             </Form.Group>
 
                             <div className="d-flex gap-2 mt-3">
-                              <Button type="submit" className="btn-cosmetic-primary rounded-1">
+                              <Button onMouseDown={(e) => e.preventDefault()}
+                               type="submit" className="btn-profile rounded-1">
                                 Guardar cambios
                               </Button>
+                              
                               <Button
+                                onMouseDown={(e) => e.preventDefault()}
                                 type="button"
-                                className="btn-outline-cosmetic-secondary"
-                                className="rounded-1"
+                                className="btn-profile-secondary rounded-1"
                                 onClick={() => setEditMode(false)}
                               >
                                 Cancelar
@@ -448,7 +448,7 @@ const ProfilePage = () => {
 
                           {isPasswordProvider && (
                             <Form onSubmit={handlePasswordChange} className="mt-4">
-                              <h5 className="fw-bold mb-3">Cambiar contraseña</h5>
+                              <h5 className="fw-bold mb-3 ">Cambiar contraseña</h5>
 
                               <Form.Group className="mb-3">
                                 <Form.Label>Contraseña actual</Form.Label>
@@ -470,7 +470,11 @@ const ProfilePage = () => {
                                 />
                               </Form.Group>
 
-                              <Button type="submit" className="btn-cosmetic-primary">Cambiar contraseña</Button>
+                              <Button 
+                              type="submit" 
+                              className="btn-profile"
+                              onMouseDown={(e) => e.preventDefault()}
+                              >Cambiar contraseña</Button>
 
                               {passwordError && <Alert className="mt-3 alert-cosmetic-danger">{passwordError}</Alert>}
                               {passwordSuccess && <Alert className="mt-3 alert-cosmetic-success">{passwordSuccess}</Alert>}
@@ -483,13 +487,25 @@ const ProfilePage = () => {
                         <>
                           <div className="mb-2"><strong>Nombre:</strong> {name}</div>
                           <div className="mb-2"><strong>Email:</strong> {email}</div>
-                          <Button
-                            className="btn-outline-cosmetic-primary"
-                            className="rounded-1 mt-3"
-                            onClick={() => setEditMode(true)}
-                          >
-                            <i className="bi bi-pencil me-2"></i>Editar datos personales
-                          </Button>
+                              {/* BOTONES EDITAR Y CERRAR SESIÓN */}
+                          <div className="d-flex justify-content-between mt-4">
+                            <Button
+                              className="btn-profile rounded-1"
+                              onClick={() => setEditMode(true)}
+                              onMouseDown={(e) => e.preventDefault()}
+                            >
+                              Editar datos personales
+                            </Button>
+
+                            <Button
+                            onMouseDown={(e) => e.preventDefault()}
+                              className="btn-cosmetic-accent rounded-1"
+                              onClick={handleLogout}
+                            >
+                              <i className="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+                            </Button>
+                          </div>
+
                         </>
                       )}
 
@@ -509,7 +525,7 @@ const ProfilePage = () => {
                         <div className="text-center py-5">
                           <i className="bi bi-box2 fs-1"></i>
                           <h5 className="fw-bold mb-2">No tienes compras recientes</h5>
-                          <Link href="/products" className="btn btn-cosmetic-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
+                          <Link onMouseDown={(e) => e.preventDefault()} href="/products" className="btn btn-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </div>
                       ) : (
                         <>
@@ -584,7 +600,7 @@ const ProfilePage = () => {
                         <>
                           <i className="bi bi-heart fs-1 text-danger mb-3"></i>
                           <p className="text-muted">Aún no tienes productos favoritos.</p>
-                          <Link href="/products" className="btn btn-cosmetic-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
+                          <Link href="/products" onMouseDown={(e) => e.preventDefault()} className="btn btn-cosmetic-primary rounded-1 px-4 mt-3 text-decoration-none">Ver Productos</Link>
                         </>
                       ) : (
                         <Row className="g-4 justify-content-center">

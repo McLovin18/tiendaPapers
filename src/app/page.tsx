@@ -18,6 +18,31 @@ export default function Home() {
   const [favSuccess, setFavSuccess] = useState<string | null>(null);
   const [favsUpdate, setFavsUpdate] = useState(0);
     const router = useRouter();
+
+    const imagenes = [
+      { 
+        src: "https://imagenes.heraldo.es/files/og_thumbnail/uploads/imagenes/2018/01/25/_cosmeticanatural_39d1b8d0.jpg",
+        alt: "Producto 1",
+        titulo: "Nueva Colección Natural",
+        descripcion: "Descubre los productos más puros y naturales.",
+        botonTexto: "Ver colección"
+      },
+      { 
+        src: "https://imagenes.heraldo.es/files/og_thumbnail/uploads/imagenes/2018/01/25/_cosmeticanatural_39d1b8d0.jpg",
+        alt: "Producto 2",
+        titulo: "Cosmética Innovadora",
+        descripcion: "Lo último en belleza y cuidado personal.",
+        botonTexto: "Explorar ahora"
+      },
+      { 
+        src: "https://imagenes.heraldo.es/files/og_thumbnail/uploads/imagenes/2018/01/25/_cosmeticanatural_39d1b8d0.jpg",
+        alt: "Producto 3",
+        titulo: "Ofertas Especiales",
+        descripcion: "Aprovecha descuentos únicos por tiempo limitado.",
+        botonTexto: "Comprar ya"
+      },
+    ];
+
   
   // 🔥 USAR EL HOOK OPTIMIZADO para productos con stock
   const { products: allProductsWithStock, loading: loadingProducts } = useProducts();
@@ -39,25 +64,45 @@ export default function Home() {
   // Página para usuarios no autenticados (similar a la imagen de referencia)
   const UnauthenticatedHome = () => (
     <div className="d-flex flex-column min-vh-100" style={{backgroundColor: "var(--cosmetic-secondary)"}}>
-      
+      <Carousel className="mb-4" controls={true} indicators={true} interval={null}>
+        {imagenes.map((img, index) => (
+          <Carousel.Item key={index}>
+            <div style={{ height: '500px', position: 'relative' }}>
+              <Image 
+                src={img.src}
+                alt={img.alt} 
+                fill 
+                style={{ objectFit: 'cover' }}
+              />
 
-      {/* Carrusel principal */}
-      <Carousel className="mb-4" controls={false} indicators={false}>
-        <Carousel.Item>
-          <div style={{ height: '500px', position: 'relative' }}>
-            <Image 
-              src= "https://imagenes.heraldo.es/files/og_thumbnail/uploads/imagenes/2018/01/25/_cosmeticanatural_39d1b8d0.jpg"
-              alt="Colección de verano" 
-              fill 
-            />
-            <Carousel.Caption className="text-start">
-              <h2 className="display-4 fw-bold" style={{ color: "var(--cosmetic-accent)" }}>Nueva Colección</h2>
-              <p className="lead" style={{ color: "var(--cosmetic-ac)" }}>Descubre las últimas tendencias en cosméticos</p>
-              <Button variant="cosmetic-primary" size="lg" className="mt-3 btn-primary">Comprar ahora</Button>
-            </Carousel.Caption>
-          </div>
-        </Carousel.Item>
+              {/* Overlay marrón con opacidad */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(139, 69, 19, 0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 2rem'
+                }}
+              >
+                <div className="text-start text-white">
+                  <h2 className="display-4 fw-bold">{img.titulo}</h2>
+                  <p className="lead">{img.descripcion}</p>
+                  <Button variant="cosmetic-primary" size="lg" className="mt-3">
+                    {img.botonTexto}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Carousel.Item>
+
+        ))} 
       </Carousel>
+
       
       {/* Sección de categorías */}
       <Container className="py-4">

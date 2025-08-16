@@ -29,33 +29,39 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isClient, setIsClient] = useState(false);
 
-  const updateQuantity = async (id: number, newQuantity: number, size: string = '', color: string = '') => {
-    if (newQuantity < 1 || !user?.uid) return;
-    
+
+  const updateQuantity = async (id: number, newQuantity: number) => {
+    if (!user?.uid) return;
+
     try {
-      await cartService.updateCartItemQuantity(user.uid, id, size, color, newQuantity);
-      // La actualización del estado se maneja por la suscripción en tiempo real
+      if (newQuantity < 1) {
+        // Si llega a 0, eliminamos el producto
+        await removeItem(id);
+      } else {
+        // Si es mayor a 0, actualizamos normalmente
+        await cartService.updateCartItemQuantity(user.uid, id, newQuantity);
+      }
     } catch (error: any) {
       console.error('Error al actualizar cantidad:', error);
-      // Mostrar alerta temporal con el error específico de stock
+
       if (error.message && error.message.includes('stock')) {
         setSaveError(error.message);
-        setTimeout(() => setSaveError(''), 5000); // Limpiar error después de 5 segundos
       } else {
         setSaveError('Error al actualizar la cantidad del producto');
-        setTimeout(() => setSaveError(''), 5000);
       }
+      setTimeout(() => setSaveError(''), 5000);
     }
   };
 
-  const removeItem = async (id: number, size: string = '', color: string = '') => {
+  const removeItem = async (id: number) => {
     if (!user?.uid) return;
-    
-    const success = await cartService.removeFromCart(user.uid, id, size, color);
+
+    const success = await cartService.removeFromCart(user.uid, id);
     if (!success) {
       console.error('Error al remover item');
     }
   };
+
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -130,8 +136,7 @@ const CartPage = () => {
       await cartService.updateCartItemQuantity(
         user.uid, 
         item.id, 
-        item.size || '', 
-        item.color || '', 
+
         newQuantity
       );
     } catch (error: any) {
@@ -156,8 +161,6 @@ const CartPage = () => {
       const success = await cartService.removeFromCart(
         user.uid, 
         item.id, 
-        item.size || '', 
-        item.color || ''
       );
       
       if (!success) {
@@ -337,19 +340,13 @@ const CartPage = () => {
                         <Col xs={8} md={9} className="p-3">
                           <div className="d-flex justify-content-between align-items-center mb-2">
                             <h5 className="fw-bold mb-0">{item.name}</h5>
-                            <Button variant="link" className="text-danger p-0" onClick={() => removeItem(item.id, item.size, item.color)}><i className="bi bi-x-lg"></i></Button>
+                            <Button variant="link" className="text-danger p-0" onClick={() => removeItem(item.id)}><i className="bi bi-x-lg"></i></Button>
                           </div>
-                          {(item.size || item.color) && (
-                            <div className="text-muted mb-2">
-                              {item.size && <span className="me-3"><strong>Talla:</strong> {item.size}</span>}
-                              {item.color && <span><strong>Color:</strong> {item.color}</span>}
-                            </div>
-                          )}
                           <div className="d-flex align-items-center mb-2">
                             <span className="me-2">Cantidad:</span>
-                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1, item.size, item.color)}>-</Button>
+                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</Button>
                             <span className="mx-2">{item.quantity}</span>
-                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1, item.size, item.color)}>+</Button>
+                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
                           </div>
                           <div className="fw-bold text-primary fs-5">${(item.price * item.quantity).toFixed(2)}</div>
                         </Col>
@@ -457,8 +454,6 @@ const CartPage = () => {
         </div>
         <Footer />
         
-        {/* 🔧 Componente de diagnóstico PayPal (solo en desarrollo) */}
-        <PayPalDiagnostic />
       </div>
     </PayPalProvider>
   );

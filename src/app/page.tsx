@@ -42,19 +42,18 @@ export default function Home() {
       
 
       {/* Carrusel principal */}
-      <Carousel className="mb-4">
+      <Carousel className="mb-4" controls={false} indicators={false}>
         <Carousel.Item>
           <div style={{ height: '500px', position: 'relative' }}>
             <Image 
-              src="/images/product1.svg" 
+              src= "https://imagenes.heraldo.es/files/og_thumbnail/uploads/imagenes/2018/01/25/_cosmeticanatural_39d1b8d0.jpg"
               alt="Colección de verano" 
               fill 
-              style={{ objectFit: 'cover' }} 
             />
             <Carousel.Caption className="text-start">
-              <h2 className="display-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Nueva Colección</h2>
-              <p className="lead" style={{ color: "var(--cosmetic-tertiary)" }}>Descubre las últimas tendencias en cosméticos</p>
-              <Button variant="cosmetic-primary" size="lg" className="mt-3 btn-cosmetic-primary">Comprar ahora</Button>
+              <h2 className="display-4 fw-bold" style={{ color: "var(--cosmetic-accent)" }}>Nueva Colección</h2>
+              <p className="lead" style={{ color: "var(--cosmetic-ac)" }}>Descubre las últimas tendencias en cosméticos</p>
+              <Button variant="cosmetic-primary" size="lg" className="mt-3 btn-primary">Comprar ahora</Button>
             </Carousel.Caption>
           </div>
         </Carousel.Item>

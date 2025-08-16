@@ -56,7 +56,7 @@ const LoginRequired = () => {
                 </Link>
                 <Link 
                   href="/auth/register" 
-                  className="btn btn-outline-primary px-4 py-2 text-decoration-none"
+                  className="btn btn-primary  px-4 py-2 text-decoration-none"
                 >
                   <i className="bi bi-person-plus me-2"></i>
                   Crear Cuenta

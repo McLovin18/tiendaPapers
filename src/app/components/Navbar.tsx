@@ -68,7 +68,7 @@ const NavbarComponent = () => {
     >
       <Container>
         {/* Logo */}
-        <Navbar.Brand as={Link} href="/" className="mx-auto mx-lg-0">
+        <Navbar.Brand as={Link} href="/" className="me-auto me-lg-0">
           <b><p>Logo!</p></b>
 
         </Navbar.Brand>
@@ -79,8 +79,9 @@ const NavbarComponent = () => {
           <Nav.Link
             as={Link}
             href="/cart"
-            className="position-relative me-2 d-lg-none hover-cosmetic-accent"
-            style={{ fontSize: "1.5rem", color: "var(--cosmetic-tertiary)" }}
+            className="position-relative me-2 d-lg-none"
+            style={{ fontSize: "1.5rem", color: "var(--cosmetic-secondary)" }}
+
             aria-label="Carrito de compras"
           >
             <i className="bi bi-cart"></i>
@@ -95,8 +96,7 @@ const NavbarComponent = () => {
           </Nav.Link>
 
           {/* Toggle menú móvil */}
-          <Navbar.Toggle
-            aria-controls="basic-navbar-nav"
+          <Navbar.Toggle className='btn-primary'
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
           />
@@ -188,7 +188,7 @@ const NavbarComponent = () => {
                 as={Link}
                 href="/auth/login"
                 onClick={() => setExpanded(false)}
-                className="btn btn-cosmetic-primary w-100 mb-2"
+                className="btn btn-primary w-100 mb-2"
               >
                 Iniciar sesión
               </Nav.Link>

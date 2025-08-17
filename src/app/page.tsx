@@ -177,12 +177,12 @@ export default function Home() {
             {featuredProducts.map((product) => (
               <Col key={product.id} md={3} sm={6} className="mb-4">
                 <Card 
-                  className="h-100 border-0 shadow-sm card-cosmetic hover-scale"
+                  className="h-100 border-0 shadow-sm card-cosmetic hover-scale bg-cosmetic-secondary"
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleCardClick(product.id)}
                 >
                   <div
-                    className="position-relative"
+                    className="position-relative bg-cosmetic-secondary"
                     style={{
                       width: 'auto',
                       height: '300px',
@@ -302,7 +302,7 @@ export default function Home() {
                 {featuredProducts.map((product) => (
                   <Col key={`${product.id}-${favsUpdate}`} xs={12} sm={6} md={3}>
                     <Card 
-                      className="h-100 border-0 shadow-sm card-cosmetic"
+                      className="h-100 border-0 shadow-sm card-cosmetic bg-cosmetic-secondary"
                       style={{ 
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -320,7 +320,7 @@ export default function Home() {
                     >
                       {/* Imagen del Producto */}
                       <div
-                        className="position-relative"
+                        className="position-relative bg-cosmetic-secondary"
                         style={{
                           width: 'auto',
                           height: '300px',

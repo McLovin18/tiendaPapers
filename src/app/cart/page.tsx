@@ -321,11 +321,11 @@ const CartPage = () => {
 
           <main className="flex-grow-1">
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5">Tu Carrito</h1>
+            <h1 className="fw-bold text-center mb-5 text-cosmetic-tertiary">Tu Carrito</h1>
             {cartItems.length === 0 ? (
               <div className="text-center py-5">
                 <i className="bi bi-bag" style={{ fontSize: '4rem' }}></i>
-                <h2 className="fw-bold mb-3">Tu carrito está vacío</h2>
+                <h2 className="fw-bold mb-3 text-cosmetic-tertiary">Tu carrito está vacío</h2>
                 <Button href="/products" className="btn-cosmetic-primary rounded-1 px-4 py-2 mt-3">Ver Productos</Button>
               </div>
             ) : (
@@ -339,14 +339,14 @@ const CartPage = () => {
                         </Col>
                         <Col xs={8} md={9} className="p-3">
                           <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h5 className="fw-bold mb-0">{item.name}</h5>
-                            <Button variant="link" className="text-danger p-0" onClick={() => removeItem(item.id)}><i className="bi bi-x-lg"></i></Button>
+                            <h5 className="fw-bold mb-0 text-cosmetic-tertiary">{item.name}</h5>
+                            <Button variant="link" className="btn-cosmetic-primary text-danger p-0" onClick={() => removeItem(item.id)}><i className="bi bi-x-lg"></i></Button>
                           </div>
                           <div className="d-flex align-items-center mb-2">
-                            <span className="me-2">Cantidad:</span>
-                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</Button>
+                            <span className="me-2 ">Cantidad:</span>
+                            <Button size="sm" className="btn-cosmetic-primary px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</Button>
                             <span className="mx-2">{item.quantity}</span>
-                            <Button variant="outline-dark" size="sm" className="px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
+                            <Button size="sm" className="btn-cosmetic-primary px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
                           </div>
                           <div className="fw-bold text-primary fs-5">${(item.price * item.quantity).toFixed(2)}</div>
                         </Col>
@@ -387,19 +387,6 @@ const CartPage = () => {
                         </Alert>
                       )}
                       
-                      {/* ✅ VALIDACIÓN DE STOCK EN TIEMPO REAL */}
-                      <StockValidation
-                        items={cartItems.map(item => ({
-                          id: item.id.toString(),
-                          name: item.name,
-                          quantity: item.quantity,
-                          price: item.price
-                        }))}
-                        onStockValidated={handleStockValidation}
-                        onQuantityAdjust={handleQuantityAdjustFromStock}
-                        onItemRemove={handleItemRemoveFromStock}
-                        className="mb-3"
-                      />
                       
                       {/* ✅ SELECTOR DE UBICACIÓN DE ENTREGA */}
                       <DeliveryLocationSelector 
@@ -407,13 +394,8 @@ const CartPage = () => {
                         disabled={cartItems.length === 0 || processing || !stockValid}
                       />
                       
-                      {/* ✅ Alerta si no hay ubicación seleccionada */}
-                      {cartItems.length > 0 && !deliveryLocation && stockValid && (
-                        <Alert variant="warning" className="mb-3">
-                          <i className="bi bi-exclamation-triangle me-2"></i>
-                          <strong>Selecciona tu ubicación</strong> para continuar con el pago.
-                        </Alert>
-                      )}
+
+
                       
                       {/* ✅ Botón de WhatsApp - Primera opción */}
                       <WhatsAppButton

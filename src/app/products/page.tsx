@@ -254,7 +254,7 @@ const ProductsPage = () => {
                       }}
                     >
                       <div
-                        className="position-relative"
+                        className="position-relative bg-cosmetic-secondary"
                         style={{
                           width: 'auto',
                           height: '300px',

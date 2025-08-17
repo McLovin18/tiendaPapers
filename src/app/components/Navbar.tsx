@@ -60,10 +60,9 @@ const NavbarComponent = () => {
 
   return (
     <Navbar
-      bg="white"
       expand="lg"
       expanded={expanded}
-      className="py-2 shadow-sm navbar-cosmetic"
+      className="py-2 shadow-sm bg-cosmetic-secondary"
       ref={navbarRef}
     >
       <Container>

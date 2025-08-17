@@ -104,7 +104,7 @@ const ProductsAccesoriosPage = () => {
                     >
                       {/* Imagen del Producto */}
                       <div
-                        className="position-relative"
+                        className="position-relative bg-cosmetic-secondary"
                         style={{
                           width: 'auto',
                           height: '300px',

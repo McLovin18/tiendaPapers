@@ -644,8 +644,8 @@ const ProductDetailPage = () => {
         <Container className="py-5">
           <Row className="g-5 align-items-center">
             <Col xs={12} md={6} style={{ width: '40%' }}>
-              <Card className="border-0 shadow-sm">
-                <div className="position-relative" style={{ width: '300px', height: '450px', margin: '0 auto', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '1rem 1rem 0 0', overflow: 'hidden' }}>
+              <Card className="border-0 shadow-sm bg-cosmetic-secondary">
+                <div className="position-relative bg-cosmetic-secondary" style={{ width: '300px', height: '450px', margin: '0 auto', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '1rem 1rem 0 0', overflow: 'hidden' }}>
                   {product.images && product.images.length > 0 && (
                     <>
                       <Image
@@ -961,7 +961,7 @@ const ProductDetailPage = () => {
                           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                             <Button
                               type="button"
-                              className="btn-cosmetic-secondary"
+                              className="btn-cosmetic-primary"
                               style={{ borderRadius: "1.5rem", fontWeight: 500, color: "#333", background: "#f7f7f7", border: "none", boxShadow: "none", padding: "4px 18px" }}
                               onClick={() => {
                                 setCommentText("");
@@ -971,7 +971,7 @@ const ProductDetailPage = () => {
                             >Cancelar</Button>
                             <Button
                               type="submit"
-                              className="btn-cosmetic-accent"
+                              className="btn-cosmetic-primary"
                               style={{ borderRadius: "1.5rem", fontWeight: 500, border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
                               disabled={!commentText.trim()}
                             >

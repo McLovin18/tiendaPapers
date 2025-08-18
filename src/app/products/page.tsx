@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import FavouriteButton from "../components/FavouriteButton";
 import { Container, Row, Col, Card, Button, Form, Pagination, Badge, Modal, Accordion, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import TopbarMobile from '../components/TopbarMobile';
@@ -132,7 +130,6 @@ const ProductsPage = () => {
   // Obtener categorías únicas
   const categories = [...new Set(products.map(product => product.category))];
 
-  // Eliminar paginación, mostrar todos los productos
   return (
     <div className="d-flex flex-column min-vh-100">
       {/* Eliminar <NavbarComponent /> de aquí, ya que el layout global ya lo incluye */}
@@ -315,7 +312,7 @@ const ProductsPage = () => {
                 {/* Navegación de páginas */}
                 {totalPages > 1 && (
                   <div className="d-flex justify-content-center">
-                    <Pagination className="mb-0">
+                    <Pagination className="mb-0 pagination-cosmetic">
                       {/* Botón Primera página */}
                       <Pagination.First 
                         onClick={() => setCurrentPage(1)}
@@ -359,6 +356,7 @@ const ProductsPage = () => {
                         for (let page = startPage; page <= endPage; page++) {
                           items.push(
                             <Pagination.Item
+
                               key={page}
                               active={page === currentPage}
                               onClick={() => setCurrentPage(page)}
@@ -510,8 +508,8 @@ const ProductsPage = () => {
                   Total de productos: {products.length}
                 </div>
               </div>
-              <Button
-                variant="outline-secondary"
+              <Button className='btn-profile-secondary'
+
                 size="sm"
                 onClick={clearFilters}
                 disabled={selectedBenefits.length === 0 && selectedBrand.length === 0}
@@ -523,8 +521,8 @@ const ProductsPage = () => {
           </div>
         </Modal.Body>
         <Modal.Footer className="border-0 pt-0">
-          <Button variant="outline-secondary" onClick={() => setShowFilters(false)}>
-            <i className="bi bi-x-circle me-1"></i>
+          <Button className='btn-profile' onClick={() => setShowFilters(false)}>
+            <i className=" bi bi-x-circle me-1"></i>
             Cancelar
           </Button>
           <Button className="btn-cosmetic-primary" onClick={() => setShowFilters(false)}>

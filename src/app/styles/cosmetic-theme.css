@@ -341,6 +341,35 @@
 }
 
 
+/*Botones para el delivery*/
+.btn-admin {
+  background-color: transparent !important;
+  color: var(--cosmetic-terciary) !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-admin:hover,
+.btn-admin:focus {
+  background-color: var(--cosmetic-primary-dark) !important;
+  color: white !important;
+}
+
+/*btn orders*/
+.btn-adminOrders {
+  background-color: transparent !important;
+  color: var(--cosmetic-terciary) !important;
+  border: 1px solid var(--cosmetic-accent) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-adminOrders:hover,
+.btn-adminOrders:focus {
+  background-color: var(--cosmetic-accent) !important;
+  color: white !important;
+}
+
+
 /* Botones principales (guardar, editar, etc.) */
 .btn-profile {
   background-color: transparent !important;
@@ -367,4 +396,73 @@
 .btn-profile-secondary:focus {
   background-color: var(--cosmetic-secondary) !important;
   color: var(--cosmetic-tertiary) !important;
+}
+
+/* Botón de paginación normal */
+.page-link {
+  color: var(--cosmetic-primary) ;
+  border: 1px solid var(--cosmetic-primary) !important;
+  background-color: transparent !important;
+  transition: all 0.2s ease-in-out !important;
+  border-radius: 6px !important; /* opcional para redondear */
+}
+
+/* Hover en botón normal */
+.page-link:hover {
+  background-color: var(--cosmetic-primary) !important;
+  color: #fff !important;
+  border-color: var(--cosmetic-primary) !important;
+}
+
+
+.page-item.active{
+  background-color: var(--cosmetic-primary) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: #fff !important;
+  border-radius: 0.7em;
+}
+
+
+
+
+.page-link.active{
+  background: none !important;
+  background-color: var(--cosmetic-primary) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: #fff !important;
+
+}
+
+
+
+
+/* Botón deshabilitado */
+.page-item.disabled .page-link {
+  color: #aaa !important;
+  background-color: var(--cosmetic-secondary) !important;
+  border-color: var(--cosmetic-secondary) !important;
+}
+
+.page{
+  background-color: var(--cosmetic-primary) !important;
+  border-color: var(--cosmetic-primary) !important;
+  color: #fff !important;
+}
+
+.pagination{
+    --bs-pagination-bg: var(--cosmetic-primary) !important;
+
+  --bs-pagination-color: var(--cosmetic-primary) !important;
+  --bs-pagination-hover-color: #fff !important;
+  --bs-pagination-hover-bg: var(--cosmetic-primary) !important;
+  --bs-pagination-hover-border-color: var(--cosmetic-primary) !important;
+
+  --bs-pagination-active-color: #fff !important;
+  --bs-pagination-active-bg: var(--cosmetic-primary) !important;
+  --bs-pagination-active-border-color: var(--cosmetic-primary) !important;
+
+  --bs-pagination-disabled-color: #aaa !important;
+  --bs-pagination-disabled-bg: #f5f5f5 !important;
+  --bs-pagination-disabled-border-color: #ddd !important;
+  --bs-pagination-focus-color: var(--cosmetic-primary) !important;
 }

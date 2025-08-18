@@ -860,9 +860,9 @@ export default function AdminOrdersPage() {
             <div className="mb-3 mb-md-4">
               <div className="d-flex gap-2">
                 <Button
-                  className={activeTab === 'orders' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary'}
+                autoFocus
                   size="sm"
-                  className="flex-fill flex-md-grow-0"
+                  className="flex-fill flex-md-grow-0 btn-admin"
                   onClick={() => setActiveTab('orders')}
                 >
                   <i className="bi bi-clipboard-data me-1 me-md-2"></i>
@@ -872,8 +872,9 @@ export default function AdminOrdersPage() {
                 <Button
                   className={activeTab === 'deliveries' ? 'btn-cosmetic-primary' : 'btn-outline-cosmetic-primary'}
                   size="sm"
-                  className="flex-fill flex-md-grow-0"
+                  className="flex-fill flex-md-grow-0 btn-admin"
                   onClick={() => setActiveTab('deliveries')}
+                  
                 >
                   <i className="bi bi-truck me-1 me-md-2"></i>
                   <span className="d-none d-sm-inline">Gestión Delivery</span>
@@ -887,7 +888,7 @@ export default function AdminOrdersPage() {
                 <Button
                   className={activeTab === 'delivery-settings' ? 'btn-cosmetic-accent' : 'btn-outline-cosmetic-accent'}
                   size="sm"
-                  className="flex-fill flex-md-grow-0"
+                  className="flex-fill flex-md-grow-0 btn-admin"
                   onClick={() => setActiveTab('delivery-settings')}
                 >
                   <i className="bi bi-person-gear me-1 me-md-2"></i>
@@ -905,6 +906,7 @@ export default function AdminOrdersPage() {
 
             {/* ✅ Contenido según tab activo */}
             {activeTab === 'orders' && (
+              
               <>
                 {/* Estadísticas generales */}
                 {statistics && (
@@ -1014,11 +1016,14 @@ export default function AdminOrdersPage() {
                     ) : (
                       <div className="d-grid gap-2">
                         {orderDays.map((day) => (
-                          <Button
+                          <Button 
+                          onMouseDown={(e) => e.preventDefault()}
+                          
                             key={day.date}
                             variant={selectedDate === day.date ? "primary" : "outline-primary"}
                             onClick={() => handleDateSelect(day.date)}
-                            className="text-start"
+                            className="text-start btn-adminOrders"
+
                           >
                             <div>
                               <strong>{day.dateFormatted}</strong>
@@ -1206,7 +1211,7 @@ export default function AdminOrdersPage() {
                     )}
 
                     {/* 📋 Tabla Completa de Monitoreo */}
-                    <Card className="mb-4">
+                    <Card  className="mb-4">
                       <Card.Header>
                         <Row className="align-items-center">
                           <Col md={6}>
@@ -1219,7 +1224,7 @@ export default function AdminOrdersPage() {
                           </Col>
                           <Col md={6}>
                             <div className="d-flex gap-2 justify-content-end align-items-center">
-                              <Form.Group className="mb-0">
+                              <Form.Group className="mb-0"> 
                                 <Form.Label className="small mb-1">Fecha:</Form.Label>
                                 <Form.Control
                                   type="date"
@@ -1229,6 +1234,9 @@ export default function AdminOrdersPage() {
                                   style={{ width: '150px' }}
                                 />
                               </Form.Group>
+
+                              {/**Esto lo dejamos pa despues */}
+                              {/*}
                               <Button 
                                 size="sm" 
                                 variant="outline-primary"
@@ -1261,6 +1269,7 @@ export default function AdminOrdersPage() {
                                 <i className="bi bi-trash3 me-1"></i>
                                 Limpiar
                               </Button>
+                              {*/}
                             </div>
                           </Col>
                         </Row>

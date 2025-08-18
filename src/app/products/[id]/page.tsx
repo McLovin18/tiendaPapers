@@ -1221,8 +1221,10 @@ const ProductDetailPage = () => {
       </div>
 
 
-            
+
+
       {/* Tabs de información adicional */}
+      {/*}
       <div className="my-5">
         <Container>
           <Tabs
@@ -1275,6 +1277,9 @@ const ProductDetailPage = () => {
           </Tabs>
         </Container>
       </div>
+
+
+      {*/}
       
       {/* Productos recomendados inteligentes */}
       <div className="my-5">

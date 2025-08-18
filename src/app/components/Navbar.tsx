@@ -79,7 +79,7 @@ const NavbarComponent = () => {
             as={Link}
             href="/cart"
             className="position-relative me-2 d-lg-none"
-            style={{ fontSize: "1.5rem", color: "var(--cosmetic-secondary)" }}
+            style={{ fontSize: "1.5rem", color: "var(--cosmetic-accent)" }}
 
             aria-label="Carrito de compras"
           >
@@ -153,7 +153,7 @@ const NavbarComponent = () => {
                 <Nav.Link
                   as={Link}
                   href="/cart"
-                  className="position-relative hover-cosmetic-accent"
+                  className="position-relative btn-cosmetic-primary hover-cosmetic-accent"
                   style={{ fontSize: "1.3rem", color: "var(--cosmetic-tertiary)" }}
                   aria-label="Carrito de compras"
                 >

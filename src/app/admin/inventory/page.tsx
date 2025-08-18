@@ -257,7 +257,6 @@ export default function InventoryManagementPage() {
                           <th>Producto</th>
                           <th>Precio</th>
                           <th>Stock</th>
-                          <th>Tallas/Colores</th>
                           <th>Última Act.</th>
                           <th>Acciones</th>
                         </tr>
@@ -292,36 +291,7 @@ export default function InventoryManagementPage() {
                                 {product.stock} unidades
                               </Badge>
                             </td>
-                            <td>
-                              <div>
-                                {product.sizes && product.sizes.length > 0 && (
-                                  <div className="mb-1">
-                                    <small className="text-muted">Tallas: </small>
-                                    {product.sizes.slice(0, 3).map((size, index) => (
-                                      <Badge key={index} bg="light" text="dark" className="me-1">
-                                        {size}
-                                      </Badge>
-                                    ))}
-                                    {product.sizes.length > 3 && (
-                                      <Badge bg="light" text="muted">+{product.sizes.length - 3}</Badge>
-                                    )}
-                                  </div>
-                                )}
-                                {product.colors && product.colors.length > 0 && (
-                                  <div>
-                                    <small className="text-muted">Colores: </small>
-                                    {product.colors.slice(0, 2).map((color, index) => (
-                                      <Badge key={index} bg="secondary" className="me-1">
-                                        {color}
-                                      </Badge>
-                                    ))}
-                                    {product.colors.length > 2 && (
-                                      <Badge bg="secondary">+{product.colors.length - 2}</Badge>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
+
                             <td>
                               <small className="text-muted">
                                 {new Date(product.lastUpdated).toLocaleDateString()}

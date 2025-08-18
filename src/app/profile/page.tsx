@@ -311,7 +311,7 @@ const ProfilePage = () => {
                     <div className="mb-2 text-muted">{email}</div>
                   </div>
                   <div className="d-grid gap-2">
-                    <Button
+                    <Button autoFocus
                       className={`btn-profile rounded-1 ${activeTab === 'personal' ? 'active' : ''}`}
                       onClick={() => {
                         setActiveTab('personal');

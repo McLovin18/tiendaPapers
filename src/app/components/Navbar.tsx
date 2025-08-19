@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { cartService } from '../services/cartService';
+import CATEGORIES from '../constants/categories'; 
 
 const NavbarComponent = () => {
   const { user, logout } = useAuth();
@@ -104,18 +105,16 @@ const NavbarComponent = () => {
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-center">
           {/* Links principales */}
           <Nav className="mx-auto text-center fw-medium mb-3 mb-lg-0">
-            <Nav.Link as={Link} href="/products/maquillaje" onClick={() => setExpanded(false)}>
-              Maquillaje
-            </Nav.Link>
-            <Nav.Link as={Link} href="/products/cuidado-piel" onClick={() => setExpanded(false)}>
-              Cuidado de Piel
-            </Nav.Link>
-            <Nav.Link as={Link} href="/products/fragancias" onClick={() => setExpanded(false)}>
-              Fragancias
-            </Nav.Link>
-            <Nav.Link as={Link} href="/products/accesorios" onClick={() => setExpanded(false)}>
-              Accesorios
-            </Nav.Link>
+            {CATEGORIES.map((cat) => (
+              <Nav.Link 
+                key={cat.value}
+                as={Link} 
+                href={`/products/${cat.value}`} 
+                onClick={() => setExpanded(false)}
+              >
+                {cat.label}
+              </Nav.Link>
+            ))}
           </Nav>
 
           {/* Contenedor sesión + carrito en desktop */}

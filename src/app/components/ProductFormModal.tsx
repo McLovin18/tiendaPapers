@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Form, Button, Row, Col, Badge, Alert, Spinner, Image } from 'react-bootstrap';
 import { inventoryService, type ProductInventory } from '../services/inventoryService';
 import { useAuth } from '../context/AuthContext';
+import CATEGORIES from '../constants/categories'; // Importar categorías desde el archivo de constantes
 
 // Función para cargar el servicio de imágenes de forma segura
 const getImageUploadService = async () => {
@@ -137,31 +138,7 @@ interface ProductFormModalProps {
 export default function ProductFormModal({ show, onHide, product, onProductSaved }: ProductFormModalProps) {
   const { user } = useAuth();
   
-  // Categorías disponibles con sus rutas correspondientes
-  const CATEGORIES = [
-    { value: '', label: 'Seleccionar categoría', link: '' },
-    { value: 'Base de Maquillaje', label: 'Base de Maquillaje', link: 'maquillaje' },
-    { value: 'Sombras de Ojos', label: 'Sombras de Ojos', link: 'maquillaje' },
-    { value: 'Labiales', label: 'Labiales', link: 'maquillaje' },
-    { value: 'Máscaras de Pestañas', label: 'Máscaras de Pestañas', link: 'maquillaje' },
-    { value: 'Delineadores', label: 'Delineadores', link: 'maquillaje' },
-    { value: 'Contorno', label: 'Contorno', link: 'maquillaje' },
-    { value: 'Correctores', label: 'Correctores', link: 'maquillaje' },
-    { value: 'Polvos', label: 'Polvos', link: 'maquillaje' },
-    { value: 'Serums', label: 'Serums', link: 'cuidado-piel' },
-    { value: 'Cremas Hidratantes', label: 'Cremas Hidratantes', link: 'cuidado-piel' },
-    { value: 'Limpieza Facial', label: 'Limpieza Facial', link: 'cuidado-piel' },
-    { value: 'Tónicos', label: 'Tónicos', link: 'cuidado-piel' },
-    { value: 'Mascarillas Faciales', label: 'Mascarillas Faciales', link: 'cuidado-piel' },
-    { value: 'Protección Solar', label: 'Protección Solar', link: 'cuidado-piel' },
-    { value: 'Cuidado Corporal', label: 'Cuidado Corporal', link: 'cuidado-piel' },
-    { value: 'Cuidado de Manos', label: 'Cuidado de Manos', link: 'cuidado-piel' },
-    { value: 'Fragancias', label: 'Fragancias', link: 'fragancias' },
-    { value: 'Brochas', label: 'Brochas', link: 'accesorios' },
-    { value: 'Esponjas', label: 'Esponjas', link: 'accesorios' },
-    { value: 'Cuidado de Uñas', label: 'Cuidado de Uñas', link: 'accesorios' },
-    { value: 'Pestañas', label: 'Pestañas', link: 'accesorios' }
-  ];
+
   
   const [formData, setFormData] = useState({
     productId: 0,

@@ -109,7 +109,7 @@ const NavbarComponent = () => {
               <Nav.Link 
                 key={cat.value}
                 as={Link} 
-                href={`/products/${cat.value}`} 
+                href={`/categories/${cat.value}`} 
                 onClick={() => setExpanded(false)}
               >
                 {cat.label}

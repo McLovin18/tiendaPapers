@@ -2,39 +2,21 @@
 
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Spinner } from "react-bootstrap";
-import { useAuth } from "../../context/AuthContext";
-import Sidebar from "../../components/Sidebar";
-import TopbarMobile from "../../components/TopbarMobile";
+import { useAuth } from "@/app/context/AuthContext";
+import Sidebar from "@/app/components/Sidebar";
+import TopbarMobile from "@/app/components/TopbarMobile";
+import Footer from "@/app/components/Footer";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
-import Footer from "../../components/Footer";
-import { useProducts } from "../../hooks/useProducts";
-import CATEGORIES from "@/app/constants/categories";
-import { notFound } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useProducts } from "@/app/hooks/useProducts";
 
-// ✅ genera rutas estáticas para cada categoría
-export async function generateStaticParams() {
-  return CATEGORIES.map((cat) => ({
-    category: cat.value,
-  }));
-}
-
-const ProductsByCategoryPage = () => {
+export default function ProductsClient({ categoryInfo }: { categoryInfo: any }) {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
-  const { category } = useParams(); // /products/[category]
-
-  // buscar la categoría en tu constante global
-  const categoryInfo = CATEGORIES.find((c) => c.value === category);
-
-  // si no existe la categoría -> 404
-  if (!categoryInfo) {
-    return notFound();
-  }
 
   // hook para traer productos de la categoría
-  const { products, loading } = useProducts(`/${category}`);
+  const { products, loading } = useProducts(`${categoryInfo.value}`);
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -193,6 +175,4 @@ const ProductsByCategoryPage = () => {
       <Footer />
     </div>
   );
-};
-
-export default ProductsByCategoryPage;
+}

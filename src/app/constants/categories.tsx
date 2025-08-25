@@ -2,9 +2,10 @@
 
 // Lista principal de categorías con rutas y nombres
 export const CATEGORIES = [
-  { id: "maquillaje", value: "maquillaje", label: "Maquillaje" },
-  { id: "cuidado-piel", value: "cuidado-piel", label: "Cuidado de Piel" },
-  { id: "fragancias", value: "fragancias", label: "Fragancias" },
+  { id: "papeleria", value: "papeleria", label: "Papeleria" },
+  { id: "escritura", value: "escritura", label: "Escritura" },
+  { id: "organizacion", value: "organizacion", label: "Organizacion" },
+  { id: "escritorio", value: "escritorio", label: "Escritorio" },
   { id: "accesorios", value: "accesorios", label: "Accesorios" },
 ];
 

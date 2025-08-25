@@ -29,7 +29,7 @@ const TopbarMobile = () => {
   // ✅ Menú de administración - fila secundaria (herramientas avanzadas)
   const adminAdvancedItems = [
     { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
-    { name: 'Migración', path: '/admin/migration', icon: 'bi-database-fill-gear' },
+    // { name: 'Migración', path: '/admin/migration', icon: 'bi-database-fill-gear' },
     { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' }
   ];
 

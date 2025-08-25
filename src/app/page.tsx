@@ -243,10 +243,10 @@ export default function Home() {
             <Col md={4} className="mb-4 mb-md-0">
               <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Categorías</h5>
               <ul className="list-unstyled">
-                <li className="mb-2"><Link href="/products/maquillaje" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Maquillaje</Link></li>
-                <li className="mb-2"><Link href="/products/cuidado-piel" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Cuidado de Piel</Link></li>
-                <li className="mb-2"><Link href="/products/fragancias" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Fragancias</Link></li>
-                <li className="mb-2"><Link href="/products/accesorios" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Accesorios</Link></li>
+                <li className="mb-2"><Link href="/categories/papeleria" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Papelería</Link></li>
+                <li className="mb-2"><Link href="/categories/escritura" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Escritura</Link></li>
+                <li className="mb-2"><Link href="/categories/organizacion" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Organización</Link></li>
+                <li className="mb-2"><Link href="/categories/accesorios" className="text-decoration-none hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>Accesorios</Link></li>
               </ul>
             </Col>
 

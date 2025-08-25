@@ -17,7 +17,6 @@ export class InputValidator {
   // Validar contraseña fuerte
   static isValidPassword(password: string): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
     if (password.length < 8) {
       errors.push('La contraseña debe tener al menos 8 caracteres');
     }

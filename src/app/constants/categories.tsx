@@ -5,9 +5,9 @@ export const CATEGORIES = [
   { id: "papeleria", value: "papeleria", label: "Papeleria" },
   { id: "escritura", value: "escritura", label: "Escritura" },
   { id: "organizacion", value: "organizacion", label: "Organizacion" },
-  { id: "escritorio", value: "escritorio", label: "Escritorio" },
   { id: "accesorios", value: "accesorios", label: "Accesorios" },
 ];
+
 
 // Exportación alternativa solo con id y nombre (si lo necesitas en otro lado)
 export const categories = CATEGORIES.map(cat => ({

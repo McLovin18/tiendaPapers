@@ -149,7 +149,7 @@ const allProducts: Product[] = [
     id: 9,
     name: 'Marcadores Permanentes (Pack 4)',
     price: 5.99,
-    images: ['https://images.unsplash.com/photo-1616627989396-c34c56a8c5b4?w=400&h=400&fit=crop&q=80'],
+    images: ['https://thafd.bing.com/th/id/OIP.ZbhfO6_T6ALNw9hknd2RxgHaHa?w=194&h=194&c=7&r=0&o=7&dpr=1.4&pid=1.7&rm=3'],
     category: 'Escritura',
     categoryLink: 'escritura',
     description: 'Set de 4 marcadores permanentes de colores básicos.',

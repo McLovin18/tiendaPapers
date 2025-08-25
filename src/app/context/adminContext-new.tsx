@@ -19,7 +19,9 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 // Lista de emails con roles específicos
 const USER_ROLES = {
   admin: [
-    'hectorcobea03@gmail.com' // Admin principal
+    'hectorcobea03@gmail.com', // Admin principal
+    "tiffanysvariedades@gmail.com", // Admin secundario
+    "lucilaaquino79@gmail.com"
   ],
   delivery: [
     'hwcobena@espol.edu.ec',  // Cuenta de delivery real

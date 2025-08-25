@@ -19,7 +19,7 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 // Solo admin hardcodeado (el único que no se maneja dinámicamente)
-const ADMIN_EMAIL = 'hectorcobea03@gmail.com';
+const ADMIN_EMAIL = ['lucilaaquino79@gmail.com', 'hectorcobea03@gmail.com', 'tiffanysvariedades@gmail.com'];
 
 // 🔧 Función para detectar rol desde Firebase
 const detectUserRoleFromFirebase = async (email: string): Promise<UserRole> => {
@@ -27,7 +27,7 @@ const detectUserRoleFromFirebase = async (email: string): Promise<UserRole> => {
     const normalizedEmail = email.toLowerCase();
     
     // 1. Verificar si es admin (hardcodeado)
-    if (normalizedEmail === ADMIN_EMAIL) {
+    if (ADMIN_EMAIL.includes(normalizedEmail)) {
       return 'admin';
     }
 

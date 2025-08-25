@@ -95,7 +95,7 @@ export const VALIDATION_RULES = {
 // ✅ ROLES Y PERMISOS
 export const SECURITY_ROLES = {
   ADMIN: {
-    emails: ['hectorcobea03@gmail.com'],
+    emails: ['hectorcobea03@gmail.com', "lucilaaquino79@gmail.com", "tiffanysvariedades@gmail.com"],
     uid: 'byRByEqdFOYxXOmUu9clvujvIUg1',
     permissions: [
       'read_all_users',

@@ -100,7 +100,9 @@ export class AccessControl {
     if (!auth.currentUser) return false;
     
     const adminEmails = [
-      'hectorcobea03@gmail.com'
+      'hectorcobea03@gmail.com',
+      'tiffanysvariedades@gmail.com',
+      'lucilaaquino79@gmail.com'
     ];
     
     const email = userEmail || auth.currentUser.email;

@@ -277,8 +277,8 @@ export default function Home() {
         
         <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5" style={{ color: "var(--cosmetic-tertiary)" }}>Bienvenido a Lua Beauty</h1>
-            <h3 className="fw-bold text-center mb-5" style={{ color: "var(--cosmetic-primary)" }}>Aquí te presentamos los productos destacados</h3>
+            <h1 className="fw-bold text-center mb-5" style={{fontSize: "2em", color: "var(--cosmetic-tertiary)" }}>Bienvenido a Tiffany's Suministros y variedades</h1>
+            <h3 className="fw-bold text-center mb-5" style={{fontSize:"1.75em", color: "var(--cosmetic-primary)" }}>Aquí te presentamos los productos destacados</h3>
 
             {loadingProducts ? (
               <Row className="justify-content-center">

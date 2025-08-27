@@ -18,7 +18,7 @@ const Footer = () => (
         <Col md={6}>
           <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contacto</h5>
           <p className="mb-1"style={{ color: "var(--cosmetic-tertiary)" }}>Email: tiffanysvariedades@gmail.com</p>
-          <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 99 449 1497</p>
+          <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 </p>
         </Col>
       </Row>
       <hr className="my-4" style={{ borderColor: "var(--cosmetic-accent)", color: "var(--cosmetic-tertiary)" }} />

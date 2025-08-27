@@ -69,7 +69,7 @@ const NavbarComponent = () => {
       <Container>
         {/* Logo */}
         <Navbar.Brand as={Link} href="/" className="me-auto me-lg-0">
-          <b><p>Logo!</p></b>
+          <b><p style={{ font: "serif", color: "var(--cosmetic-tertiary)" }}>Tiffany's</p></b>
 
         </Navbar.Brand>
 

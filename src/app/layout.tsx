@@ -20,12 +20,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://lua-store.vercel.app'),
+  metadataBase: new URL('https://tienda-papers.vercel.app/'),
   title: {
-    default: "Paulina Papers - Tienda de Suministros de oficina Online",
-    template: "%s | Paulina Papers"
+    default: "Tiffanys - Tienda de Suministros y variedades",
+    template: "%s | Tiffany's"
   },
-  description: "Descubre los mejores suministros de oficina en Paulina Papers. Calidad premium para tu espacio de trabajo.",
+  description: "Descubre los mejores suministros de oficina en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo.",
   keywords: [
     "tienda de suministros de oficina",
     "papelería online",
@@ -36,14 +36,16 @@ export const metadata: Metadata = {
     "papelería",
     "material de oficina",
     "accesorios de escritorio",
-    "organización"
+    "organización",
+    "cosmeticos",
+    "bisuteria"
   ],
   authors: [{ name: "Nexel" }],
   creator: "Nexel",
-  publisher: "Paulina Papers",
-  applicationName: "Paulina Papers",
+  publisher: "Nexel",
+  applicationName: "Tiffany's",
   category: "E-commerce",
-  classification: "Papers and office supplies",
+  classification: "Office supplies and many more",
   manifest: '/manifest.json',
   robots: {
     index: true,
@@ -59,26 +61,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_ES",
-    url: "https://lua-store.vercel.app",
-    siteName: "Paulina Papers",
-    title: "Paulina Papers, Tienda de Suministros de Oficina Online",
-    description: "Descubre los mejores suministros de oficina en Paulina Papers. Calidad premium para tu espacio de trabajo.",
+    url: "https://tienda-papers.vercel.app",
+    siteName: "Tiffany's",
+    title: "Tiffanys - Tienda de Suministros y variedades",
+    description: "Descubre los mejores suministros de oficina en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo.",
     images: [
       {
         url: "/logoShop1.png",
         width: 1200,
         height: 630,
-        alt: "Lua Beauty - Tienda de Cosméticos Online",
+        alt: "Tiffanys - Tienda de Suministros y variedades",
         type: "image/png",
       }
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@luabeauty",
-    creator: "@luabeauty",
-    title: "Lua Beauty - Tienda de Cosméticos Online",
-    description: "Descubre la mejor belleza en Lua Beauty. Cosméticos de calidad premium para realzar tu belleza natural.",
+    site: "@tienda-papers",
+    creator: "@tiffanys",
+    title: "Tiffanys - Tienda de Suministros y variedades",
+    description: "Descubre los mejores suministros de oficina en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo.",
     images: ["/logoShop1.png"],
   },
   verification: {
@@ -87,9 +89,9 @@ export const metadata: Metadata = {
     // yahoo: "yahoo-site-verification-code",
   },
   alternates: {
-    canonical: "https://lua-store.vercel.app",
+    canonical: "https://tienda-papers.vercel.app/",
     languages: {
-      'es-ES': 'https://lua-store.vercel.app',
+      'es-ES': 'https://tienda-papers.vercel.app/',
     },
   },
   other: {
@@ -98,7 +100,7 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'Lua Store',
+    'apple-mobile-web-app-title': 'Tyffanys',
     'format-detection': 'telephone=no',
   },
 };

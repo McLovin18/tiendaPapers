@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithPopup,
   UserCredential,
   updateProfile,
@@ -43,6 +44,7 @@ export const useAuth = () => {
   }
   return context;
 };
+
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -119,44 +121,78 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+
+    // en el useEffect de onAuthStateChanged:
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      
       if (firebaseUser) {
-        // Cargar datos del usuario cuando se autentica
+        if (!firebaseUser.emailVerified) {
+          console.warn("⚠️ Usuario con email no verificado, cerrando sesión...");
+          await signOut(auth);
+          setUser(null);
+          setUserData(null);
+          localStorage.removeItem("user");
+          setLoading(false);
+          return;
+        }
+
+        setUser(firebaseUser);
         await loadUserData(firebaseUser);
       } else {
-        // Limpiar datos cuando se desautentica
+        setUser(null);
         setUserData(null);
-        localStorage.removeItem('user');
+        localStorage.removeItem("user");
       }
-      
+
       setLoading(false);
     });
+
+
 
     return () => unsubscribe();
   }, []);
 
-  const login = (email: string, password: string) => {
-    if (!auth) throw new Error("Firebase Auth no inicializado");
-    return signInWithEmailAndPassword(auth, email, password);
-  };
 
+
+  // Versión simplificada de register solo para enviar verificación de email
   const register = async (email: string, password: string, name?: string) => {
     if (!auth) throw new Error("Firebase Auth no inicializado");
+    
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // Si se proporciona un nombre, actualizar el perfil del usuario
-    if (name && result.user) {
-      await updateProfile(result.user, {
-        displayName: name
-      });
-      // Forzar actualización del estado del usuario
-      setUser({ ...result.user, displayName: name });
+
+    // Enviar correo de verificación
+    if (result.user) {
+      await sendEmailVerification(result.user);
+
+      // Si se proporciona un nombre, actualizar el perfil
+      if (name) {
+        await updateProfile(result.user, { displayName: name });
+        setUser({ ...result.user, displayName: name });
+      }
     }
-    
+
     return result;
   };
+
+
+
+  const login = async (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase Auth no inicializado");
+
+    const result = await signInWithEmailAndPassword(auth, email, password);
+
+    if (!result.user.emailVerified) {
+      await signOut(auth);
+      const error: any = new Error("Debes verificar tu correo antes de iniciar sesión.");
+      error.code = "auth/email-not-verified";
+      throw error;
+    }
+
+    return result;
+  };
+
+
+
+
 
   const logout = async () => {
     if (!auth) throw new Error("Firebase Auth no inicializado");

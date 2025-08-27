@@ -27,6 +27,20 @@ export const RATE_LIMITS = {
   }
 } as const;
 
+
+
+
+export const AUTH_REQUIREMENTS = {
+  EMAIL_VERIFICATION_REQUIRED: true,
+  MIN_PASSWORD_STRENGTH: 'MEDIUM', // puedes mapear con SECURITY_PATTERNS.PASSWORD_STRENGTH
+  ALLOWED_ROLES: ['ADMIN', 'USER', 'DELIVERY'],
+};
+
+
+
+
+
+
 // ✅ VALIDACIONES DE ENTRADA
 export const VALIDATION_RULES = {
   USER: {

@@ -97,6 +97,9 @@ const SecureLogin: React.FC = () => {
       let errorMessage = 'Error al iniciar sesión. Verifica tus credenciales.';
       
       switch (error.code) {
+        case 'auth/email-not-verified':
+          errorMessage = 'Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.';
+          break;
         case 'auth/user-not-found':
           errorMessage = 'No existe una cuenta con este email.';
           break;

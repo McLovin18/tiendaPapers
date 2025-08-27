@@ -38,7 +38,7 @@ const Register = () => {
     try {
       setLoading(true);
       await register(email, password, name);
-      router.push('/');
+      router.push('/auth/verify-email');  // 👈 Nueva página
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setError('Este correo electrónico ya está en uso');

@@ -1,7 +1,7 @@
 {
-  "name": "Lua Store - Tienda de Ropa Online",
-  "short_name": "Lua Store",
-  "description": "Descubre la mejor moda en Lua Store. Ropa de calidad para toda la familia con precios accesibles.",
+  "name": "Tiffanys - Suministros y variedades",
+  "short_name": "Tiffanys",
+  "description": "Tienda en línea de suministros y variedades en Tiffany's",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

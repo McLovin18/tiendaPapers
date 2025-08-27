@@ -4,15 +4,45 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { cartService } from '../services/cartService';
-import CATEGORIES from '../constants/categories'; 
+import {SUBCATEGORIES, CATEGORIES} from '../constants/categories'; 
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const NavbarComponent = () => {
   const { user, logout } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [clickedDropdown, setClickedDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+
+  // Detectar click fuera del nav
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setClickedDropdown(null);
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleClick = (catId: string) => {
+    if (clickedDropdown === catId) {
+      setClickedDropdown(null); // cerrar si ya estaba activo con click
+      setActiveDropdown(null);
+    } else {
+      setClickedDropdown(catId); // dejar fijo abierto
+      setActiveDropdown(catId);
+    }
+  };
+
 
   const navbarRef = useRef<HTMLDivElement>(null);
 
@@ -104,18 +134,51 @@ const NavbarComponent = () => {
 
         <Navbar.Collapse id="basic-navbar-nav" className="justify-content-center">
           {/* Links principales */}
-          <Nav className="mx-auto text-center fw-medium mb-3 mb-lg-0">
-            {CATEGORIES.map((cat) => (
-              <Nav.Link 
-                key={cat.value}
-                as={Link} 
-                href={`/categories/${cat.value}`} 
-                onClick={() => setExpanded(false)}
-              >
-                {cat.label}
-              </Nav.Link>
-            ))}
-          </Nav>
+              <Nav ref={navRef} className="mx-auto text-center fw-medium mb-3 mb-lg-0">
+                {CATEGORIES.map((cat) => {
+                  const isOpen = activeDropdown === cat.id;
+
+                  return (
+                    <NavDropdown
+                      key={cat.id}
+                      title={
+                        <span className="d-flex align-items-center gap-1">
+                          {cat.label}
+                          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </span>
+                      }
+                      id={`nav-dropdown-${cat.id}`}
+                      show={isOpen}
+                      onMouseEnter={() => {
+                        if (!clickedDropdown) setActiveDropdown(cat.id);
+                      }}
+                      onMouseLeave={() => {
+                        if (!clickedDropdown) setActiveDropdown(null);
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleClick(cat.id);
+                      }}
+                    >
+                      {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
+                        <NavDropdown.Item
+                          key={sub.value}
+                          as={Link}
+                          href={`/categories/${sub.value}`}
+                          onClick={() => {
+                            setExpanded(false);
+                            setClickedDropdown(null);
+                            setActiveDropdown(null);
+                          }}
+                        >
+                          {sub.label}
+                        </NavDropdown.Item>
+                      ))}
+                    </NavDropdown>
+                  );
+                })}
+              </Nav>
+
 
           {/* Contenedor sesión + carrito en desktop */}
           <div className="d-none d-lg-flex align-items-center ms-lg-4">

@@ -1,19 +1,29 @@
-// categories.tsx
-
-// Lista principal de categorías con rutas y nombres
 export const CATEGORIES = [
-  { id: "papeleria", value: "papeleria", label: "Papeleria" },
-  { id: "escritura", value: "escritura", label: "Escritura" },
-  { id: "organizacion", value: "organizacion", label: "Organizacion" },
-  { id: "accesorios", value: "accesorios", label: "Accesorios" },
+  { id: "suministrosOficina", label: "Suministros de Oficina" },
+  { id: "cosmeticos", label: "Cosméticos" },
+  { id: "bisuteria", label: "Bisutería" },
+];
+
+// Subcategorías conectadas a su categoría principal
+export const SUBCATEGORIES = [
+  { id: "suministrosOficina", value: "papeleria", label: "Papeleria" },
+  { id: "suministrosOficina", value: "escritura", label: "Escritura" },
+  { id: "suministrosOficina", value: "organizacion", label: "Organizacion" },
+  { id: "suministrosOficina", value: "accesorios", label: "Accesorios" },
+  { id: "cosmeticos", value: "maquillaje", label: "Maquillaje" },
+  { id: "cosmeticos", value: "cuidado-piel", label: "Cuidado de Piel" },
+  { id: "cosmeticos", value: "fragancias", label: "Fragancias" },
+  { id: "cosmeticos", value: "accesorios", label: "Accesorios" },
+  { id: "bisuteria", value: "collares", label: "Collares" },
+  { id: "bisuteria", value: "pulseras", label: "Pulseras" },
+  { id: "bisuteria", value: "anillos", label: "Anillos" },
 ];
 
 
-// Exportación alternativa solo con id y nombre (si lo necesitas en otro lado)
-export const categories = CATEGORIES.map(cat => ({
+// Export alternativo (si necesitas lista plana)
+export const subcategories = SUBCATEGORIES.map((cat) => ({
   id: cat.id,
   name: cat.label,
 }));
 
-// Exportación por defecto
-export default CATEGORIES;
+export default SUBCATEGORIES;

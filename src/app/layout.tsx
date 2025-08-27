@@ -8,6 +8,7 @@ import ClientLayout from "./ClientLayout";
 import NavbarComponent from './components/Navbar';
 import PayPalProvider from "./components/paypalProvider";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

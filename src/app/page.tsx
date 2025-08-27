@@ -13,6 +13,14 @@ import { useRouter } from 'next/navigation';
 import FavouriteButton from "./components/FavouriteButton";
 import Footer from "./components/Footer";
 
+import { Dr_Sugiyama } from 'next/font/google';
+
+
+const drSugiyama = Dr_Sugiyama({
+  weight: '400', // Dr Sugiyama solo tiene un peso disponible
+  subsets: ['latin'],
+});
+
 export default function Home() {
   const { user } = useAuth();
   const [favSuccess, setFavSuccess] = useState<string | null>(null);
@@ -277,8 +285,8 @@ export default function Home() {
         
         <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className="fw-bold text-center mb-5" style={{fontSize: "2em", color: "var(--cosmetic-tertiary)" }}>Bienvenido a Tiffany's Suministros y variedades</h1>
-            <h3 className="fw-bold text-center mb-5" style={{fontSize:"1.75em", color: "var(--cosmetic-primary)" }}>Aquí te presentamos los productos destacados</h3>
+            <h1 className={`${drSugiyama.className} fw-bold text-center mb-5`} style={{fontSize: "3em", color: "var(--cosmetic-tertiary)" }}>Bienvenido a Tiffany's Suministros y variedades</h1>
+            <h3 className={`${drSugiyama.className} fw-bold text-center mb-5`} style={{fontSize:"2.8em", color: "var(--cosmetic-primary)" }}>Productos destacados</h3>
 
             {loadingProducts ? (
               <Row className="justify-content-center">

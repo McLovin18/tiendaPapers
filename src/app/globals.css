@@ -24,6 +24,12 @@
 
 
 
+.nav-link.dropdown-toggle::after {
+  display: none !important;
+}
+
+
+
 input:valid, textarea:valid, select:valid, .form-control:valid
  {
     border-color: #222 !important;

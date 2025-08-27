@@ -253,12 +253,12 @@ export default function Home() {
             <Col md={4}>
               <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contacto</h5>
               <p className="mb-1" style={{ color: "var(--cosmetic-tertiary)" }}>Email: tiffanysvariedades@gmail.com</p>
-              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 99 449 1497 </p>
+              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 958845516 </p>
             </Col>
           </Row>
           <hr className="my-4" style={{ borderColor: "var(--cosmetic-accent)" }} />
           <div className="text-center">
-            <p className="small" style={{ color: "var(--cosmetic-tertiary)" }}>&copy; {new Date().getFullYear()} Paulina Papers. Todos los derechos reservados.</p>
+            <p className="small" style={{ color: "var(--cosmetic-tertiary)" }}>&copy; {new Date().getFullYear()} Tiffany's Variedades. Todos los derechos reservados.</p>
           </div>
         </Container>
       </footer>

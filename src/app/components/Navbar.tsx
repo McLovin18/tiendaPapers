@@ -69,7 +69,7 @@ const NavbarComponent = () => {
       <Container>
         {/* Logo */}
         <Navbar.Brand as={Link} href="/" className="me-auto me-lg-0">
-          <img style={{ maxWidth: "120px", height: "auto" }} src="/logo1.jpg" alt="" />
+          <img style={{ maxWidth: "120px", height: "auto" }} src="/logo.png" alt="" />
 
         </Navbar.Brand>
 

@@ -69,7 +69,7 @@ const NavbarComponent = () => {
       <Container>
         {/* Logo */}
         <Navbar.Brand as={Link} href="/" className="me-auto me-lg-0">
-          <b><p style={{ font: "serif", color: "var(--cosmetic-tertiary)" }}>Tiffany's</p></b>
+          <img style={{ maxWidth: "120px", height: "auto" }} src="/logo1.jpg" alt="" />
 
         </Navbar.Brand>
 

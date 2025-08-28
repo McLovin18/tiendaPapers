@@ -29,23 +29,27 @@ export default function Home() {
 
   const imagenes = [
     { 
-      src: "https://thafd.bing.com/th/id/OIP.ogmRT0XOm0F7MOhcM2AgdQHaEK?w=317&h=180&c=7&r=0&o=7&dpr=1.6&pid=1.7&rm=3",
+      src: "/banner.jpg",
       alt: "Engrapadora y útiles de oficina",
       titulo: "Útiles de oficina esenciales",
       descripcion: "Papelería, grapadoras, calculadoras y todo lo que necesitas en tu día a día.",
-      botonTexto: "Explorar ahora"
+      botonTexto: "Explorar ahora",
+      botonLink: "#productosDestacados"
     },
     { 
-      src: "https://thafd.bing.com/th/id/OIP.aM5uMT6qwA04OUXkujGOHAHaE8?w=257&h=180&c=7&r=0&o=5&dpr=1.4&pid=1.7",
+      src: "/banner2.jpg",
       alt: "Ofertas en suministros de oficina",
-      titulo: "Ofertas Especiales",
-      descripcion: "Aprovecha descuentos en artículos de oficina seleccionados por tiempo limitado.",
-      botonTexto: "Comprar ya"
+      titulo: "Compra lo que necesites de suministro y más aquí",
+      descripcion: "Artículos a muy buen precio, que necesitas para la escuela o trabajo.",
+      botonTexto: "Comprar ya",
+      botonLink: "/products"
+
     },
   ];
   
   // 🔥 USAR EL HOOK OPTIMIZADO para productos con stock
   const { products: allProductsWithStock, loading: loadingProducts } = useProducts();
+
 
   const handleCardClick = (productId: number) => {
     router.push(`/products/${productId}`);
@@ -92,7 +96,11 @@ export default function Home() {
                 <div className="text-start text-white">
                   <h2 className="display-4 fw-bold">{img.titulo}</h2>
                   <p className="lead">{img.descripcion}</p>
-                  <Button variant="cosmetic-primary" size="lg" className="bg-cosmetic-primary mt-3">
+                  <Button
+                  onClick={() => router.push(img.botonLink)} // 👈 Aquí usamos el link
+
+                   variant="cosmetic-primary" size="lg" className="bg-cosmetic-primary mt-3">
+
                     {img.botonTexto}
                   </Button>
                 </div>
@@ -106,7 +114,7 @@ export default function Home() {
       
       {/* Sección de categorías */}
       <Container className="py-4">
-        <h2 className="text-center mb-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Categorías Destacadas</h2>
+        <h2 className="text-center mb-4 fw-bold" style={{fontSize: "2rem", color: "var(--cosmetic-tertiary)" }}>Categorías Destacadas</h2>
         <Row>
           <Col md={4} className="mb-4">
             <div className="position-relative hover-scale" style={{ height: '400px', borderRadius: '1rem', overflow: 'hidden' }}>
@@ -154,8 +162,8 @@ export default function Home() {
       </Container>
 
       {/* Sección de productos destacados */}
-      <Container className="py-5" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
-        <h2 className="text-center mb-4 fw-bold" style={{ color: "var(--cosmetic-tertiary)" }}>Productos Destacados</h2>
+      <Container id='productosDestacados' className="py-5" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
+        <h2 className="text-center mb-4 fw-bold" style={{fontSize: "2rem", color: "var(--cosmetic-tertiary)" }}>Productos Destacados</h2>
         {loadingProducts ? (
           <Row className="justify-content-center">
             <Col xs={12} className="text-center py-5">

@@ -50,6 +50,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [justRegistered, setJustRegistered] = useState(false);
+
 
   // Helper para cargar datos del usuario desde Firestore
   const loadUserData = async (firebaseUser: User) => {
@@ -121,20 +123,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-
-    // en el useEffect de onAuthStateChanged:
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        if (!firebaseUser.emailVerified) {
-          console.warn("⚠️ Usuario con email no verificado, cerrando sesión...");
-          await signOut(auth);
-          setUser(null);
-          setUserData(null);
-          localStorage.removeItem("user");
-          setLoading(false);
-          return;
-        }
-
         setUser(firebaseUser);
         await loadUserData(firebaseUser);
       } else {
@@ -142,32 +132,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserData(null);
         localStorage.removeItem("user");
       }
-
       setLoading(false);
     });
-
-
 
     return () => unsubscribe();
   }, []);
 
 
 
-  // Versión simplificada de register solo para enviar verificación de email
   const register = async (email: string, password: string, name?: string) => {
     if (!auth) throw new Error("Firebase Auth no inicializado");
-    
+
     const result = await createUserWithEmailAndPassword(auth, email, password);
 
-    // Enviar correo de verificación
     if (result.user) {
       await sendEmailVerification(result.user);
 
-      // Si se proporciona un nombre, actualizar el perfil
       if (name) {
         await updateProfile(result.user, { displayName: name });
         setUser({ ...result.user, displayName: name });
       }
+
+      setJustRegistered(true); // ⚡ usuario recién registrado
     }
 
     return result;

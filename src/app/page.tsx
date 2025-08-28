@@ -29,13 +29,6 @@ export default function Home() {
 
   const imagenes = [
     { 
-      src: "https://tse1.mm.bing.net/th/id/OIP.aaTKW-ECINRpZTCCAnKCMAHaDz?rs=1&pid=ImgDetMain&o=7&rm=3",
-      alt: "Escritorio de oficina organizado",
-      titulo: "Organiza tu oficina",
-      descripcion: "Encuentra escritorios, sillas y accesorios para un espacio de trabajo ideal.",
-      botonTexto: "Ver productos"
-    },
-    { 
       src: "https://thafd.bing.com/th/id/OIP.ogmRT0XOm0F7MOhcM2AgdQHaEK?w=317&h=180&c=7&r=0&o=7&dpr=1.6&pid=1.7&rm=3",
       alt: "Engrapadora y útiles de oficina",
       titulo: "Útiles de oficina esenciales",

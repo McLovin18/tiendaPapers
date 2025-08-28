@@ -24,12 +24,10 @@ const Register = () => {
       setError('Por favor, complete todos los campos');
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
-
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       return;
@@ -38,7 +36,7 @@ const Register = () => {
     try {
       setLoading(true);
       await register(email, password, name);
-      router.push('/auth/verify-email');  // 👈 Nueva página
+      router.push('/auth/verify-email'); // 👈 Página de verificación
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setError('Este correo electrónico ya está en uso');

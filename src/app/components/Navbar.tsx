@@ -17,8 +17,8 @@ const NavbarComponent = () => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [clickedDropdown, setClickedDropdown] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
-  const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [dropdownAlign, setDropdownAlign] = useState<Record<string, 'start' | 'end'>>({});
+  const dropdownRefs = useRef<Record<string, HTMLElement | null>>({});
 
 
 
@@ -38,6 +38,7 @@ const NavbarComponent = () => {
     };
   }, []);
 
+
   useEffect(() => {
     if (!activeDropdown) return;
 
@@ -47,13 +48,15 @@ const NavbarComponent = () => {
     const rect = el.getBoundingClientRect();
     const spaceRight = window.innerWidth - rect.left;
 
-    const align = spaceRight < 400 ? 'end' : 'start'; // 'end' = abre hacia la izquierda
+    // Umbral de 400px (ajústate si es necesario)
+const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
 
     setDropdownAlign((prev) => ({
       ...prev,
-      [activeDropdown]: align,
+      [activeDropdown]: newAlign,
     }));
-  }, [activeDropdown]);
+  }, [activeDropdown, window.innerWidth]);
+
 
 
 
@@ -115,188 +118,160 @@ const NavbarComponent = () => {
   };
 
   return (
-    <Navbar
-      expand="lg"
-      expanded={expanded}
-      className="py-2 shadow-sm bg-cosmetic-secondary"
-      ref={navbarRef}
-    >
-      <Container>
-        {/* Logo */}
-        <Navbar.Brand as={Link} href="/" className="me-auto me-lg-0">
-          <img style={{ maxWidth: "200px", height: "auto" }} src="/logo.png" alt="" />
+    
 
-        </Navbar.Brand>
+    <Navbar expand="lg" expanded={expanded} className="py-2 shadow-sm bg-cosmetic-secondary" ref={navbarRef}>
+      <Container className="navbar-container">
+        
+        {/* Fila 1: Logo + botones importantes */}
+        <div className="first-row d-flex justify-content-between align-items-center w-100 px-3 py-1">
+          <Navbar.Brand as={Link} href="/" className="me-auto">
+            <img style={{ maxWidth: "180px", height: "auto" }} src="/logo.png" alt="Logo" />
+          </Navbar.Brand>
 
-        {/* Contenedor carrito + toggle para móviles */}
-        <div className="d-flex align-items-center">
-          {/* Carrito visible solo en móviles (fuera del menú) */}
-          <Nav.Link
-            as={Link}
-            href="/cart"
-            className="position-relative me-2 d-lg-none"
-            style={{ fontSize: "1.5rem", color: "var(--cosmetic-accent)" }}
+          <div className="d-flex align-items-center">
+            {/* Blog (solo desktop) */}
+            <Nav className="d-none d-lg-flex me-4">
+              <Nav.Link as={Link} href="/blog" className="fw-medium">Blog</Nav.Link>
+            </Nav>
 
-            aria-label="Carrito de compras"
-          >
-            <i className="bi bi-cart"></i>
-            {cartCount > 0 && (
-              <span
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </Nav.Link>
+            {/* Carrito (siempre visible) */}
+            <Nav.Link as={Link} href="/cart" className="me-4 position-relative" aria-label="Carrito">
+              <i className="bi bi-cart" style={{ fontSize: "1.5rem", color: "var(--cosmetic-accent)" }}></i>
+              {cartCount > 0 && (
+                <span className="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle p-1">
+                  {cartCount}
+                </span>
+              )}
+            </Nav.Link>
 
-          {/* Toggle menú móvil */}
-          <Navbar.Toggle className='btn-primary'
-            onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-          />
+            {/* Iniciar sesión / Registro (solo desktop) */}
+            <div className="d-none d-lg-flex">
+              {user ? (
+                <Nav.Link as={Link} href="/profile" className="me-2">Mi cuenta</Nav.Link>
+              ) : (
+                <>
+                  <Nav.Link as={Link} href="/auth/login" className="me-2">Iniciar sesión</Nav.Link>
+                  <Nav.Link as={Link} href="/auth/register">Registrate</Nav.Link>
+                </>
+              )}
+            </div>
+
+            {/* Menú toggle (solo móvil) */}
+            <Navbar.Toggle className="d-lg-none ms-3" onClick={() => setExpanded(!expanded)} />
+          </div>
         </div>
 
-        <Navbar.Collapse id="basic-navbar-nav" className="justify-content-center">
-          {/* Links principales */}
-              <Nav ref={navRef} className="mx-auto text-center fw-medium mb-3 mb-lg-0">
-                {CATEGORIES.map((cat) => {
-                  const isOpen = activeDropdown === cat.id;
+        {/* Fila 2: Categorías (solo desktop) */}
+        <div className="second-row d-none d-lg-flex flex-wrap justify-content-center w-100 px-3 pb-2">
+          <Nav ref={navRef} className="flex-wrap justify-content-center">
+            {CATEGORIES.map((cat) => {
+              const isOpen = activeDropdown === cat.id;
+              return (
+                <NavDropdown
+                  key={cat.id}
+                  align={dropdownAlign[cat.id] || 'start'}  // usa ‘end’ cuando detectado
+                  title={
+                    <span
+                      ref={(el) => {
+                        dropdownRefs.current[cat.id] = el;
+                      }}
+                      className="d-flex align-items-center gap-1"
+                    >
+                      {cat.label}
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </span>
+                  }
+                  id={`nav-dropdown-${cat.id}`}
+                  show={isOpen}
+                  onMouseEnter={() => !clickedDropdown && setActiveDropdown(cat.id)}
+                  onMouseLeave={() => !clickedDropdown && setActiveDropdown(null)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleClick(cat.id);
+                  }}
+                  className="mx-2 my-1"
+                >
+                  <div className={`dropdown-grid ${dropdownAlign[cat.id] === 'end' ? 'dropdown-align-left' : ''}`}>
+                    {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
+                      <NavDropdown.Item
+                        key={sub.value}
+                        as={Link}
+                        href={`/categories/${sub.value}`}
+                        onClick={() => {
+                          setExpanded(false);
+                          setClickedDropdown(null);
+                          setActiveDropdown(null);
+                        }}
+                      >
+                        {sub.label}
+                      </NavDropdown.Item>
+                    ))}
+                  </div>
+                </NavDropdown>
+              );
+            })}
 
-                  return (
-                    <NavDropdown
-                      key={cat.id}
-                      align={dropdownAlign[cat.id]} // Esto es nuevo
-                      title={
-                        <span
-                          ref={(el) => {
-                            dropdownRefs.current[cat.id] = el;
-                          }}
-                          className="d-flex align-items-center gap-1"
-                        >
-                          {cat.label}
-                          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </span>
-                      }
-                      id={`nav-dropdown-${cat.id}`}
-                      show={isOpen}
-                      onMouseEnter={() => {
-                        if (!clickedDropdown) setActiveDropdown(cat.id);
-                      }}
-                      onMouseLeave={() => {
-                        if (!clickedDropdown) setActiveDropdown(null);
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleClick(cat.id);
+          </Nav>
+        </div>
+
+        {/* Menú colapsable para móviles */}
+        <Navbar.Collapse id="basic-navbar-nav" className="d-lg-none">
+          <Nav className="flex-column text-center">
+            {CATEGORIES.map((cat) => (
+              <NavDropdown
+                key={cat.id}
+                title={cat.label}
+                id={`nav-dropdown-mobile-${cat.id}`}
+                show={activeDropdown === cat.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleClick(cat.id);
+                }}
+              >
+                <div className="dropdown-grid">
+                  {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
+                    <NavDropdown.Item
+                      key={sub.value}
+                      as={Link}
+                      href={`/categories/${sub.value}`}
+                      onClick={() => {
+                        setExpanded(false);
+                        setClickedDropdown(null);
+                        setActiveDropdown(null);
                       }}
                     >
-                      <div className="dropdown-grid">
-                        {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
-                          <NavDropdown.Item
-                            key={sub.value}
-                            as={Link}
-                            href={`/categories/${sub.value}`}
-                            onClick={() => {
-                              setExpanded(false);
-                              setClickedDropdown(null);
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            {sub.label}
-                          </NavDropdown.Item>
-                        ))}
-                      </div>
-                    </NavDropdown>
+                      {sub.label}
+                    </NavDropdown.Item>
+                  ))}
+                </div>
+              </NavDropdown>
+            ))}
 
-
-                  );
-                })}
-              </Nav>
-
-
-          {/* Contenedor sesión + carrito en desktop */}
-          <div className="d-none d-lg-flex align-items-center ms-lg-4">
-            {user ? (
-              <>
-                <Nav.Link as={Link} href="/profile" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
+            {/* Botones de sesión para móviles */}
+            <div className="mt-3">
+              {user ? (
+                <Nav.Link as={Link} href="/profile" onClick={() => setExpanded(false)} className="btn btn-primary w-100">
                   Mi cuenta
                 </Nav.Link>
-
-                <Nav.Link
-                  as={Link}
-                  href="/cart"
-                  className="position-relative hover-cosmetic-accent"
-                  style={{ fontSize: "1.3rem", color: "var(--cosmetic-tertiary)" }}
-                  aria-label="Carrito de compras"
-                >
-                  <i className="bi bi-cart"></i>
-                  {cartCount > 0 && (
-                    <span
-                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                      style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
-                    >
-                      {cartCount}
-                    </span>
-                  )}
-                </Nav.Link>
-              </>
-            ) : (
-              <>
-                <Nav.Link as={Link} href="/auth/login" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
-                  Iniciar sesión
-                </Nav.Link>
-
-                <Nav.Link as={Link} href="/auth/register" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
-                  Registrate
-                </Nav.Link>
-
-                <Nav.Link
-                  as={Link}
-                  href="/cart"
-                  className="position-relative btn-cosmetic-primary hover-cosmetic-accent"
-                  style={{ fontSize: "1.3rem", color: "var(--cosmetic-tertiary)" }}
-                  aria-label="Carrito de compras"
-                >
-                  <i className="bi bi-cart"></i>
-                  {cartCount > 0 && (
-                    <span
-                      className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                      style={{ fontSize: "0.75rem", backgroundColor: "var(--cosmetic-accent)" }}
-                    >
-                      {cartCount}
-                    </span>
-                  )}
-                </Nav.Link>
-              </>
-            )}
-          </div>
-
-          {/* Botón sesión visible solo en móviles dentro del menú */}
-          <div className="d-lg-none rounded p-3 shadow-sm text-center" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
-            {user ? (
-              <Nav.Link
-                as={Link}
-                href="/profile"
-                onClick={() => setExpanded(false)}
-                className="btn btn-cosmetic-primary w-100 mb-2"
-              >
-                Mi cuenta
-              </Nav.Link>
-            ) : (
-              <Nav.Link
-                as={Link}
-                href="/auth/login"
-                onClick={() => setExpanded(false)}
-                className="btn btn-primary w-100 mb-2"
-              >
-                Iniciar sesión
-              </Nav.Link>
-            )}
-          </div>
+              ) : (
+                <>
+                  <Nav.Link as={Link} href="/auth/login" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-2">
+                    Iniciar sesión
+                  </Nav.Link>
+                  <Nav.Link as={Link} href="/auth/register" onClick={() => setExpanded(false)} className="btn btn-secondary w-100">
+                    Registrate
+                  </Nav.Link>
+                </>
+              )}
+            </div>
+          </Nav>
         </Navbar.Collapse>
       </Container>
     </Navbar>
+
+
+
   );
 };
 

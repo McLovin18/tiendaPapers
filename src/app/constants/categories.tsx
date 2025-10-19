@@ -2,8 +2,12 @@ export const CATEGORIES = [
   { id: "suministrosOficina", label: "Suministros de Oficina" },
   { id: "suministrosBelleza", label: "Suministros de Belleza" },
   { id: "suministrosMedicos", label: "Suministros Médicos" },
+  { id: "suministrosLimpieza", label: "Suministros de Limpieza" },
   { id: "productosCosmeticos", label: "Cosméticos" },
   { id: "cuidadoPersonal", label: "Cuidado Personal" },
+  { id: "productosOrganicos", label: " Productos Organicos" },
+
+
 ];
 
 // Subcategorías conectadas a su categoría principal
@@ -24,6 +28,7 @@ export const SUBCATEGORIES = [
   { id: "suministrosOficina", value: "sobres", label: "Sobres" },
 
 
+
   { id: "suministrosBelleza", value: "tijeras", label: "Tijeras" },
   { id: "suministrosBelleza", value: "alicates", label: "Alicates" },
   { id: "suministrosBelleza", value: "peinillas", label: "Peinillas" },
@@ -37,9 +42,16 @@ export const SUBCATEGORIES = [
   { id: "suministrosBelleza", value: "extensiones-cabello", label: "Extensiones de Cabello" },
   { id: "suministrosBelleza", value: "uñas-postizas", label: "Uñas Postizas" },
 
+
+
   { id: "suministrosMedicos", value: "gorros", label: "Gorros" },
   { id: "suministrosMedicos", value: "guantes", label: "Guantes" },
   { id: "suministrosMedicos", value: "mandiles", label: "Mandiles" },
+  { id: "suministrosMedicos", value: "mascarillas", label: "Mascarillas" },
+  { id: "suministrosMedicos", value: "zapatones", label: "Zapatones" },
+  { id: "suministrosMedicos", value: "algodon", label: "Algodón" },
+  { id: "suministrosMedicos", value: "varios", label: "Varios" },
+
 
 
   { id: "suministrosLimpieza", value: "escobas", label: "Escobas" },
@@ -58,15 +70,15 @@ export const SUBCATEGORIES = [
   { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje" },
 
 
+
   { id: "cuidadoPersonal", value: "jabones", label: "Jabones" },
   { id: "cuidadoPersonal", value: "gel-dental", label: "Gel Dental" },
   { id: "cuidadoPersonal", value: "protector-solar", label: "Protector Solar" },
 
-
+  
   
   { id: "productosOrganicos", value: "cuidado-piel", label: "Cuidado de la Piel" },
-  { id: "cuidadoPersonal", value: "bebidas-aloe", label: "Bebidas de Aloe" },
-  { id: "cuidadoPersonal", value: "", label: "Protector Solar" },
+  { id: "productosOrganicos", value: "bebidas-aloe", label: "Bebidas de Aloe" },
 
 
 

@@ -1,8 +1,9 @@
 export const CATEGORIES = [
   { id: "suministrosOficina", label: "Suministros de Oficina" },
+  { id: "suministrosBelleza", label: "Suministros de Belleza" },
   { id: "suministrosMedicos", label: "Suministros Médicos" },
-  { id: "cosmeticos", label: "Cosméticos" },
-  { id: "bisuteria", label: "Bisutería" },
+  { id: "productosCosmeticos", label: "Cosméticos" },
+  { id: "cuidadoPersonal", label: "Cuidado Personal" },
 ];
 
 // Subcategorías conectadas a su categoría principal
@@ -19,25 +20,60 @@ export const SUBCATEGORIES = [
   { id: "suministrosOficina", value: "articulos-generales", label: "Articulos Generales" },
   { id: "suministrosOficina", value: "calculadora", label: "Calculadora" },
   { id: "suministrosOficina", value: "cuadernos", label: "Cuadernos" },
+  { id: "suministrosOficina", value: "material-didactico", label: "Material didactico" },
+  { id: "suministrosOficina", value: "sobres", label: "Sobres" },
 
 
-    { id: "suministrosMedicos", value: "gorros", label: "Gorros" },
-    { id: "suministrosOficina", value: "guantes", label: "Guantes" },
-    { id: "suministrosOficina", value: "mandiles", label: "Mandiles" },
+  { id: "suministrosBelleza", value: "tijeras", label: "Tijeras" },
+  { id: "suministrosBelleza", value: "alicates", label: "Alicates" },
+  { id: "suministrosBelleza", value: "peinillas", label: "Peinillas" },
+  { id: "suministrosBelleza", value: "cepillosCabello", label: "Cepillos de Cabello" },
+  { id: "suministrosBelleza", value: "brochas", label: "Brochas" },
+  { id: "suministrosBelleza", value: "pinzas", label: "Pinzas" },
+  { id: "suministrosBelleza", value: "moños", label: "Moños" },
+  { id: "suministrosBelleza", value: "binchas", label: "Binchas" },
+  { id: "suministrosBelleza", value: "limas", label: "Limas" },
+  { id: "suministrosBelleza", value: "rulos", label: "Rulos" },
+  { id: "suministrosBelleza", value: "extensiones-cabello", label: "Extensiones de Cabello" },
+  { id: "suministrosBelleza", value: "uñas-postizas", label: "Uñas Postizas" },
+
+  { id: "suministrosMedicos", value: "gorros", label: "Gorros" },
+  { id: "suministrosMedicos", value: "guantes", label: "Guantes" },
+  { id: "suministrosMedicos", value: "mandiles", label: "Mandiles" },
+
+
+  { id: "suministrosLimpieza", value: "escobas", label: "Escobas" },
+  { id: "suministrosLimpieza", value: "recogedores", label: "Recogedores" },
+  { id: "suministrosLimpieza", value: "cepillos", label: "Cepillos" },
+  { id: "suministrosLimpieza", value: "toallas-paños", label: "Toallas y Paños" },
+  { id: "suministrosLimpieza", value: "fundas", label: "Fundas" },
 
 
 
-  { id: "suministrosOficina", value: "escritura-y-correccion", label: "escritura y correccion" },
-  { id: "suministrosOficina", value: "accesorios", label: "Accesorios" },
-  { id: "suministrosOficina", value: "belleza", label: "Belleza" },
+  { id: "productosCosmeticos", value: "cuidado-capilar", label: "Cuidado Capilar" },
+  { id: "productosCosmeticos", value: "cuidado-facial", label: "Cuidado Facial" },
+  { id: "productosCosmeticos", value: "cuidado-manos-pies", label: "Cuidado de manos y pies" },
+  { id: "productosCosmeticos", value: "cuidado-corporal", label: "Cuidado Corporal" },
+  { id: "productosCosmeticos", value: "fragancias", label: "Fragancias" },
+  { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje" },
 
-  { id: "cosmeticos", value: "maquillaje", label: "Maquillaje" },
-  { id: "cosmeticos", value: "cuidado-piel", label: "Cuidado de Piel" },
-  { id: "cosmeticos", value: "fragancias", label: "Fragancias" },
-  { id: "cosmeticos", value: "accesorios", label: "Accesorios" },
-  { id: "bisuteria", value: "collares", label: "Collares" },
-  { id: "bisuteria", value: "pulseras", label: "Pulseras" },
-  { id: "bisuteria", value: "anillos", label: "Anillos" },
+
+  { id: "cuidadoPersonal", value: "jabones", label: "Jabones" },
+  { id: "cuidadoPersonal", value: "gel-dental", label: "Gel Dental" },
+  { id: "cuidadoPersonal", value: "protector-solar", label: "Protector Solar" },
+
+
+  
+  { id: "productosOrganicos", value: "cuidado-piel", label: "Cuidado de la Piel" },
+  { id: "cuidadoPersonal", value: "bebidas-aloe", label: "Bebidas de Aloe" },
+  { id: "cuidadoPersonal", value: "", label: "Protector Solar" },
+
+
+
+
+
+
+
 ];
 
 

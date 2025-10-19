@@ -17,6 +17,10 @@ const NavbarComponent = () => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [clickedDropdown, setClickedDropdown] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [dropdownAlign, setDropdownAlign] = useState<Record<string, 'start' | 'end'>>({});
+
+
 
   // Detectar click fuera del nav
   useEffect(() => {
@@ -27,11 +31,32 @@ const NavbarComponent = () => {
       }
     };
 
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+
+    const el = dropdownRefs.current[activeDropdown];
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const spaceRight = window.innerWidth - rect.left;
+
+    const align = spaceRight < 400 ? 'end' : 'start'; // 'end' = abre hacia la izquierda
+
+    setDropdownAlign((prev) => ({
+      ...prev,
+      [activeDropdown]: align,
+    }));
+  }, [activeDropdown]);
+
+
+
 
   const handleClick = (catId: string) => {
     if (clickedDropdown === catId) {
@@ -141,8 +166,14 @@ const NavbarComponent = () => {
                   return (
                     <NavDropdown
                       key={cat.id}
+                      align={dropdownAlign[cat.id]} // Esto es nuevo
                       title={
-                        <span className="d-flex align-items-center gap-1">
+                        <span
+                          ref={(el) => {
+                            dropdownRefs.current[cat.id] = el;
+                          }}
+                          className="d-flex align-items-center gap-1"
+                        >
                           {cat.label}
                           {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </span>
@@ -177,6 +208,7 @@ const NavbarComponent = () => {
                         ))}
                       </div>
                     </NavDropdown>
+
 
                   );
                 })}

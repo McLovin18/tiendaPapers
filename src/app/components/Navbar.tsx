@@ -160,21 +160,24 @@ const NavbarComponent = () => {
                         handleClick(cat.id);
                       }}
                     >
-                      {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
-                        <NavDropdown.Item
-                          key={sub.value}
-                          as={Link}
-                          href={`/categories/${sub.value}`}
-                          onClick={() => {
-                            setExpanded(false);
-                            setClickedDropdown(null);
-                            setActiveDropdown(null);
-                          }}
-                        >
-                          {sub.label}
-                        </NavDropdown.Item>
-                      ))}
+                      <div className="dropdown-grid">
+                        {SUBCATEGORIES.filter((sub) => sub.id === cat.id).map((sub) => (
+                          <NavDropdown.Item
+                            key={sub.value}
+                            as={Link}
+                            href={`/categories/${sub.value}`}
+                            onClick={() => {
+                              setExpanded(false);
+                              setClickedDropdown(null);
+                              setActiveDropdown(null);
+                            }}
+                          >
+                            {sub.label}
+                          </NavDropdown.Item>
+                        ))}
+                      </div>
                     </NavDropdown>
+
                   );
                 })}
               </Nav>
@@ -210,6 +213,10 @@ const NavbarComponent = () => {
               <>
                 <Nav.Link as={Link} href="/auth/login" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
                   Iniciar sesión
+                </Nav.Link>
+
+                <Nav.Link as={Link} href="/auth/register" className="px-2 me-3 hover-cosmetic-accent" style={{ color: "var(--cosmetic-tertiary)" }}>
+                  Registrate
                 </Nav.Link>
 
                 <Nav.Link

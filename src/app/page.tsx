@@ -32,7 +32,7 @@ export default function Home() {
       src: "/banner.jpg",
       alt: "Engrapadora y útiles de oficina",
       titulo: "Útiles de oficina esenciales",
-      descripcion: "Papelería, grapadoras, calculadoras y todo lo que necesitas en tu día a día.",
+      descripcion: "Cuadernos, hojas, libretas y todo lo que necesitas en tu día a día.",
       botonTexto: "Explorar ahora",
       botonLink: "#productosDestacados"
     },

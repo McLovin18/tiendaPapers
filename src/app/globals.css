@@ -741,3 +741,16 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   from { box-shadow: 0 2px 4px rgba(0,123,255,0.3); }
   to { box-shadow: 0 2px 8px rgba(0,123,255,0.5); }
 }
+
+
+.dropdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Ajusta 150px al gusto */
+  gap: 0.5rem 1rem; /* Espaciado entre filas y columnas */
+  padding: 0.5rem 1rem;
+  max-width: 600px; /* Limita el ancho del dropdown */
+}
+
+.dropdown-grid .dropdown-item {
+  white-space: normal; /* Permite saltos de línea si el texto es largo */
+}

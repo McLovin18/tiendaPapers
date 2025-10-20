@@ -12,13 +12,11 @@ interface WhatsAppButtonProps {
 
 export default function WhatsAppButton({ cartItems, total, deliveryLocation, disabled }: WhatsAppButtonProps) {
   // 🔥 CONFIGURACIÓN: Tu número de WhatsApp 
-  // Formato: código país + número sin espacios ni caracteres especiales
-  // Ejemplo Ecuador: 593 + número sin el 0 inicial
-  // Si tu número es 0987654321, aquí va: 593987654321
-  const WHATSAPP_NUMBER = "593995770937"; // ⚠️ CAMBIAR POR TU NÚMERO REAL
+
+  const WHATSAPP_NUMBER = "593987275333"; 
   
   const generateWhatsAppMessage = () => {
-    let message = "¡Hola! Sra Lucila Me interesa hacer un pedido desde tu tienda online:\n\n";
+    let message = "¡Hola! Sra Tiffanys Me interesa hacer un pedido desde tu tienda online:\n\n";
     
     // Agregar productos
     message += "*PRODUCTOS SELECCIONADOS:*\n";

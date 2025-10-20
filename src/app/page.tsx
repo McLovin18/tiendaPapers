@@ -262,7 +262,7 @@ export default function Home() {
             <Col md={4}>
               <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contacto</h5>
               <p className="mb-1" style={{ color: "var(--cosmetic-tertiary)" }}>Email: tiffanysvariedades@gmail.com</p>
-              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 958845516 </p>
+              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>Teléfono: +593 98 727 5333</p>
             </Col>
           </Row>
           <hr className="my-4" style={{ borderColor: "var(--cosmetic-accent)" }} />

@@ -767,7 +767,7 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 }
 
 .navbar {
-  font-size: 1.2em;
+  font-size: 1em;
 }
 
 .dropdown-grid {

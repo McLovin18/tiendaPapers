@@ -126,7 +126,7 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
         {/* Fila 1: Logo + botones importantes */}
         <div className="first-row d-flex justify-content-between align-items-center w-100 px-3 py-1">
           <Navbar.Brand as={Link} href="/" className="me-auto">
-            <img style={{ maxWidth: "180px", height: "auto" }} src="/logo.png" alt="Logo" />
+            <img style={{ maxWidth: "360px", height: "auto" }} src="/logo.png" alt="Logo" />
           </Navbar.Brand>
 
           <div className="d-flex align-items-center">

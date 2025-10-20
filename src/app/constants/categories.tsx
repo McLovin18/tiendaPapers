@@ -4,7 +4,6 @@ export const CATEGORIES = [
   { id: "suministrosMedicos", label: "Suministros Médicos" },
   { id: "suministrosLimpieza", label: "Suministros de Limpieza" },
   { id: "productosCosmeticos", label: "Cosméticos" },
-  { id: "cuidadoPersonal", label: "Cuidado Personal" },
   { id: "productosOrganicos", label: " Productos Organicos" },
 
 
@@ -68,17 +67,22 @@ export const SUBCATEGORIES = [
   { id: "productosCosmeticos", value: "cuidado-corporal", label: "Cuidado Corporal" },
   { id: "productosCosmeticos", value: "fragancias", label: "Fragancias" },
   { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje" },
+  { id: "productosCosmeticos", value: "jabones", label: "Jabones" },
+  { id: "productosComesticos", value: "gel-dental", label: "Gel Dental" },
+  { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar" },
 
 
 
-  { id: "cuidadoPersonal", value: "jabones", label: "Jabones" },
-  { id: "cuidadoPersonal", value: "gel-dental", label: "Gel Dental" },
-  { id: "cuidadoPersonal", value: "protector-solar", label: "Protector Solar" },
 
-  
-  
   { id: "productosOrganicos", value: "cuidado-piel", label: "Cuidado de la Piel" },
-  { id: "productosOrganicos", value: "bebidas-aloe", label: "Bebidas de Aloe" },
+  { id: "productosOrganicos", value: "bebidas-aloe", label: "Bebidas Aloe" },
+  { id: "productosOrganicos", value: "cuidado-personal", label: "Cuidado Personal" },
+  { id: "productosOrganicos", value: "productos-de-la-colmena", label: "Productos de la Colmena" },
+  { id: "productosOrganicos", value: "nutricion", label: "Nutrición" },
+  { id: "productosOrganicos", value: "control-peso", label: "Control de Peso" },
+
+
+
 
 
 

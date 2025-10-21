@@ -814,3 +814,10 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   right: 0 !important;
   transform-origin: top right !important;
 }
+
+
+@media screen and (max-width: 500px){
+  .logo_img{
+    width: 220px;
+  }
+}

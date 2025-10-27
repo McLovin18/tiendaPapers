@@ -252,9 +252,17 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
             {/* Botones de sesión para móviles */}
             <div className="mt-3">
               {user ? (
-                <Nav.Link as={Link} href="/profile" onClick={() => setExpanded(false)} className="btn btn-primary w-100">
+                <>
+                <Nav.Link as={Link} href="/blogs" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-2">
+                  Blog
+                </Nav.Link>
+                <Nav.Link as={Link} href="/profile" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-3">
                   Mi cuenta
                 </Nav.Link>
+
+                </>
+
+
               ) : (
                 <>
                   <Nav.Link as={Link} href="/blogs" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-2">

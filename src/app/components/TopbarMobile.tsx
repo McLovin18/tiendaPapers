@@ -30,7 +30,10 @@ const TopbarMobile = () => {
   const adminAdvancedItems = [
     { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
     // { name: 'Migración', path: '/admin/migration', icon: 'bi-database-fill-gear' },
-    { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' }
+    { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
+    { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-graph-up-arrow' }
+
+
   ];
 
   // ✅ Construir menús según el rol del usuario

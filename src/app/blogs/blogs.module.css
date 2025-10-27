@@ -62,7 +62,7 @@
 .blogContent img,
 .blogImage {
   width: 100%;
-  max-width: 35%; /* se adapta al contenedor */
+  max-width: 40%; /* se adapta al contenedor */
   margin: 15px auto;
   border-radius: 10px;
   object-fit: cover;
@@ -266,6 +266,11 @@
   .blogCard img {
     max-width: 100%;
     height: auto;
+  }
+
+  .blogContent img,
+  .blogImage {
+    max-width: 80%;
   }
 }
 

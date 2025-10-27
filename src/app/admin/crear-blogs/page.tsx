@@ -42,7 +42,7 @@ export default function BlogsAdmin() {
                 <div
                 className={styles.thumb}
                 style={{
-                    backgroundImage: blog.imageUrl ? `url(${blog.imageUrl})` : 'none',
+                    backgroundImage: blog.thumbnail ? `url(${blog.thumbnail})` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     minHeight: '150px',

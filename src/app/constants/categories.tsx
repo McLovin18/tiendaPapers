@@ -56,8 +56,9 @@ export const SUBCATEGORIES = [
   { id: "suministrosLimpieza", value: "escobas", label: "Escobas" },
   { id: "suministrosLimpieza", value: "recogedores", label: "Recogedores" },
   { id: "suministrosLimpieza", value: "cepillos", label: "Cepillos" },
-  { id: "suministrosLimpieza", value: "toallas-paños", label: "Toallas y Paños" },
   { id: "suministrosLimpieza", value: "fundas", label: "Fundas" },
+    { id: "suministrosLimpieza", value: "toallas", label: "Toallas"},
+
 
 
 

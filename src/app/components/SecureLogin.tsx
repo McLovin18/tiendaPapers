@@ -1,61 +1,46 @@
-/**
- * 🔒 COMPONENTE DE LOGIN SEGURO
- * Implementación de autenticación con validaciones y protecciones
- */
-
 'use client';
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   InputValidator, 
-  DataSanitizer, 
-  RateLimiter 
+  DataSanitizer 
 } from '../utils/security';
 import { useSecureForm, useRateLimit } from '../utils/securityMiddleware';
 
 const SecureLogin: React.FC = () => {
   const { login, loginWithGoogle } = useAuth();
+    const { user} = useAuth();
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
+
   const { errors, isSubmitting, setIsSubmitting, validateField, clearErrors } = useSecureForm();
   const { blocked, attemptsLeft, checkRateLimit } = useRateLimit('login', 3);
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [securityAlert, setSecurityAlert] = useState('');
 
   const handleInputChange = (name: string, value: string) => {
-    // ✅ Sanitizar entrada
     const sanitizedValue = DataSanitizer.sanitizeText(value);
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: sanitizedValue
-    }));
+    setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
 
-    // ✅ Validar en tiempo real
-    if (name === 'email') {
-      validateField(name, sanitizedValue, { required: true, email: true });
-    } else if (name === 'password') {
-      validateField(name, sanitizedValue, { required: true, minLength: 6 });
-    }
+    if (name === 'email') validateField(name, sanitizedValue, { required: true, email: true });
+    else if (name === 'password') validateField(name, sanitizedValue, { required: true, minLength: 6 });
   };
 
   const validateForm = (): boolean => {
     let isValid = true;
 
-    // ✅ Validar email
     if (!InputValidator.isValidEmail(formData.email)) {
       validateField('email', formData.email, { required: true, email: true });
       isValid = false;
     }
 
-    // ✅ Validar contraseña
     if (formData.password.length < 6) {
       validateField('password', formData.password, { required: true, minLength: 6 });
       isValid = false;
@@ -66,8 +51,7 @@ const SecureLogin: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // ✅ Verificar rate limiting
+
     if (blocked) {
       setSecurityAlert('Demasiados intentos fallidos. Intenta nuevamente en unos minutos.');
       return;
@@ -78,7 +62,6 @@ const SecureLogin: React.FC = () => {
       return;
     }
 
-    // ✅ Validar formulario
     if (!validateForm()) {
       setSecurityAlert('Por favor corrige los errores en el formulario.');
       return;
@@ -89,16 +72,16 @@ const SecureLogin: React.FC = () => {
 
     try {
       await login(formData.email, formData.password);
-      
       clearErrors();
-      router.push('/');
-      
+      const redirect = sessionStorage.getItem('redirectAfterLogin') || '/';
+      router.push(redirect);
+      sessionStorage.removeItem('redirectAfterLogin');
+  
     } catch (error: any) {
       let errorMessage = 'Error al iniciar sesión. Verifica tus credenciales.';
-      
       switch (error.code) {
         case 'auth/email-not-verified':
-          errorMessage = 'Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.';
+          errorMessage = 'Debes verificar tu correo antes de iniciar sesión.';
           break;
         case 'auth/user-not-found':
           errorMessage = 'No existe una cuenta con este email.';
@@ -116,7 +99,6 @@ const SecureLogin: React.FC = () => {
           errorMessage = 'El formato del email no es válido.';
           break;
       }
-      
       setSecurityAlert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -124,7 +106,6 @@ const SecureLogin: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
-    // ✅ Verificar rate limiting
     if (blocked || !checkRateLimit()) {
       setSecurityAlert('Demasiados intentos. Espera unos minutos.');
       return;
@@ -132,7 +113,7 @@ const SecureLogin: React.FC = () => {
 
     try {
       await loginWithGoogle();
-      router.push('/');
+      router.push(redirectTo); // <-- redirige al blog o página deseada
     } catch (error: any) {
       setSecurityAlert('Error al iniciar sesión con Google. Intenta nuevamente.');
     }
@@ -150,7 +131,6 @@ const SecureLogin: React.FC = () => {
                 <p className="text-muted">Bienvenido de vuelta</p>
               </div>
 
-              {/* ✅ Alertas para el usuario */}
               {securityAlert && (
                 <div className="alert alert-warning d-flex align-items-center" role="alert">
                   <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -158,7 +138,6 @@ const SecureLogin: React.FC = () => {
                 </div>
               )}
 
-              {/* ✅ Indicador de intentos restantes */}
               {attemptsLeft < 3 && !blocked && (
                 <div className="alert alert-info" role="alert">
                   <small>
@@ -169,15 +148,12 @@ const SecureLogin: React.FC = () => {
               )}
 
               <form onSubmit={handleLogin}>
-                {/* ✅ Campo Email Seguro */}
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">
                     Email <span className="text-danger">*</span>
                   </label>
                   <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-envelope"></i>
-                    </span>
+                    <span className="input-group-text"><i className="bi bi-envelope"></i></span>
                     <input
                       type="email"
                       className={`form-control ${errors.email ? 'is-invalid' : ''}`}
@@ -189,21 +165,16 @@ const SecureLogin: React.FC = () => {
                       autoComplete="email"
                       disabled={blocked}
                     />
-                    {errors.email && (
-                      <div className="invalid-feedback">{errors.email}</div>
-                    )}
+                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
                 </div>
 
-                {/* ✅ Campo Contraseña Seguro */}
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">
                     Contraseña <span className="text-danger">*</span>
                   </label>
                   <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-lock"></i>
-                    </span>
+                    <span className="input-group-text"><i className="bi bi-lock"></i></span>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       className={`form-control ${errors.password ? 'is-invalid' : ''}`}
@@ -223,14 +194,12 @@ const SecureLogin: React.FC = () => {
                     >
                       <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
                     </button>
-                    {errors.password && (
-                      <div className="invalid-feedback">{errors.password}</div>
-                    )}
+                    {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                   </div>
                 </div>
 
-                {/* ✅ Botón de Login */}
                 <button
+                onClick={handleLogin}
                   type="submit"
                   className="btn btn-primary w-100 mb-3"
                   disabled={isSubmitting || blocked || Object.keys(errors).length > 0}
@@ -248,12 +217,10 @@ const SecureLogin: React.FC = () => {
                   )}
                 </button>
 
-                {/* ✅ Divisor */}
                 <div className="text-center mb-3">
                   <small className="text-muted">o continúa con</small>
                 </div>
 
-                {/* ✅ Login con Google */}
                 <button
                   type="button"
                   className="btn btn-outline-danger w-100 btn-profile"
@@ -265,7 +232,6 @@ const SecureLogin: React.FC = () => {
                 </button>
               </form>
 
-              {/* ✅ Indicadores de seguridad */}
               <div className="mt-4 text-center">
                 <small className="text-muted d-flex align-items-center justify-content-center">
                   <i className="bi bi-shield-check text-success me-1"></i>
@@ -273,7 +239,6 @@ const SecureLogin: React.FC = () => {
                 </small>
               </div>
 
-              {/* ✅ Enlace a registro */}
               <div className="text-center mt-3">
                 <small>
                   ¿No tienes cuenta?{' '}

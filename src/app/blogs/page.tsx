@@ -60,23 +60,20 @@ export default function BlogsPage() {
         <p className={styles.emptyText}>Todavía no hay blogs publicados.</p>
       )}
 
-      <div className={styles.blogList}>
+      <div className={styles.blogList} style={{ justifyContent: blogs.length <= 2 ? "center" : "flex-start" }}>
         {blogs.map((blog) => (
           <div key={blog.id} className={styles.blogCard}>
-            <p className={styles.date}>
-              {blog.createdAt?.toDate?.().toLocaleString("es-ES", { dateStyle: "medium" })}
-            </p>
+            {blog.content?.find((c: any) => c.type === "image") && (
+              <div className={styles.imageWrapper}>
+                <img
+                  src={blog.content.find((c: any) => c.type === "image").content}
+                  alt={blog.title}
+                  className={styles.blogImage}
+                />
+              </div>
+            )}
             <h3 className={styles.blogTitle}>{blog.title}</h3>
-            <p className={styles.blogDesc}>
-                {blog.summary
-                    ? blog.summary.slice(0, 120) + "..."
-                    : blog.content
-                        .filter(p => p.type === "text")
-                        .map(p => p.content)
-                        .join(" ")
-                        .slice(0, 120) + "..."}
-            </p>
-
+            {blog.summary && <p className={styles.blogDesc}>{blog.summary}</p>}
             <Link href={`/blogs/${blog.id}`} className={styles.readMore}>
               Leer más
             </Link>
@@ -84,7 +81,7 @@ export default function BlogsPage() {
         ))}
       </div>
 
-      {!noMore && !loading && (
+      {blogs.length > 6 && !noMore && !loading && (
         <button className={styles.loadMore} onClick={() => fetchBlogs(true)}>
           Ver más blogs
         </button>

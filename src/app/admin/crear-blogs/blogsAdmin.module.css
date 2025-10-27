@@ -50,3 +50,112 @@
     background-color: #ddd; /* fallback si no hay imagen */
     width: 100%;
 }
+
+
+
+
+
+
+
+
+.editorBlock {
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+}
+
+.toolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.toolbar button {
+  padding: 4px 8px;
+  font-weight: bold;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.toolbar button:hover {
+  background: #d4d4d4;
+}
+
+.editorContent {
+
+    width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.editorContent:focus {
+  outline: 2px solid #0070f3;
+}
+
+.imageBlock {
+  position: relative;
+}
+
+.imageBlock img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.deleteBtn {
+  background: red;
+  color: white;
+  font-size: 12px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+
+.activeBtn {
+  background: #0070f3 !important;
+  color: white !important;
+}
+
+
+
+.editorContainer {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+}
+
+.toolbar button {
+  background: #f4f4f4;
+  border: none;
+  padding: 6px 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.activeBtn {
+  background: #007bff;
+  color: #fff;
+}
+
+.editor {
+  padding: 10px;
+  min-height: 120px;
+  cursor: text;
+}

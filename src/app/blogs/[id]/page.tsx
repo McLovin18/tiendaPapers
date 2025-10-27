@@ -12,11 +12,12 @@ import {
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../../utils/firebase";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styles from "../blogs.module.css";
 
 export default function BlogDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [user] = useAuthState(auth);
   const [blog, setBlog] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -40,14 +41,17 @@ export default function BlogDetailPage() {
   }, [id]);
 
   const handleComment = async () => {
-    if (!user) return alert("Debes iniciar sesión para comentar.");
+    if (!user) {
+      router.push(`/login?redirect=/blogs/${id}`);
+      return;
+    }
     if (!message.trim()) return;
 
     await addDoc(collection(db, "blogs", id as string, "comments"), {
-    userId: user.uid,
-    name: user.displayName || user.email,
-    text: message,
-    createdAt: Timestamp.now()
+      userId: user.uid,
+      name: user.displayName || user.email,
+      text: message,
+      createdAt: Timestamp.now()
     });
 
     setMessage("");
@@ -81,26 +85,34 @@ export default function BlogDetailPage() {
 
       <h3 className={styles.commentsTitle}>Comentarios</h3>
 
+
       {user ? (
         <div className={styles.commentForm}>
-          <textarea
+            <textarea
             className={styles.commentTextarea}
             placeholder="Escribe un comentario..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-          />
-          <button onClick={handleComment} className={styles.commentSubmit}>Enviar</button>
+            />
+            <button onClick={handleComment} className={styles.commentSubmit}>Enviar</button>
         </div>
-      ) : (
-        <p className={styles.loginNotice}>Inicia sesión para comentar.</p>
-      )}
+        ) : (
+        <button
+            onClick={() => router.push(`/auth/login?redirect=/blogs/${id}`)}
+            className={styles.commentSubmit}
+        >
+            Inicia sesión para comentar
+        </button>
+        )}
+
+
 
       <div className={styles.commentList}>
         {comments.map((c) => (
           <div key={c.id} className={styles.commentCard}>
             <div className={styles.commentHeader}>
-              <span className={styles.commentUser}>{c.user}</span>
-              {user && user.email === c.user && (
+              <span className={styles.commentUser}>{c.name}</span>
+              {user && user.uid === c.userId && (
                 <button
                   className={styles.deleteBtn}
                   onClick={() => deleteComment(c.id)}
@@ -109,7 +121,7 @@ export default function BlogDetailPage() {
                 </button>
               )}
             </div>
-            <p className={styles.commentText}>{c.message}</p>
+            <p className={styles.commentText}>{c.text}</p>
           </div>
         ))}
       </div>

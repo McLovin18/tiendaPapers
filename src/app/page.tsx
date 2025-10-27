@@ -51,9 +51,17 @@ export default function Home() {
   const { products: allProductsWithStock, loading: loadingProducts } = useProducts();
 
 
+  // Función que se llama al hacer click en un producto
   const handleCardClick = (productId: number) => {
-    router.push(`/products/${productId}`);
+    if (!user) {
+      // Guardamos la ruta que quería visitar
+      sessionStorage.setItem('redirectAfterLogin', `/products/${productId}`);
+      router.push('/auth/login'); // Redirigimos a login
+    } else {
+      router.push(`/products/${productId}`);
+    }
   };
+
   
   // 🌟 FILTRAR PRODUCTOS DESTACADOS que tienen stock
   const featuredProducts = allProductsWithStock.filter(p => p.featured && p.inStock);
@@ -64,6 +72,20 @@ export default function Home() {
 
     return () => window.removeEventListener("favourites-updated", handleFavUpdate);
   }, []);
+
+
+  useEffect(() => {
+  if (user) {
+    const redirect = sessionStorage.getItem('redirectAfterLogin');
+    if (redirect) {
+      router.push(redirect);
+      sessionStorage.removeItem('redirectAfterLogin'); // Limpiamos
+    } else {
+      router.push('/'); // Ruta por defecto si no había producto
+    }
+  }
+}, [user]);
+
 
   // Página para usuarios no autenticados (similar a la imagen de referencia)
   const UnauthenticatedHome = () => (
@@ -126,7 +148,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Papeleria</h3>
-                <Link href="/categories/papeleria" className="btn rounded-1 btn-cosmetic-primary px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/categories/papeles" className="btn rounded-1 btn-cosmetic-primary px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
@@ -140,7 +162,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Escritura</h3>
-                <Link href="/categories/escritura"  className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/categories/lapices"  className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>
@@ -154,7 +176,7 @@ export default function Home() {
               />
               <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(58,48,41,0.8), transparent)' }}>
                 <h3 className="text-white fw-bold mb-3">Accesorios</h3>
-                <Link href="/categories/accesorios" className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
+                <Link href="/categories/articulos-generales" className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none">Ver Colección</Link>
               </div>
             </div>
           </Col>

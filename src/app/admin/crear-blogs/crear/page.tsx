@@ -27,24 +27,6 @@ export default function CreateBlog() {
 
   const addParagraph = () => setParagraphs([...paragraphs, { type: "text", content: "" }]);
 
-  const addImageParagraph = (file: File) => {
-    setParagraphs([...paragraphs, { type: "image", content: file }]);
-  };
-
-  const toggleBold = (index: number) => {
-    const newParagraphs = [...paragraphs];
-    const p = newParagraphs[index];
-    if (p.type === "text") {
-      const text = p.content as string;
-      if (text.startsWith("<b>") && text.endsWith("</b>")) {
-        p.content = text.replace(/^<b>|<\/b>$/g, "");
-      } else {
-        p.content = `<b>${text}</b>`;
-      }
-      setParagraphs(newParagraphs);
-    }
-  };
-
   const removeParagraph = (index: number) => {
     setParagraphs(paragraphs.filter((_, i) => i !== index));
   };
@@ -61,7 +43,6 @@ export default function CreateBlog() {
       return alert("Completa todos los campos de texto");
     }
 
-    // Subir imágenes y reemplazar File por URL
     const uploadedParagraphs = await Promise.all(
       paragraphs.map(async p => {
         if (p.type === "image" && p.content instanceof File) {
@@ -72,12 +53,16 @@ export default function CreateBlog() {
       })
     );
 
+    const firstImageObj = uploadedParagraphs.find(p => p.type === "image");
+    const thumbnail = firstImageObj ? firstImageObj.content : null;
+
     await addDoc(collection(db, "blogs"), {
       title,
       summary,
       content: uploadedParagraphs,
+      thumbnail,
       createdAt: serverTimestamp(),
-      author: "Admin",
+      author: "Admin"
     });
 
     router.push("/admin/crear-blogs");
@@ -107,51 +92,56 @@ export default function CreateBlog() {
           />
 
           <label className="fw-semibold">Contenido</label>
+
           {paragraphs.map((p, idx) => (
-            <div key={idx} className="mb-3">
+            <div key={idx} className={styles.editorBlock}>
+              <div className={styles.toolbar}>
+                <button
+                  type="button"
+                  onClick={() => removeParagraph(idx)}
+                  className={styles.deleteBtn}
+                >
+                  ❌
+                </button>
+              </div>
+
               {p.type === "text" ? (
                 <textarea
-                  className="form-control mb-1"
+                  className={styles.editorContent}
                   rows={4}
                   value={p.content as string}
                   onChange={(e) => handleParagraphChange(idx, e.target.value)}
-                  placeholder={`Párrafo ${idx + 1}`}
                 />
+
               ) : (
-                <div className="position-relative mb-1">
+                <div className={styles.imagePreview}>
                   <img
-                    src={typeof p.content === "string" ? p.content : URL.createObjectURL(p.content)}
-                    alt="Imagen del párrafo"
-                    className="img-fluid rounded"
+                    src={p.content instanceof File ? URL.createObjectURL(p.content) : p.content}
+                    alt="preview"
+                    style={{ maxWidth: "100%" }}
                   />
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger position-absolute top-0 end-0"
-                    onClick={() => removeParagraph(idx)}
-                  >
-                    X
-                  </button>
                 </div>
               )}
-              <div className="d-flex gap-2 mb-2">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={() => toggleBold(idx)}
-                >
-                  B
-                </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-control form-control-sm"
-                  onChange={(e) => e.target.files && addImageParagraph(e.target.files[0])}
-                />
-              </div>
+
+              {p.type === "text" && (
+                <div className={styles.actions}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const newParagraphs = [...paragraphs];
+                        newParagraphs.splice(idx + 1, 0, { type: "image", content: e.target.files[0] });
+                        setParagraphs(newParagraphs);
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
 
-          <button type="button" className="btn btn-secondary mb-3" onClick={addParagraph}>
+          <button type="button" className="btn btn-secondary mb-3 mx-3" onClick={addParagraph}>
             [+] Agregar párrafo
           </button>
 

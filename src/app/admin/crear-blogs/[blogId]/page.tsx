@@ -72,34 +72,45 @@ export default function BlogEditorPage() {
     return await getDownloadURL(imageRef);
   };
 
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!title || !summary || paragraphs.some(p => p.type === "text" && !p.content)) {
-      return alert("Completa todos los campos de texto");
+        return alert("Completa todos los campos de texto");
     }
 
     // Subir imágenes nuevas y reemplazar File por URL
     const uploadedParagraphs = await Promise.all(
-      paragraphs.map(async p => {
+        paragraphs.map(async (p) => {
         if (p.type === "image" && p.content instanceof File) {
-          const url = await uploadParagraphImage(p.content);
-          return { type: "image", content: url };
+            const url = await uploadParagraphImage(p.content);
+            return { type: "image", content: url };
         }
+        // Mantener imágenes existentes (URL)
         return p;
-      })
+        })
     );
 
-    const blogRef = blogId ? doc(db, "blogs", blogId) : doc(db, "blogs", title + "_" + Date.now());
+    // Determinar la miniatura: la primera imagen (ya sea nueva o existente)
+    const firstImage = uploadedParagraphs.find((p) => p.type === "image");
+    const thumbnail = firstImage ? firstImage.content : null;
+
+    // Guardar en Firestore
+    const blogRef = blogId
+        ? doc(db, "blogs", blogId)
+        : doc(db, "blogs", title + "_" + Date.now());
     await setDoc(blogRef, {
-      title,
-      summary,
-      content: uploadedParagraphs,
-      createdAt: serverTimestamp(),
-      author: "Admin",
+        title,
+        summary,
+        content: uploadedParagraphs,
+        thumbnail,
+        createdAt: serverTimestamp(),
+        author: "Admin",
     });
 
     router.push("/admin/crear-blogs");
-  };
+    };
+
 
   return (
     <div className={styles.adminContainer}>
@@ -159,7 +170,13 @@ export default function BlogEditorPage() {
                   type="file"
                   accept="image/*"
                   className="form-control form-control-sm"
-                  onChange={(e) => e.target.files && addImageParagraph(e.target.files[0])}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const newParagraphs = [...paragraphs];
+                      newParagraphs.splice(idx + 1, 0, { type: "image", content: e.target.files[0] });
+                      setParagraphs(newParagraphs);
+                    }
+                  }}
                 />
               </div>
             </div>

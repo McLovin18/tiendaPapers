@@ -6,6 +6,7 @@ import { db } from "@/app/utils/firebase";
 import Sidebar from "@/app/components/Sidebar";
 import Link from "next/link";
 import styles from "./blogsAdmin.module.css";
+import TopbarMobile from "@/app/components/TopbarMobile";
 
 export default function BlogsAdmin() {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -21,45 +22,50 @@ export default function BlogsAdmin() {
 
   return (
     <div className={styles.adminContainer}>
-      <Sidebar />
-      <div className={styles.content}>
-        <h2 className="fw-bold mb-4">Administrar Blogs</h2>
+      <div className="d-flex flex-column min-vh-100">
+        <TopbarMobile/>
+        <div className="d-flex flex-grow-1">
+          <Sidebar />
+          <div className={styles.content}>
+            <h2 className="fw-bold mb-4">Administrar Blogs</h2>
 
-        <div className={styles.grid}>
-          {/* Tarjeta para crear nuevo blog */}
-          <Link href="/admin/crear-blogs/crear" className={styles.addCard}>
-            <span>+</span>
-          </Link>
+            <div className={styles.grid}>
+              {/* Tarjeta para crear nuevo blog */}
+              <Link href="/admin/crear-blogs/crear" className={styles.addCard}>
+                <span>+</span>
+              </Link>
 
 
-          {/* Tarjetas de blogs */}
-            {blogs.map((blog) => (
-            <Link
-                key={blog.id}
-                href={`/admin/crear-blogs/${blog.id}`}
-                className={styles.card}
-            >
-                <div
-                className={styles.thumb}
-                style={{
-                    backgroundImage: blog.thumbnail ? `url(${blog.thumbnail})` : 'none',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    minHeight: '150px',
-                    borderRadius: '8px'
-                }}
-                ></div>
-                <h5 className="mt-2 fw-semibold">{blog.title}</h5>
-            </Link>
-            ))}
+              {/* Tarjetas de blogs */}
+                {blogs.map((blog) => (
+                <Link
+                    key={blog.id}
+                    href={`/admin/crear-blogs/${blog.id}`}
+                    className={styles.card}
+                >
+                    <div
+                    className={styles.thumb}
+                    style={{
+                        backgroundImage: blog.thumbnail ? `url(${blog.thumbnail})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        minHeight: '150px',
+                        borderRadius: '8px'
+                    }}
+                    ></div>
+                    <h5 className="mt-2 fw-semibold">{blog.title}</h5>
+                </Link>
+                ))}
 
+            </div>
+
+            {blogs.length === 0 && (
+              <p className="text-muted mt-3">
+                No hay blogs aún. Comienza creando uno.
+              </p>
+            )}
+          </div>
         </div>
-
-        {blogs.length === 0 && (
-          <p className="text-muted mt-3">
-            No hay blogs aún. Comienza creando uno.
-          </p>
-        )}
       </div>
     </div>
   );

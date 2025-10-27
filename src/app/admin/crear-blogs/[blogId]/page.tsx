@@ -163,9 +163,6 @@ export default function BlogEditorPage() {
                 </div>
               )}
               <div className="d-flex gap-2 mb-2">
-                <button type="button" className="btn btn-sm btn-secondary" onClick={() => toggleBold(idx)}>
-                  B
-                </button>
                 <input
                   type="file"
                   accept="image/*"

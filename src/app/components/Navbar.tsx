@@ -132,7 +132,7 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
           <div className="d-flex align-items-center">
             {/* Blog (solo desktop) */}
             <Nav className="d-none d-lg-flex me-4">
-              <Nav.Link as={Link} href="/blog" className="fw-medium">Blog</Nav.Link>
+              <Nav.Link as={Link} href="/blogs" className="fw-medium">Blog</Nav.Link>
             </Nav>
 
             {/* Carrito (siempre visible) */}
@@ -151,6 +151,7 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
                 <Nav.Link as={Link} href="/profile" className="me-2">Mi cuenta</Nav.Link>
               ) : (
                 <>
+
                   <Nav.Link as={Link} href="/auth/login" className="me-2">Iniciar sesión</Nav.Link>
                   <Nav.Link as={Link} href="/auth/register">Registrate</Nav.Link>
                 </>
@@ -158,7 +159,7 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
             </div>
 
             {/* Menú toggle (solo móvil) */}
-            <Navbar.Toggle className="d-lg-none ms-3" onClick={() => setExpanded(!expanded)} />
+            <Navbar.Toggle className="btn btn-primary d-lg-none ms-3 " onClick={() => setExpanded(!expanded)} />
           </div>
         </div>
 
@@ -256,6 +257,9 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
                 </Nav.Link>
               ) : (
                 <>
+                  <Nav.Link as={Link} href="/blogs" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-2">
+                    Blog
+                  </Nav.Link>
                   <Nav.Link as={Link} href="/auth/login" onClick={() => setExpanded(false)} className="btn btn-primary w-100 mb-2">
                     Iniciar sesión
                   </Nav.Link>

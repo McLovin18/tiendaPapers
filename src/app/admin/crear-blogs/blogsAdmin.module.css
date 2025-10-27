@@ -1,0 +1,52 @@
+.adminContainer {
+  display: flex;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.addCard,
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.25s ease;
+  border: 2px dashed #ccc;
+}
+
+.addCard {
+  font-size: 48px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.addCard:hover {
+  background: #e8f1ff;
+  border-color: #007bff;
+}
+
+.card {
+  border: 2px solid #eee;
+}
+
+.card:hover {
+  background: #fafafa;
+}
+
+.thumb {
+  background: #dfe8ff;
+  height: 130px;
+  border-radius: 8px;
+    background-color: #ddd; /* fallback si no hay imagen */
+    width: 100%;
+}

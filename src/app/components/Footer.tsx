@@ -4,6 +4,8 @@ import React from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import Link from "next/link";
 import { CATEGORIES, SUBCATEGORIES } from "../constants/categories"; 
+import { Facebook, Instagram, Twitter, Linkedin, Github } from "lucide-react";
+
 
 const Footer = () => (
   <footer 
@@ -12,49 +14,65 @@ const Footer = () => (
   >
     <Container>
       <Row>
-        {/* Sección de categorías con 60% del ancho en desktop */}
-        <Col xs={12} md={7} className="mb-4 mb-md-0">
-          <Row>
-            {CATEGORIES.map((category) => (
-              <Col xs={6} sm={4} key={category.id} className="mb-4">
-                {/* Nombre Categoría */}
-                <h6 
-                  className="fw-bold text-decoration-underline mb-3"
-                  style={{ color: "var(--cosmetic-accent)" }}
-                >
-                  {category.label}
-                </h6>
-
-                {/* Subcategorías */}
-                <ul className="list-unstyled">
-                  {SUBCATEGORIES.filter(sub => sub.id === category.id).map(sub => (
-                    <li className="mb-2" key={sub.value}>
-                      <Link
-                        href={`/categories/${sub.value}`}
-                        className="footer-link"
-                        style={{ color: "var(--cosmetic-tertiary)" }}
-                      >
-                        {sub.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </Col>
-            ))}
-          </Row>
-        </Col>
-
         {/* Sección contacto 40% del ancho */}
+
         <Col xs={12} md={5} className="d-flex align-items-center justify-content-center flex-column text-center">
-          <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contáctanos</h5>
-          <p className="mb-1" style={{ color: "var(--cosmetic-tertiary)" }}>
-            Email: tiffanysvariedades@gmail.com
-          </p>
-          <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>
-            Teléfono: +593 958845516
-          </p>
+
+          <img className='logo_img' style={ { maxWidth: "360px", height: "auto"}} src="/logo.png" alt="Logo" />
+
         </Col>
+
+        <Col>
+              <div>
+                <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Enlaces útiles</h5>
+                <ul>
+                  
+                    <li><a style={{ color: "var(--cosmetic-tertiary)" }} href="/">Inicio</a></li>
+                    <li><a style={{ color: "var(--cosmetic-tertiary)" }} href="/products">Productos</a></li>
+                    <li><a style={{ color: "var(--cosmetic-tertiary)" }} href="/blogs">Blogs</a></li>
+                </ul>
+            </div>
+        </Col>
+        <Col xs={12} md={5} className="d-flex align-items-center justify-content-center flex-column text-center">
+          <div style={{display: "flex", flexDirection: "column"}}>
+            <div style={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", padding: "1em"}}>
+              <a style={{margin: "0.5em"}}
+                href="https://www.facebook.com/share/17NfkFiL3i/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-500 transition-colors"
+              >
+                <Facebook size={24} />
+              </a>
+
+              <a
+                href="https://www.instagram.com/tiffanyssupplies?igsh=MWE3eHd5OTNpbGd1cQ=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-pink-500 transition-colors"
+              >
+                <Instagram size={24} />
+              </a>
+
+            </div>
+
+            <div>
+
+              <h5 className="fw-bold mb-3" style={{ color: "var(--cosmetic-accent)" }}>Contáctanos</h5>
+              <p className="mb-1" style={{ color: "var(--cosmetic-tertiary)" }}>
+                Email: tiffanysvariedades@gmail.com
+              </p>
+              <p className="mb-0" style={{ color: "var(--cosmetic-tertiary)" }}>
+                Teléfono: +593 987275333
+              </p>
+            </div>
+          </div>
+
+
+        </Col>
+
       </Row>
+
 
       <hr className="my-4" style={{ borderColor: "var(--cosmetic-accent)" }} />
 

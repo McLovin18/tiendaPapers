@@ -4,7 +4,7 @@ export const CATEGORIES = [
   { id: "suministrosMedicos", label: "Suministros Médicos" },
   { id: "suministrosLimpieza", label: "Suministros de Limpieza" },
   { id: "productosCosmeticos", label: "Cosméticos" },
-  { id: "productosOrganicos", label: " Productos Organicos" },
+  { id: "productosOrganicos", label: " Productos Orgánicos" },
 
 
 ];

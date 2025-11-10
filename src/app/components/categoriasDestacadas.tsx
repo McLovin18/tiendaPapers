@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -53,9 +53,27 @@ const categories: Category[] = [
 
 const FeaturedCategories = () => {
   const [index, setIndex] = useState(0);
+  const [visibleItems, setVisibleItems] = useState(3);
+
+  // Ajustar cantidad visible según ancho de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setVisibleItems(2.5); // móviles
+      } else if (window.innerWidth < 1024) {
+        setVisibleItems(3.5); // tablets o pantallas medianas
+      } else {
+        setVisibleItems(4); // escritorio
+      }
+    };
+
+    handleResize(); // ejecutar al inicio
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleNext = () => {
-    if (index < categories.length - 3) {
+    if (index < categories.length - visibleItems) {
       setIndex(index + 1);
     }
   };
@@ -80,25 +98,28 @@ const FeaturedCategories = () => {
         <button
           onClick={handlePrev}
           disabled={index === 0}
-          className="absolute left-0 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
+          className="absolute left-2 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
         >
           <ChevronLeft size={28} />
         </button>
 
-        {/* Contenedor de las categorías */}
-        <div className="overflow-hidden w-full max-w-6xl">
+        {/* Contenedor visible */}
+        <div className="overflow-hidden w-full max-w-6xl px-6 sm:px-2">
           <div
             className="flex transition-transform duration-500 ease-in-out"
             style={{
-              transform: `translateX(-${index * (100 / 3)}%)`,
-              width: `${(categories.length * 100) / 6}%`,
+              transform: `translateX(-${index * (100 / visibleItems)}%)`,
+              width: `${(categories.length * 100) / visibleItems}%`,
             }}
           >
             {categories.map((cat) => (
               <div
                 key={cat.id}
-                className="w-1/3 px-3 flex-shrink-0"
-                style={{ height: "400px" }}
+                className="flex-shrink-0 px-2"
+                style={{
+                  width: `${100 / visibleItems}%`,
+                  height: "380px",
+                }}
               >
                 <div
                   className="relative hover:scale-105 transition-transform duration-300"
@@ -115,16 +136,18 @@ const FeaturedCategories = () => {
                     style={{ objectFit: "cover" }}
                   />
                   <div
-                    className="absolute bottom-0 start-0 w-100 p-3 text-center"
+                    className="absolute bottom-0 start-0 w-full p-3 text-center"
                     style={{
                       background:
                         "linear-gradient(to top, rgba(58,48,41,0.8), transparent)",
                     }}
                   >
-                    <h3 className="text-white fw-bold mb-3">{cat.title}</h3>
+                    <h3 className="text-white fw-bold mb-3 text-lg sm:text-xl">
+                      {cat.title}
+                    </h3>
                     <Link
                       href={cat.link}
-                      className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none"
+                      className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none text-sm sm:text-base"
                     >
                       Ver Colección
                     </Link>
@@ -138,8 +161,8 @@ const FeaturedCategories = () => {
         {/* Flecha Derecha */}
         <button
           onClick={handleNext}
-          disabled={index >= categories.length - 3}
-          className="absolute right-0 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
+          disabled={index >= categories.length - visibleItems}
+          className="absolute right-2 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
         >
           <ChevronRight size={28} />
         </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,75 +13,44 @@ interface Category {
 }
 
 const categories: Category[] = [
-  {
-    id: 1,
-    title: "Engrapadoras",
-    image: "/engrapadora.jpeg",
-    link: "/categories/grapadoras",
-  },
-  {
-    id: 2,
-    title: "Organizadores de Escritorio",
-    image: "/organizadoresEscritorio.jpeg",
-    link: "/categories/organizadores-de-escritorio",
-  },
-  {
-    id: 3,
-    title: "Bolígrafos",
-    image: "/boligrafos.jpeg",
-    link: "/categories/boligrafos",
-  },
-  {
-    id: 4,
-    title: "Cuadernos",
-    image: "/cuadernos.jpeg",
-    link: "/categories/cuadernos",
-  },
-  {
-    id: 5,
-    title: "Tijeras",
-    image: "/tijeras.jpeg",
-    link: "/categories/tijeras",
-  },
-  {
-    id: 6,
-    title: "Carpetas",
-    image: "/carpetas.jpeg",
-    link: "/categories/carpetas",
-  },
+  { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/grapadoras" },
+  { id: 2, title: "Organizadores de Escritorio", image: "/organizadoresEscritorio.jpeg", link: "/categories/organizadores-de-escritorio" },
+  { id: 3, title: "Bolígrafos", image: "/boligrafos.jpeg", link: "/categories/boligrafos" },
+  { id: 4, title: "Cuadernos", image: "/cuadernos.jpeg", link: "/categories/cuadernos" },
+  { id: 5, title: "Tijeras", image: "/tijeras.jpeg", link: "/categories/tijeras" },
+  { id: 6, title: "Carpetas", image: "/carpetas.jpeg", link: "/categories/carpetas" },
 ];
 
 const FeaturedCategories = () => {
-  const [index, setIndex] = useState(0);
-  const [visibleItems, setVisibleItems] = useState(3);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Ajustar cantidad visible según ancho de pantalla
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setVisibleItems(2.5); // móviles
-      } else if (window.innerWidth < 1024) {
-        setVisibleItems(3.5); // tablets o pantallas medianas
-      } else {
-        setVisibleItems(4); // escritorio
-      }
-    };
-
-    handleResize(); // ejecutar al inicio
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handleNext = () => {
-    if (index < categories.length - visibleItems) {
-      setIndex(index + 1);
-    }
+  // Controla visibilidad de flechas dinámicamente
+  const checkScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
   };
 
-  const handlePrev = () => {
-    if (index > 0) {
-      setIndex(index - 1);
-    }
+  useEffect(() => {
+    checkScroll();
+    const container = containerRef.current;
+    if (container) container.addEventListener("scroll", checkScroll);
+    return () => container?.removeEventListener("scroll", checkScroll);
+  }, []);
+
+  const scroll = (direction: "left" | "right") => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cardWidth = container.firstElementChild?.clientWidth || 0;
+    const scrollAmount = cardWidth + 16; // un poco de espacio entre tarjetas
+    container.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -93,76 +62,58 @@ const FeaturedCategories = () => {
         Categorías Destacadas
       </h2>
 
-      <div className="relative flex items-center justify-center">
+      <div className="relative max-w-6xl mx-auto px-4">
         {/* Flecha Izquierda */}
         <button
-          onClick={handlePrev}
-          disabled={index === 0}
-          className="absolute left-2 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
+          onClick={() => scroll("left")}
+          disabled={!canScrollLeft}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition ${
+            !canScrollLeft ? "opacity-40 cursor-not-allowed" : ""
+          }`}
         >
           <ChevronLeft size={28} />
         </button>
 
-        {/* Contenedor visible */}
-        <div className="overflow-hidden w-full max-w-6xl px-6 sm:px-2">
-          <div
-            className="flex transition-transform duration-500 ease-in-out"
-            style={{
-              transform: `translateX(-${index * (100 / visibleItems)}%)`,
-              width: `${(categories.length * 100) / visibleItems}%`,
-            }}
-          >
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex-shrink-0 px-2"
-                style={{
-                  width: `${100 / visibleItems}%`,
-                  height: "380px",
-                }}
-              >
+        {/* Carrusel scrollable */}
+        <div
+          ref={containerRef}
+          className="flex overflow-x-auto scroll-smooth no-scrollbar gap-4"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex-none scroll-snap-align-start w-full sm:w-[48%] lg:w-[32%] relative"
+              style={{ height: "380px", borderRadius: "1rem", overflow: "hidden" }}
+            >
+              <div className="relative hover:scale-[1.03] transition-transform duration-300 h-full">
+                <Image src={cat.image} alt={cat.title} fill style={{ objectFit: "cover" }} />
                 <div
-                  className="relative hover:scale-105 transition-transform duration-300"
+                  className="absolute bottom-0 start-0 w-full p-3 text-center"
                   style={{
-                    borderRadius: "1rem",
-                    overflow: "hidden",
-                    height: "100%",
+                    background: "linear-gradient(to top, rgba(58,48,41,0.8), transparent)",
                   }}
                 >
-                  <Image
-                    src={cat.image}
-                    alt={cat.title}
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
-                  <div
-                    className="absolute bottom-0 start-0 w-full p-3 text-center"
-                    style={{
-                      background:
-                        "linear-gradient(to top, rgba(58,48,41,0.8), transparent)",
-                    }}
+                  <h3 className="text-white fw-bold mb-3 text-lg sm:text-xl">{cat.title}</h3>
+                  <Link
+                    href={cat.link}
+                    className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none text-sm sm:text-base"
                   >
-                    <h3 className="text-white fw-bold mb-3 text-lg sm:text-xl">
-                      {cat.title}
-                    </h3>
-                    <Link
-                      href={cat.link}
-                      className="btn btn-cosmetic-primary rounded-1 px-4 text-decoration-none text-sm sm:text-base"
-                    >
-                      Ver Colección
-                    </Link>
-                  </div>
+                    Ver Colección
+                  </Link>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Flecha Derecha */}
         <button
-          onClick={handleNext}
-          disabled={index >= categories.length - visibleItems}
-          className="absolute right-2 z-10 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition disabled:opacity-40"
+          onClick={() => scroll("right")}
+          disabled={!canScrollRight}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition ${
+            !canScrollRight ? "opacity-40 cursor-not-allowed" : ""
+          }`}
         >
           <ChevronRight size={28} />
         </button>

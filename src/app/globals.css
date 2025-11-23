@@ -818,7 +818,7 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 
 @media screen and (max-width: 500px){
   .logo_img{
-    width: 220px;
+    width: 170px;
   }
 }
 

@@ -1,4 +1,4 @@
-// src/app/services/cartService.ts
+'use client';
 
 import { db } from '../utils/firebase';
 import { 
@@ -8,11 +8,12 @@ import {
   getDoc, 
   updateDoc, 
   deleteDoc, 
-  onSnapshot,
-  arrayUnion,
-  arrayRemove 
+  onSnapshot
 } from 'firebase/firestore';
 import { inventoryService } from './inventoryService';
+
+// Reactivo interno del CartService
+type Listener = (items: CartItem[]) => void;
 
 export interface CartItem {
   id: number;
@@ -20,8 +21,10 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
-  userId: string;
-  dateAdded: string;
+  size?: string;
+  color?: string;
+  userId?: string;
+  dateAdded?: string;
 }
 
 export interface CartData {
@@ -34,343 +37,376 @@ export interface CartData {
 
 class CartService {
   private readonly COLLECTION_NAME = 'carts';
+  private readonly CART_GUEST_KEY = 'cartItems_guest';
 
-  /**
-   * Obtener el carrito del usuario desde Firestore
-   */
+  // Estado reactivo interno
+  private listeners: Listener[] = [];
+
+  /* ================================================================
+      🔹 LISTENER SYSTEM REACTIVO
+  =================================================================*/
+  subscribe(callback: Listener, userId?: string) {
+    this.listeners.push(callback);
+
+    // Estado inicial correcto según usuario
+    if (userId) {
+      this.getUserCart(userId).then(items => callback(items));
+    } else {
+      callback(this.getGuestCart());
+    }
+
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== callback);
+    };
+  }
+
+
+  
+
+
+  // 🔄 Compatibilidad con versiones previas
+  subscribeToCartChanges(callback: Listener) {
+    return this.subscribe(callback);
+  }
+
+  getGuestTotalItems(): number {
+    const cart = this.getGuestCart();
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+
+  private emit(items?: CartItem[]) {
+    if (items) {
+      this.listeners.forEach(cb => cb(items));
+    } else {
+      // Si no hay items → modo invitado
+      const guest = this.getGuestCart();
+      this.listeners.forEach(cb => cb(guest));
+    }
+  }
+
+  /* ================================================================
+      🔹 CARRITO INVITADO
+  =================================================================*/
+  private getGuestCart(): CartItem[] {
+    return JSON.parse(localStorage.getItem(this.CART_GUEST_KEY) || '[]');
+  }
+
+  private saveGuestCart(items: CartItem[]) {
+    localStorage.setItem(this.CART_GUEST_KEY, JSON.stringify(items));
+
+    // Emitir cambios al sistema reactivo
+    this.emit(items);
+
+    // Evento global (para actualizar el ícono)
+    window.dispatchEvent(new Event("cart-updated"));
+  }
+
+  /* ================================================================
+      🔹 GET USER CART
+  =================================================================*/
   async getUserCart(userId: string): Promise<CartItem[]> {
+    if (!userId) {
+      return this.getGuestCart();
+    }
+
     try {
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
       const cartDoc = await getDoc(cartRef);
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data() as CartData;
-        return cartData.items || [];
-      }
-      
+      if (cartDoc.exists()) return (cartDoc.data() as CartData).items || [];
       return [];
+
     } catch (error) {
-      console.error('Error al obtener carrito:', error);
+      console.error("Error al obtener carrito:", error);
       return [];
     }
   }
 
-  /**
-   * Agregar producto al carrito con validación de stock
-   */
-  async addToCart(userId: string, item: Omit<CartItem, 'userId' | 'dateAdded'>): Promise<boolean> {
-    try {
-      // ✅ VALIDAR STOCK ANTES DE AGREGAR AL CARRITO
-      const isAvailable = await inventoryService.isProductAvailable(item.id, item.quantity);
-      if (!isAvailable) {
-        const currentStock = await inventoryService.getProductStock(item.id);
-        throw new Error(`No hay suficiente stock disponible. Stock actual: ${currentStock} unidades`);
-      }
 
-      const cartRef = doc(db, this.COLLECTION_NAME, userId);
-      const cartDoc = await getDoc(cartRef);
-      
-      let items: CartItem[] = [];
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data() as CartData;
-        items = cartData.items || [];
-      }
 
-      // Buscar si el producto ya existe (mismo id)
-      const existingItemIndex = items.findIndex(cartItem => 
-        cartItem.id === item.id
-      );
+  /* ================================================================
+      🔹 ADD TO CART
+  =================================================================*/
 
-      const newItem: CartItem = {
-        ...item,
-        userId,
-        dateAdded: new Date().toISOString()
-      };
+  async addToCart(
+    userId: string,
+    item: Omit<CartItem, 'userId' | 'dateAdded'>
+  ): Promise<boolean> {
 
-      if (existingItemIndex !== -1) {
-        // ✅ VALIDAR STOCK PARA LA CANTIDAD TOTAL (EXISTENTE + NUEVA)
-        const totalQuantity = items[existingItemIndex].quantity + item.quantity;
-        const isAvailableTotal = await inventoryService.isProductAvailable(item.id, totalQuantity);
-        if (!isAvailableTotal) {
-          const currentStock = await inventoryService.getProductStock(item.id);
-          throw new Error(`No hay suficiente stock para la cantidad total. Stock disponible: ${currentStock}, cantidad en carrito: ${items[existingItemIndex].quantity}, cantidad a agregar: ${item.quantity}`);
-        }
-        
-        // Si existe, actualizar cantidad
-        items[existingItemIndex].quantity += item.quantity;
+    /* ======================================
+          🟣 MODO INVITADO (sin login)
+    ====================================== */
+    if (!userId) {
+      const guestItems = this.getGuestCart();
+      const index = guestItems.findIndex(i => i.id === item.id);
+
+      if (index !== -1) {
+        guestItems[index].quantity += item.quantity;
       } else {
-        // Si no existe, agregar nuevo item
-        items.push(newItem);
+        guestItems.push({
+          ...item,
+          dateAdded: new Date().toISOString()
+        });
       }
 
-      // Calcular totales
-      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      this.saveGuestCart(guestItems);
 
-      const cartData: CartData = {
+
+      return true;
+    }
+
+
+    
+
+    /* ======================================
+          🟢 MODO LOGUEADO (Firebase)
+    ====================================== */
+    try {
+      // 🛑 Validar stock del inventario
+      const isAvailable = await inventoryService.isProductAvailable(
+        item.id,
+        item.quantity
+      );
+
+      if (!isAvailable) {
+        const stock = await inventoryService.getProductStock(item.id);
+        throw new Error(`No hay suficiente stock. Stock disponible: ${stock}`);
+      }
+
+      const cartRef = doc(db, this.COLLECTION_NAME, userId);
+      const cartDoc = await getDoc(cartRef);
+
+      let items: CartItem[] = [];
+      if (cartDoc.exists()) {
+        items = (cartDoc.data() as CartData).items || [];
+      }
+
+      const index = items.findIndex(i => i.id === item.id);
+
+      if (index !== -1) {
+        // sumar cantidad
+        const newQuantity = items[index].quantity + item.quantity;
+
+        const available = await inventoryService.isProductAvailable(item.id, newQuantity);
+        if (!available) {
+          const stock = await inventoryService.getProductStock(item.id);
+          throw new Error(`Cantidad supera stock. Stock actual: ${stock}`);
+        }
+
+        items[index].quantity += item.quantity;
+
+      } else {
+        items.push({
+          ...item,
+          userId,
+          dateAdded: new Date().toISOString()
+        });
+      }
+
+      const totalItems = items.reduce((a, b) => a + b.quantity, 0);
+      const totalPrice = items.reduce((a, b) => a + b.quantity * b.price, 0);
+
+      const newCart: CartData = {
         userId,
         items,
-        lastUpdated: new Date().toISOString(),
         totalItems,
-        totalPrice
+        totalPrice,
+        lastUpdated: new Date().toISOString()
       };
 
-      await setDoc(cartRef, cartData);
-      
-      // Disparar evento para actualizar UI
-      this.dispatchCartUpdateEvent();
-      
+      await setDoc(cartRef, newCart);
+
+      // 🔥 emitir actualización a los listeners del cartService
+      this.emit(items);
+
+      // 🔥 notificación global (carrito actualizado en otras páginas)
+      window.dispatchEvent(new Event("cart-updated"));
+
       return true;
+
     } catch (error) {
-      console.error('Error al agregar al carrito:', error);
-      throw error; // Re-lanzar el error para que el componente lo maneje
+      console.error("Error al agregar al carrito:", error);
+      throw error;
     }
   }
 
-  /**
-   * Actualizar cantidad de un producto en el carrito con validación de stock
-   */
-  async updateCartItemQuantity(userId: string, itemId: number, newQuantity: number): Promise<boolean> {
-    try {
-      if (newQuantity <= 0) {
-        return await this.removeFromCart(userId, itemId);
-      }
 
-      // ✅ VALIDAR STOCK ANTES DE ACTUALIZAR CANTIDAD
-      const isAvailable = await inventoryService.isProductAvailable(itemId, newQuantity);
-      if (!isAvailable) {
-        const currentStock = await inventoryService.getProductStock(itemId);
-        throw new Error(`No hay suficiente stock disponible. Stock actual: ${currentStock} unidades, cantidad solicitada: ${newQuantity}`);
-      }
-
-      const cartRef = doc(db, this.COLLECTION_NAME, userId);
-      const cartDoc = await getDoc(cartRef);
-      
-      if (!cartDoc.exists()) {
-        return false;
-      }
-
-      const cartData = cartDoc.data() as CartData;
-      const items = cartData.items || [];
-
-      const itemIndex = items.findIndex(item => 
-        item.id === itemId
-      );
-
-      if (itemIndex === -1) {
-        return false;
-      }
-
-      items[itemIndex].quantity = newQuantity;
-
-      // Recalcular totales
-      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      const updatedCartData: CartData = {
-        ...cartData,
-        items,
-        lastUpdated: new Date().toISOString(),
-        totalItems,
-        totalPrice
-      };
-
-      await setDoc(cartRef, updatedCartData);
-      
-      this.dispatchCartUpdateEvent();
-      
+  /* ================================================================
+    🔹 CLEAR CART
+================================================================*/
+  async clearCart(userId?: string): Promise<boolean> {
+    // Invitado
+    if (!userId) {
+      localStorage.removeItem(this.CART_GUEST_KEY);
+      this.emit([]);
+      window.dispatchEvent(new Event("cart-updated"));
       return true;
-    } catch (error) {
-      console.error('Error al actualizar cantidad:', error);
-      throw error; // Re-lanzar el error para que el componente lo maneje
     }
-  }
 
-  /**
-   * Remover producto del carrito
-   */
-  async removeFromCart(userId: string, itemId: number): Promise<boolean> {
+    // Logueado
     try {
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
-      const cartDoc = await getDoc(cartRef);
-      
-      if (!cartDoc.exists()) {
-        return false;
-      }
-
-      const cartData = cartDoc.data() as CartData;
-      const items = cartData.items || [];
-
-      const filteredItems = items.filter(item => 
-        item.id !== itemId
-      );
-
-      // Recalcular totales
-      const totalItems = filteredItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = filteredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      const updatedCartData: CartData = {
-        ...cartData,
-        items: filteredItems,
-        lastUpdated: new Date().toISOString(),
-        totalItems,
-        totalPrice
-      };
-
-      await setDoc(cartRef, updatedCartData);
-      
-      this.dispatchCartUpdateEvent();
-      
-      return true;
-    } catch (error) {
-      console.error('Error al remover del carrito:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Limpiar todo el carrito
-   */
-  async clearCart(userId: string): Promise<boolean> {
-    try {
-      const cartRef = doc(db, this.COLLECTION_NAME, userId);
-      
-      const emptyCartData: CartData = {
+      await setDoc(cartRef, {
         userId,
         items: [],
-        lastUpdated: new Date().toISOString(),
         totalItems: 0,
-        totalPrice: 0
-      };
-
-      await setDoc(cartRef, emptyCartData);
-      
-      this.dispatchCartUpdateEvent();
-      
+        totalPrice: 0,
+        lastUpdated: new Date().toISOString()
+      });
+      this.emit([]);
+      window.dispatchEvent(new Event("cart-updated"));
       return true;
     } catch (error) {
-      console.error('Error al limpiar carrito:', error);
+      console.error("Error al limpiar el carrito:", error);
       return false;
     }
   }
 
-  /**
-   * Obtener totales del carrito
-   */
-  async getCartTotals(userId: string): Promise<{ totalItems: number; totalPrice: number }> {
+
+
+  
+
+  /* ================================================================
+      🔹 UPDATE QUANTITY
+  =================================================================*/
+  async updateCartItemQuantity(userId: string, itemId: number, qty: number): Promise<boolean> {
+
+    /* Invitado */
+    if (!userId) {
+      const items = this.getGuestCart();
+      const index = items.findIndex(i => i.id === itemId);
+
+      if (index === -1) return false;
+
+      if (qty <= 0) items.splice(index, 1);
+      else items[index].quantity = qty;
+
+      this.saveGuestCart(items);
+      return true;
+    }
+
+    /* Logueado */
     try {
+      const available = await inventoryService.isProductAvailable(itemId, qty);
+      if (!available) {
+        const stock = await inventoryService.getProductStock(itemId);
+        throw new Error(`Stock insuficiente. Disponible: ${stock}`);
+      }
+
       const cartRef = doc(db, this.COLLECTION_NAME, userId);
       const cartDoc = await getDoc(cartRef);
-      
-      if (cartDoc.exists()) {
-        const cartData = cartDoc.data() as CartData;
-        return {
-          totalItems: cartData.totalItems || 0,
-          totalPrice: cartData.totalPrice || 0
-        };
-      }
-      
-      return { totalItems: 0, totalPrice: 0 };
+      if (!cartDoc.exists()) return false;
+
+      const cartData = cartDoc.data() as CartData;
+      const items = cartData.items;
+
+      const index = items.findIndex(i => i.id === itemId);
+      if (index === -1) return false;
+
+      if (qty <= 0) items.splice(index, 1);
+      else items[index].quantity = qty;
+
+      const totalItems = items.reduce((a, b) => a + b.quantity, 0);
+      const totalPrice = items.reduce((a, b) => a + b.quantity * b.price, 0);
+
+      await setDoc(cartRef, {
+        ...cartData,
+        items,
+        totalItems,
+        totalPrice,
+        lastUpdated: new Date().toISOString()
+      });
+
+      this.emit(items);
+      return true;
+
     } catch (error) {
-      console.error('Error al obtener totales:', error);
-      return { totalItems: 0, totalPrice: 0 };
+      console.error("Error actualizando cantidad:", error);
+      throw error;
     }
   }
 
-  /**
-   * Migrar carrito desde localStorage a Firebase (solo una vez)
-   */
+
+  /* ================================================================
+      🔹 REMOVE ITEM
+  =================================================================*/
+  async removeFromCart(userId: string, itemId: number): Promise<boolean> {
+
+    /* Invitado */
+    if (!userId) {
+      const items = this.getGuestCart().filter(i => i.id !== itemId);
+      this.saveGuestCart(items);
+      return true;
+    }
+
+    /* Logueado */
+    try {
+      const cartRef = doc(db, this.COLLECTION_NAME, userId);
+      const cartDoc = await getDoc(cartRef);
+      if (!cartDoc.exists()) return false;
+
+      const cartData = cartDoc.data() as CartData;
+      const items = cartData.items.filter(i => i.id !== itemId);
+
+      const totalItems = items.reduce((a, b) => a + b.quantity, 0);
+      const totalPrice = items.reduce((a, b) => a + b.quantity * b.price, 0);
+
+      await setDoc(cartRef, {
+        ...cartData,
+        items,
+        totalItems,
+        totalPrice,
+        lastUpdated: new Date().toISOString()
+      });
+
+      this.emit(items);
+      return true;
+
+    } catch (error) {
+      console.error("Error al remover item:", error);
+      return false;
+    }
+  }
+
+  /* ================================================================
+      🔹 MIGRATE LOCAL → FIREBASE
+  =================================================================*/
   async migrateFromLocalStorage(userId: string): Promise<boolean> {
     try {
-      // Verificar si ya existe un carrito en Firebase
-      const existingCart = await this.getUserCart(userId);
-      if (existingCart.length > 0) {
-        return false;
-      }
+      if (!userId) return false;
 
-      // Intentar obtener desde localStorage
-      const localCartKey = `cartItems_${userId}`;
-      const localCartData = localStorage.getItem(localCartKey);
-      
-      if (!localCartData) {
-        return false;
-      }
+      const existing = await this.getUserCart(userId);
+      if (existing.length > 0) return false;
 
-      const localItems = JSON.parse(localCartData);
-      
-      if (!Array.isArray(localItems) || localItems.length === 0) {
-        return false;
-      }
+      const guest = this.getGuestCart();
+      if (guest.length === 0) return false;
 
-      // Convertir items de localStorage al formato de Firebase
-      const firebaseItems: CartItem[] = localItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity: item.quantity,
-        size: item.size || 'M',
-        color: item.color || 'Default',
+      const merged = guest.map(i => ({
+        ...i,
         userId,
         dateAdded: new Date().toISOString()
       }));
 
-      // Calcular totales
-      const totalItems = firebaseItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = firebaseItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const totalItems = merged.reduce((a, b) => a + b.quantity, 0);
+      const totalPrice = merged.reduce((a, b) => a + b.quantity * b.price, 0);
 
-      const cartData: CartData = {
+      await setDoc(doc(db, this.COLLECTION_NAME, userId), {
         userId,
-        items: firebaseItems,
-        lastUpdated: new Date().toISOString(),
+        items: merged,
         totalItems,
-        totalPrice
-      };
+        totalPrice,
+        lastUpdated: new Date().toISOString()
+      });
 
-      // Guardar en Firebase
-      const cartRef = doc(db, this.COLLECTION_NAME, userId);
-      await setDoc(cartRef, cartData);
-
-      // Limpiar localStorage después de migrar exitosamente
-      localStorage.removeItem(localCartKey);
-      
-      this.dispatchCartUpdateEvent();
-      
+      localStorage.removeItem(this.CART_GUEST_KEY);
+      this.emit(merged);
       return true;
+
     } catch (error) {
-      console.error('Error durante la migración:', error);
+      console.error("Error migrando carrito:", error);
       return false;
     }
   }
-
-  /**
-   * Escuchar cambios en tiempo real del carrito
-   */
-  subscribeToCartChanges(userId: string, callback: (items: CartItem[]) => void): () => void {
-    const cartRef = doc(db, this.COLLECTION_NAME, userId);
-    
-    return onSnapshot(cartRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        const cartData = docSnapshot.data() as CartData;
-        const items = cartData.items || [];
-        callback(items);
-      } else {
-        callback([]);
-      }
-    }, (error) => {
-      console.error('Error en la suscripción del carrito:', error);
-      callback([]);
-    });
-  }
-
-  /**
-   * Disparar evento personalizado para notificar cambios en el carrito
-   */
-  private dispatchCartUpdateEvent(): void {
-    window.dispatchEvent(new Event('cart-updated'));
-  }
 }
 
-// Instancia singleton del servicio de carrito
 export const cartService = new CartService();

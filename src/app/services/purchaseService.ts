@@ -30,6 +30,7 @@ export interface DailyOrder {
   userName?: string; // Opcional para compatibilidad con pedidos existentes
   userEmail?: string; // Opcional: email del usuario
   date: string;
+  guestCheckout?: boolean; // ✅ agregado
   items: PurchaseItem[];
   total: number;
   orderTime: string;
@@ -72,199 +73,94 @@ function validatePurchase(purchase: Omit<Purchase, 'id'>) {
  * Guarda una nueva compra en Firestore en la subcolección del usuario
  * Y también intenta guardarla en la colección diaria de pedidos para fácil visualización (opcional)
  */
-export const savePurchase = async (purchase: Omit<Purchase, 'id'>, userName?: string, userEmail?: string): Promise<string> => {
+
+
+export const savePurchase = async (
+  purchase: Omit<Purchase, 'id'>,
+  userName?: string,
+  userEmail?: string
+): Promise<string> => {
   try {
     validatePurchase(purchase);
-    
+
     const currentDate = new Date();
     const dateString = purchase.date || currentDate.toISOString();
-    const dayKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
-    SecureLogger.log('Saving purchase', { 
-      userId: purchase.userId, 
-      total: purchase.total, 
-      itemCount: purchase.items.length 
-    });
+    const dayKey = currentDate.toISOString().split('T')[0];
 
-    // ✅ VERIFICAR AUTENTICACIÓN ANTES DE CONTINUAR
     const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
-    }
+    const isGuest = !currentUser;
+    const finalUserId = isGuest ? 'guest' : purchase.userId;
 
-    // ✅ PROCESAR INVENTARIO ANTES DE GUARDAR LA COMPRA
-    try {
-      SecureLogger.log('Processing inventory reduction for order');
-      await inventoryService.processOrder(purchase.items.map(item => ({
+    // Reducir inventario
+    await inventoryService.processOrder(
+      purchase.items.map(item => ({
         productId: parseInt(item.id),
         quantity: item.quantity
-      })));
-      
-      SecureLogger.log('Inventory processed successfully');
-    } catch (inventoryError: any) {
-      SecureLogger.error('Inventory processing failed', inventoryError);
-      
-      // Lanzar error más específico para mejor UX
-      if (inventoryError.message.includes('Stock insuficiente')) {
-        throw new Error(`❌ Stock insuficiente: ${inventoryError.message}`);
-      } else if (inventoryError.message.includes('no está registrado')) {
-        throw new Error(`❌ Producto no disponible: ${inventoryError.message}`);
-      } else {
-        throw new Error(`❌ Error al verificar inventario: ${inventoryError.message || 'Verifica la disponibilidad de los productos'}`);
-      }
-    }
-    
-    // 1. OPERACIÓN PRINCIPAL: Guardar en la subcolección del usuario
-    const userCollectionRef = collection(db, `users/${purchase.userId}/purchases`);
-    
-    // ✅ Generar el documento primero para obtener el ID
-    const tempDocRef = doc(userCollectionRef);
+      }))
+    );
+
+    // Guardar compra principal
+    const purchaseRef = isGuest
+      ? collection(db, 'guestPurchases')
+      : collection(db, `users/${purchase.userId}/purchases`);
+
+    const tempDocRef = doc(purchaseRef);
     const purchaseId = tempDocRef.id;
-    
-    // ✅ Crear el documento con el purchaseId incluido desde el inicio
+
     await setDoc(tempDocRef, {
       ...purchase,
+      userId: finalUserId,
+      guestCheckout: isGuest,
       date: dateString,
-      purchaseId: purchaseId  // Incluir el ID desde el momento de creación
+      purchaseId
     });
-    
-    // 2. OPERACIÓN OPCIONAL: Intentar guardar en la colección diaria (sin fallar si no puede)
-    try {
-      // ✅ VERIFICAR TOKEN DE AUTENTICACIÓN
-      const token = await currentUser.getIdToken();
-      
-      // ✅ ESPERAR UN POCO PARA ASEGURAR QUE LA AUTENTICACIÓN ESTÉ COMPLETAMENTE ESTABLECIDA
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
-      
-      // ✅ NUEVA LÓGICA: No intentar leer el documento, usar merge directo
-      
-      const orderData = {
-        id: purchaseId,  // Usar el purchaseId generado
-        userId: purchase.userId,
-        userName: userName || (userEmail ? userEmail.split('@')[0] : undefined), // Fallback al email si no hay userName
-        userEmail: userEmail || undefined, // Asegurar que se guarde el email
-        date: dateString,
-        items: purchase.items,
-        total: purchase.total,
-        orderTime: currentDate.toLocaleTimeString('es-ES', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })
-      };
-      
-      // ✅ NUEVA ESTRATEGIA: Usar arrayUnion para agregar órdenes de manera atómica
-      
-      // Preparar los datos base del documento si no existe
-      const baseDocData = {
-        date: dayKey,
-        dateFormatted: currentDate.toLocaleDateString('es-ES', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        orders: [],
-        totalOrdersCount: 0,
-        totalDayAmount: 0,
-        createdAt: currentDate.toISOString(),
-        lastUpdated: currentDate.toISOString()
-      };
-      
-      // ESTRATEGIA MEJORADA: Intentar directamente con arrayUnion
-      let success = false;
-      
+
+    // Guardar en dailyOrders solo si hay usuario autenticado
+    if (!isGuest) {
       try {
-        await updateDoc(dailyOrderRef, {
-          orders: arrayUnion(orderData),
-          totalOrdersCount: increment(1),
-          totalDayAmount: increment(purchase.total),
-          lastUpdated: currentDate.toISOString()
-        });
-        
-        success = true;
-      } catch (updateError: any) {
-        // Si arrayUnion falla, probablemente el documento no existe
-        try {
-          // Crear documento base sin sobrescribir órdenes existentes
-          await setDoc(dailyOrderRef, baseDocData, { merge: true });
-          
-          // Intentar arrayUnion de nuevo
-          await updateDoc(dailyOrderRef, {
+        const dailyOrderRef = doc(db, `dailyOrders/${dayKey}`);
+
+        const orderData: DailyOrder = {
+          id: purchaseId,
+          userId: finalUserId,
+          guestCheckout: isGuest,
+          userName: userName || (userEmail ? userEmail.split('@')[0] : undefined),
+          userEmail: userEmail || undefined,
+          date: dateString,
+          items: purchase.items,
+          total: purchase.total,
+          orderTime: currentDate.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+
+        await setDoc(
+          dailyOrderRef,
+          {
             orders: arrayUnion(orderData),
             totalOrdersCount: increment(1),
             totalDayAmount: increment(purchase.total),
             lastUpdated: currentDate.toISOString()
-          });
-          
-          success = true;
-        } catch (secondError: any) {
-          // ÚLTIMO RECURSO: Usar transacción para leer y escribir manualmente
-          try {
-            const { runTransaction } = await import('firebase/firestore');
-            await runTransaction(db, async (transaction) => {
-              const docSnap = await transaction.get(dailyOrderRef);
-              
-              if (docSnap.exists()) {
-                const existingData = docSnap.data();
-                const orders: DailyOrder[] = existingData.orders || [];
-                orders.push(orderData);
-                
-                transaction.update(dailyOrderRef, {
-                  orders: orders,
-                  totalOrdersCount: orders.length,
-                  totalDayAmount: orders.reduce((sum: number, order: DailyOrder) => sum + order.total, 0),
-                  lastUpdated: currentDate.toISOString()
-                });
-              } else {
-                transaction.set(dailyOrderRef, {
-                  ...baseDocData,
-                  orders: [orderData],
-                  totalOrdersCount: 1,
-                  totalDayAmount: purchase.total
-                });
-              }
-            });
-            
-            success = true;
-          } catch (transactionError: any) {
-            // DEBUG: Transacción también falló
-          }
-        }
+          },
+          { merge: true }
+        );
+      } catch (dailyError) {
+        console.warn('No se pudo guardar en dailyOrders:', dailyError);
       }
-      
-      if (!success) {
-        // DEBUG: Todas las estrategias fallaron para dailyOrders
-      }
-      
-    } catch (dailyOrderError: any) {
-      // DEBUG: Error guardando en dailyOrders (no crítico)
-      
-      // Verificar si el usuario está autenticado
-      if (!currentUser) {
-        console.error('❌ [DEBUG] CRÍTICO: Usuario no autenticado al intentar guardar en dailyOrders');
-      } else {
-        console.error('❌ [DEBUG] Usuario autenticado correctamente:', {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          emailVerified: currentUser.emailVerified
-        });
-      }
-      
-      // No fallar si no puede guardar en dailyOrders - solo continuar
     }
-    
-    // SIEMPRE retornar el ID exitosamente, ya que la operación principal funcionó
-    return purchaseId;  // Usar el purchaseId generado
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Mensaje de error:', error.message);
-      console.error('Stack trace:', error.stack);
-    }
-    throw error;
+
+    return purchaseId;
+  } catch (error: any) {
+    console.error('Error en savePurchase:', error);
+    // Lanzar un mensaje más específico para el front
+    throw new Error(error.message || 'Error desconocido al guardar la compra');
   }
 };
+
+
+
+
 
 /**
  * Obtiene todas las compras de un usuario desde la subcolección
@@ -557,52 +453,8 @@ export const getTodayOrders = async (): Promise<DailyOrdersDocument | null> => {
   return getDailyOrders(today);
 };
 
-/**
- * REGLAS DE FIRESTORE ACTUALIZADAS (con UID específico del admin):
- * 
- * rules_version = '2';
- * service cloud.firestore {
- *   match /databases/{database}/documents {
- * 
- *     // ✅ Usuarios: Solo el dueño puede leer o modificar su perfil
- *     match /users/{userId} {
- *       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
- *       allow create: if request.auth != null;
- *       
- *       // ✅ Subcolecciones del usuario (compras, favoritos)
- *       match /{collection}/{document} {
- *         allow read, write: if request.auth != null && request.auth.uid == userId;
- *       }
- *     }
- * 
- *     // ✅ Productos: lectura pública, escritura solo para admins
- *     match /products/{productId} {
- *       allow read: if true;
- *       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
- *       
- *       // ✅ Comentarios de productos
- *       match /comments/{commentId} {
- *         allow read: if request.auth != null;
- *         allow create: if request.auth != null;
- *         allow update: if request.auth != null;
- *         allow delete: if false;
- *       }
- *     }
- *    
- *     // ✅ ACTUALIZADO: Pedidos diarios para administración
- *     match /dailyOrders/{date} {
- *       // CUALQUIER usuario autenticado puede escribir (para guardar pedidos)
- *       allow write: if request.auth != null;
- *       // SOLO el admin puede leer (usando UID específico)
- *       allow read: if request.auth != null && 
- *         request.auth.uid == "byRByEqdFOYxXOmUu9clvujvIUg1";
- *     }
- *   }
- * }
- */
-/**
- * Función auxiliar para obtener información del usuario desde Firebase Auth
- */
+
+
 export const getUserDisplayInfo = (user: any) => {
   if (!user) return { userName: undefined, userEmail: undefined };
   

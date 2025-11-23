@@ -72,6 +72,21 @@ const DeliveryOrdersPage = () => {
     }
   };
 
+
+  const formatOrderDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'assigned': return 'warning';
@@ -238,12 +253,7 @@ const DeliveryOrdersPage = () => {
                             <div>
                               <div className="fw-bold small">{order.userName}</div>
                               <small className="text-muted">
-                                {new Date(order.date).toLocaleDateString('es-ES', { 
-                                  day: '2-digit', 
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
+                                {formatOrderDate(order.date)}
                               </small>
                             </div>
                           </div>

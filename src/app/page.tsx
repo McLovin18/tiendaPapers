@@ -54,13 +54,7 @@ export default function Home() {
 
   // Función que se llama al hacer click en un producto
   const handleCardClick = (productId: number) => {
-    if (!user) {
-      // Guardamos la ruta que quería visitar
-      sessionStorage.setItem('redirectAfterLogin', `/products/${productId}`);
-      router.push('/auth/login'); // Redirigimos a login
-    } else {
-      router.push(`/products/${productId}`);
-    }
+    router.push(`/products/${productId}`);
   };
 
   

@@ -2,9 +2,12 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getFunctions } from "firebase/functions";
 
-// Check if we're in a build environment and provide fallback values
-const isBuilding = process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+// Detectar si estamos en build de Vercel sin variables
+const isBuilding =
+  process.env.NODE_ENV === 'production' &&
+  !process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || (isBuilding ? 'fake-api-key-for-build' : ''),
@@ -15,12 +18,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || (isBuilding ? 'fake-app-id' : ''),
 };
 
-// Initialize Firebase only if we have valid config or we're not building
 let app: any = null;
 let auth: any = null;
 let db: any = null;
 let storage: any = null;
 let googleProvider: any = null;
+let functions: any = null;
 
 if (!isBuilding) {
   try {
@@ -29,8 +32,8 @@ if (!isBuilding) {
     db = getFirestore(app);
     storage = getStorage(app);
     googleProvider = new GoogleAuthProvider();
+    functions = getFunctions(app);   // ← 🟢 AQUÍ SE CREA LA INSTANCIA REAL
   } catch (error) {
-    // ✅ Log de error seguro - sin exponer configuración sensible
     console.error('❌ Error al inicializar Firebase');
     if (process.env.NODE_ENV === 'development') {
       console.error('Detalles del error:', error);
@@ -38,4 +41,4 @@ if (!isBuilding) {
   }
 }
 
-export { app, auth, db, storage, googleProvider };
+export { app, auth, db, storage, googleProvider, functions };

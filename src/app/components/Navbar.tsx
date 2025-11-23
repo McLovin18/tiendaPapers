@@ -78,23 +78,39 @@ const newAlign: 'start' | 'end' = spaceRight < 650 ? 'end' : 'start';
     setIsClient(true);
   }, []);
 
+
   useEffect(() => {
-    if (!isClient || !user?.uid) {
-      setCartCount(0);
-      return;
+    if (!isClient) return;
+
+    // 🟣 INVITADO
+    if (!user?.uid) {
+      const updateGuestCount = () => {
+        const guestItems = cartService.getGuestCart();
+        const count = guestItems.reduce((acc, item) => acc + item.quantity, 0);
+        setCartCount(count);
+      };
+
+      updateGuestCount(); // cargar inicial
+      window.addEventListener("cart-updated", updateGuestCount);
+
+      return () => {
+        window.removeEventListener("cart-updated", updateGuestCount);
+      };
     }
 
-    // Migrar desde localStorage si es necesario
+    // 🟢 LOGUEADO
     cartService.migrateFromLocalStorage(user.uid);
 
-    // Suscribirse a cambios del carrito en tiempo real
-    const unsubscribe = cartService.subscribeToCartChanges(user.uid, (items) => {
+    const unsubscribe = cartService.subscribe((items) => {
       const count = items.reduce((acc, item) => acc + item.quantity, 0);
       setCartCount(count);
-    });
+    }, user.uid);
 
     return unsubscribe;
   }, [user?.uid, isClient]);
+
+
+
 
   // Cerrar menú si se hace click fuera (solo para móviles)
   useEffect(() => {

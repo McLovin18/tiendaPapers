@@ -59,10 +59,42 @@ const convertInventoryToProduct = (inventory: ProductInventory): Product => {
 
 const ProductDetailPage = () => {
   // Control de comentarios y respuestas visibles
+  //constantes y variables
   const INITIAL_COMMENTS_TO_SHOW = 3;
   const INITIAL_REPLIES_TO_SHOW = 2;
   const [commentsToShow, setCommentsToShow] = useState(INITIAL_COMMENTS_TO_SHOW);
   const [repliesToShow, setRepliesToShow] = useState<{ [key: number]: number }>({});
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [smartRecommendations, setSmartRecommendations] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  // Comentarios por producto (Firestore)
+  const [rating, setRating] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [replyText, setReplyText] = useState<{ [key: number]: string | undefined }>({}); // para respuestas
+  // Estado para mostrar el botón y picker de emojis en comentario principal
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiButtonRef = React.useRef<HTMLButtonElement>(null);
+  const emojiPickerRef = React.useRef<HTMLDivElement>(null);
+  const [showCommentActions, setShowCommentActions] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const { user } = useAuth();
+  const params = useParams();
+  const productId = Number(params.id);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState('details');
+  const [addSuccess, setAddSuccess] = useState(false);
+  const [stockAvailable, setStockAvailable] = useState<boolean>(true);
+  const [stockAmount, setStockAmount] = useState<number>(0);
+  const [product, setProduct] = useState<Product | undefined>(undefined);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+
+  const [replyEmojiState, setReplyEmojiState] = useState<{ [key: number]: { button?: boolean; picker?: boolean } }>({});
+  const replyEmojiButtonRefs = React.useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const replyEmojiPickerRefs = React.useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   // Función para mostrar más comentarios
   const handleShowMoreComments = () => {
@@ -76,12 +108,7 @@ const ProductDetailPage = () => {
       [idx]: Math.min((prev[idx] || INITIAL_REPLIES_TO_SHOW) + INITIAL_REPLIES_TO_SHOW, totalReplies)
     }));
   };
-  const { user } = useAuth();
-  const params = useParams();
-  const productId = Number(params.id);
-  
-  const [product, setProduct] = useState<Product | undefined>(undefined);
-  const [loadingProduct, setLoadingProduct] = useState(true);
+
   
   // ✅ Buscar producto tanto en productos estáticos como en inventario
   useEffect(() => {
@@ -115,11 +142,7 @@ const ProductDetailPage = () => {
     }
   }, [productId]);
   
-  const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('details');
-  const [addSuccess, setAddSuccess] = useState(false);
-  const [stockAvailable, setStockAvailable] = useState<boolean>(true);
-  const [stockAmount, setStockAmount] = useState<number>(0);
+
 
   // ✅ Verificar stock disponible cuando cambie el producto o la cantidad
   useEffect(() => {
@@ -144,25 +167,8 @@ const ProductDetailPage = () => {
     
     return () => clearTimeout(timeoutId);
   }, [product?.id, quantity]);
-  const [isFavourite, setIsFavourite] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [smartRecommendations, setSmartRecommendations] = useState<Product[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
-  
-  // Comentarios por producto (Firestore)
-  const [rating, setRating] = useState(0);
-  const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState<any[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [averageRating, setAverageRating] = useState(0);
-  const [replyText, setReplyText] = useState<{ [key: number]: string | undefined }>({}); // para respuestas
-  // Estado para mostrar el botón y picker de emojis en comentario principal
-  const [showEmojiButton, setShowEmojiButton] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiButtonRef = React.useRef<HTMLButtonElement>(null);
-  const emojiPickerRef = React.useRef<HTMLDivElement>(null);
 
-  const [showCommentActions, setShowCommentActions] = useState(false);
+
   // Cerrar el emoji picker solo si se hace clic fuera del input, botón y picker
   useEffect(() => {
     if (!showEmojiPicker) return;
@@ -188,9 +194,7 @@ const ProductDetailPage = () => {
   // Estado para mostrar el botón y picker de emojis en cada campo de respuesta
   // Estado para controlar el flujo de emoji en cada reply
   // Estado para controlar el emoji en cada reply: { idx: { button: bool, picker: bool } }
-  const [replyEmojiState, setReplyEmojiState] = useState<{ [key: number]: { button?: boolean; picker?: boolean } }>({});
-  const replyEmojiButtonRefs = React.useRef<{ [key: number]: HTMLButtonElement | null }>({});
-  const replyEmojiPickerRefs = React.useRef<{ [key: number]: HTMLDivElement | null }>({});
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       Object.keys(replyEmojiState).forEach(idxStr => {
@@ -290,8 +294,6 @@ const ProductDetailPage = () => {
         image: product.images?.[0] || "/images/product1.svg",
       });
     }
-
-    const favs = await getUserFavourites(user.uid);
 
     window.dispatchEvent(new Event("favourites-updated"));
 
@@ -466,64 +468,84 @@ const ProductDetailPage = () => {
       console.error("❌ Error al enviar respuesta:", error);
     }
   };
-  
-  
 
-  const [errorMessage, setErrorMessage] = useState('');
 
+  
   const handleAddToCart = async () => {
-    // Clear any previous error messages
-    setErrorMessage('');
-    
-    if (!product) {
-      setErrorMessage('Error: Producto no cargado');
-      return;
-    }
-    
-    if (!user?.uid) {
-      setErrorMessage('Debes iniciar sesión para agregar productos al carrito');
-      return;
-    }
-    
-    if (quantity < 1) {
-      setErrorMessage('La cantidad debe ser mayor a 0');
-      return;
-    }
-    
-    try {
-      const cartItem = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0] || '/images/product1.svg',
-        quantity
-      };
+    setErrorMessage("");
 
-      await cartService.addToCart(user.uid, cartItem);
-      
+    if (!product) {
+      setErrorMessage("Error: Producto no cargado");
+      return;
+    }
+
+    if (quantity < 1) {
+      setErrorMessage("La cantidad debe ser mayor a 0");
+      return;
+    }
+
+    if (!stockAvailable) {
+      setErrorMessage(`Solo hay ${stockAmount} unidades disponibles`);
+      return;
+    }
+
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0] || "/images/product1.svg",
+      quantity,
+    };
+
+    /* -------------------------------------------------
+        🟦 MODO INVITADO
+      ------------------------------------------------- */
+    if (!user?.uid) {
+      const GUEST_KEY = "cartItems_guest"; // 🔥 UNIFICADO
+      const existing = JSON.parse(localStorage.getItem(GUEST_KEY) || "[]");
+
+      const index = existing.findIndex((item: any) => item.id === product.id);
+
+      if (index >= 0) {
+        const newQty = existing[index].quantity + quantity;
+        if (newQty > stockAmount) {
+          setErrorMessage(`Solo hay ${stockAmount} unidades disponibles`);
+          return;
+        }
+        existing[index].quantity = newQty;
+      } else {
+        existing.push(cartItem);
+      }
+
+      localStorage.setItem(GUEST_KEY, JSON.stringify(existing));
+
+      // 🔥 MANDAR EVENTO PARA ACTUALIZAR LA CART PAGE
+      window.dispatchEvent(new Event("cart-updated"));
+
       setAddSuccess(true);
       setTimeout(() => setAddSuccess(false), 3000);
-      
-      // Limpiar campos después de agregar exitosamente
       setQuantity(1);
-      
+      return;
+    }
+
+    /* -------------------------------------------------
+        🟩 MODO LOGUEADO
+      ------------------------------------------------- */
+    try {
+      await cartService.addToCart(user.uid, cartItem);
+      setAddSuccess(true);
+      setTimeout(() => setAddSuccess(false), 3000);
+      setQuantity(1);
     } catch (error: any) {
-      console.error('Error adding to cart:', error);
-      // Mostrar mensaje específico de stock si es disponible
-      if (error.message && error.message.includes('stock')) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage('Error al agregar el producto al carrito');
-      }
+      console.error("Error adding to cart:", error);
+      setErrorMessage(error.message || "Error al agregar el producto al carrito");
     }
   };
 
 
-  // Si el usuario no está autenticado, mostrar mensaje de inicio de sesión requerido
-  if (!user) {
-    return <LoginRequired message="Para ver los detalles del producto y realizar compras, por favor inicia sesión." />;
-  }
-  
+
+
+
   // Si no se encuentra el producto, mostrar mensaje de error
   if (!product) {
     return (

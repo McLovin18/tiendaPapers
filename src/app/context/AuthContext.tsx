@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../utils/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from "uuid";
 
 interface UserData {
   email: string;
@@ -51,6 +52,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [justRegistered, setJustRegistered] = useState(false);
+  const [anonymousId, setAnonymousId] = useState<string | null>(null);
+  
 
 
   // Helper para cargar datos del usuario desde Firestore
@@ -137,6 +140,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      let anon = localStorage.getItem('anonymousId');
+      if (!anon) {
+        anon = uuidv4();
+        localStorage.setItem('anonymousId', anon);
+      }
+      setAnonymousId(anon);
+    }
+  }, [user]);
+
 
 
 

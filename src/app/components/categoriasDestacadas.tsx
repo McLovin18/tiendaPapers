@@ -14,8 +14,8 @@ interface Category {
 
 const categories: Category[] = [
   { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/grapadoras" },
-  { id: 2, title: "Organizadores de Escritorio", image: "/organizadoresEscritorio.jpeg", link: "/categories/organizadores-de-escritorio" },
-  { id: 3, title: "Bolígrafos", image: "/boligrafos.jpeg", link: "/categories/boligrafos" },
+  { id: 2, title: "Cuidado de la Piel", image: "/cuidado-piel.jpeg", link: "/categories/cuidado-piel" },
+  { id: 3, title: "Brochas", image: "/brochas.jpeg", link: "/categories/brochas" },
   { id: 4, title: "Cuadernos", image: "/cuadernos.jpeg", link: "/categories/cuadernos" },
   { id: 5, title: "Tijeras", image: "/tijeras.jpeg", link: "/categories/tijeras" },
   { id: 6, title: "Carpetas", image: "/carpetas.jpeg", link: "/categories/carpetas" },

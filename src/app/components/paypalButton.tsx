@@ -1,7 +1,7 @@
 'use client';
 
 import { PayPalButtons, usePayPalScriptReducer, FUNDING } from '@paypal/react-paypal-js';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button, Alert } from 'react-bootstrap';
 
 interface PayPalButtonProps {
@@ -9,90 +9,104 @@ interface PayPalButtonProps {
   onSuccess: (details: any) => void;
   onError: (error: any) => void;
   disabled?: boolean;
+  guestEmail?: string; // email para invitado
 }
 
-export default function PayPalButton({ amount, onSuccess, onError, disabled }: PayPalButtonProps) {
+export default function PayPalButton({ amount, onSuccess, onError, disabled, guestEmail }: PayPalButtonProps) {
   const [loading, setLoading] = useState(false);
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [{ isPending, isResolved, isRejected }] = usePayPalScriptReducer();
+  const [showPayPalButton, setShowPayPalButton] = useState(false);
+  const [showCardButton, setShowCardButton] = useState(false);
 
-  // Detectar errores del script
+  // Detectar errores en la carga de PayPal
   useEffect(() => {
     if (isRejected) {
       setScriptError('Error al cargar PayPal. Verifica tu conexión a internet.');
     }
   }, [isRejected]);
 
-  // 🔍 Verificar que PayPal esté disponible
-  const isPayPalReady = isResolved && typeof window !== 'undefined' && window.paypal && window.paypal.Buttons;
+  useEffect(() => {
+    if (isResolved && typeof window !== 'undefined' && window.paypal && window.paypal.Buttons) {
+      setShowPayPalButton(true);
+      setShowCardButton(true);
+    }
+  }, [isResolved]);
 
+  const isPayPalReady = useMemo(() => showPayPalButton || showCardButton, [showPayPalButton, showCardButton]);
+
+  // Crear orden de PayPal
   const createOrder = useCallback((data: any, actions: any) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            value: amount.toFixed(2),
-            currency_code: "USD"
-          }
-        }
-      ]
-    });
-  }, [amount]);
+    try {
+      if (!amount || amount <= 0) {
+        throw new Error("El monto de la compra no es válido");
+      }
 
+      console.log("🛒 PayPal createOrder, amount:", amount);
+      if (guestEmail) console.log("Email de invitado:", guestEmail);
+
+      return actions.order.create({
+        purchase_units: [
+          {
+            amount: {
+              value: amount.toFixed(2),
+              currency_code: "USD"
+            }
+          }
+        ]
+      });
+    } catch (err: any) {
+      console.error("❌ Error al crear la orden de PayPal:", err.message);
+      onError({ ...err, userMessage: "No se pudo iniciar el pago. Revisa los datos de tu compra." });
+      return undefined;
+    }
+  }, [amount, guestEmail, onError]);
+
+  // Aprobar pago
   const onApprove = useCallback(async (data: any, actions: any) => {
     setLoading(true);
-    
     try {
+      if (!actions.order) throw new Error("Orden de PayPal no encontrada");
+
       const details = await actions.order.capture();
-      
-      const paymentMethod = details.payment_source || details.payer?.payment_method;
-      
+      console.log("✅ Pago aprobado:", details);
+
       onSuccess(details);
-    } catch (error) {
-      onError(error);
+    } catch (err: any) {
+      console.error("❌ Error al aprobar el pago:", err.message);
+      onError({ ...err, userMessage: "Hubo un problema al procesar tu pago." });
     } finally {
       setLoading(false);
     }
   }, [onSuccess, onError]);
 
+  // Manejo de errores específico de PayPal
   const onErrorHandler = useCallback((error: any) => {
     const errorMessage = error?.message || '';
-    
-    // Ignorar errores de ventana cerrada
+
+    // Ignorar errores por ventana cerrada o popup
     if (errorMessage.includes('Window closed') || 
         errorMessage.includes('popup_closed') ||
         errorMessage.includes('postrobot_method')) {
       return;
     }
-    
-    // Detectar errores específicos de sandbox
+
     if (errorMessage.includes('INVALID_CLIENT_ID')) {
-      onError({
-        ...error,
-        userMessage: 'Error de configuración de PayPal Sandbox. Verifica el Client ID.'
-      });
+      onError({ ...error, userMessage: 'Error de configuración de PayPal Sandbox. Verifica el Client ID.' });
       return;
     }
-    
+
     if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('authentication')) {
-      onError({
-        ...error,
-        userMessage: 'Error de autenticación en PayPal. Intenta con otra cuenta.'
-      });
+      onError({ ...error, userMessage: 'Error de autenticación en PayPal. Intenta con otra cuenta.' });
       return;
     }
-    
-    // Detectar errores de cuenta sandbox
+
     if (errorMessage.includes('INVALID_ACCOUNT') || errorMessage.includes('account_invalid')) {
-      onError({
-        ...error,
-        userMessage: 'Cuenta de prueba inválida. Usa las credenciales correctas del sandbox.'
-      });
+      onError({ ...error, userMessage: 'Cuenta de prueba inválida. Usa las credenciales correctas del sandbox.' });
       return;
     }
-    
-    // Error genérico
-    onError(error);
+
+    onError(error); // Error genérico
   }, [onError]);
 
   if (disabled) {
@@ -144,9 +158,9 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
           <span className="text-primary">Procesando...</span>
         </div>
       )}
-      
-      {/* ✅ BOTÓN PAYPAL */}
-      <div className="mb-2">
+
+      {/* Botón PayPal */}
+      {showPayPalButton && (
         <PayPalButtons
           createOrder={createOrder}
           onApprove={onApprove}
@@ -161,10 +175,10 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
             tagline: false
           }}
         />
-      </div>
+      )}
 
-      {/* ✅ BOTÓN TARJETAS DE CRÉDITO/DÉBITO */}
-      <div className="mb-2">
+      {/* Botón Tarjeta */}
+      {showCardButton && (
         <PayPalButtons
           createOrder={createOrder}
           onApprove={onApprove}
@@ -179,8 +193,8 @@ export default function PayPalButton({ amount, onSuccess, onError, disabled }: P
             tagline: false
           }}
         />
-      </div>
-      
+      )}
+
       <div className="text-center mt-2">
         <small className="text-muted">
           <i className="bi bi-shield-check me-1"></i>

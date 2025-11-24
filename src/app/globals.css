@@ -894,3 +894,25 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   position: static !important;
   float: none !important;
 }
+
+
+/* 🔥 Hace que el dropdown NO empuje otros elementos */
+.navbar .dropdown-menu {
+  position: absolute !important;
+  left: 0;
+  top: 100%;
+  z-index: 9999;
+  margin-top: 0.5rem;
+  transform: none !important;
+}
+
+/* Evita que el NavDropdown cambie el tamaño del navbar */
+.navbar .dropdown {
+  position: relative !important;
+}
+
+/* Mantiene todas las categorías en su lugar */
+.navbar .nav-link,
+.navbar .dropdown-toggle {
+  white-space: nowrap;
+}

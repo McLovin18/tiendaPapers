@@ -859,3 +859,38 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   min-height: 120px;
   cursor: text;
 }
+
+
+.collapse{
+  visibility: visible;
+}
+
+
+
+
+/* 🔥 Fuerza a que el menú móvil sí pueda abrirse */
+.navbar-collapse.collapse {
+  display: none !important;
+}
+
+.navbar-collapse.collapse.show {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 99999 !important;
+}
+
+/* 🔥 El botón del menú no debe estar bloqueado */
+.navbar-toggler, .navbar-toggler * {
+  pointer-events: auto !important;
+  z-index: 99999 !important;
+  overflow: visible !important;
+}
+
+/* 🔥 Arregla dropdown en móvil */
+.dropdown-menu {
+  position: static !important;
+  float: none !important;
+}

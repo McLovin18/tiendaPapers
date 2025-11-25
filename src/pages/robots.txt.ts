@@ -1,23 +1,21 @@
-import { NextApiRequest, NextApiResponse } from "next";
+export const config = {
+  runtime: 'edge',
+};
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader("Content-Type", "text/plain");
-
-  res.send(`
+export default function Robots() {
+  return new Response(
+    `
 User-agent: *
 Allow: /
 
-# Sitemap
 Sitemap: https://tiffanysec.com/sitemap.xml
 
-# Directorios permitidos
 Allow: /products/
 Allow: /auth/
 Allow: /cart
 Allow: /profile
 Allow: /favourite
 
-# Archivos estáticos
 Allow: /images/
 Allow: /*.css
 Allow: /*.js
@@ -28,5 +26,10 @@ Allow: /*.svg
 Allow: /*.webp
 
 Crawl-delay: 1
-  `);
+`.trim(),
+    {
+      headers: {
+        'Content-Type': 'text/plain',
+    },
+  });
 }

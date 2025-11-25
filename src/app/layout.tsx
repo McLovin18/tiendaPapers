@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     default: "Tiffanys - Tienda de Suministros y variedades",
     template: "%s | Tiffany's"
   },
-  description: "Descubre los mejores suministros de oficina en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo.",
+  description: "Descubre los mejores suministros de oficina en Tiffany's, cosmeticos, productos orgánicos y mucho más.",
   keywords: [
     "tienda de suministros de oficina",
     "papelería online",
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     site: "@tienda-papers",
     creator: "@tiffanys",
     title: "Tiffanys - Tienda de Suministros y variedades",
-    description: "Descubre los mejores suministros de oficina en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo.",
+    description: "Descubre los mejores suministros en Tiffany's. Hechos de la mejor calidad para tu espacio de trabajo, y mucho más.",
     images: ["/logoShop1.png"],
   },
   verification: {
@@ -129,6 +129,8 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-TileImage" content="/logoShop1.png" />
+        <meta name="description" content= "Descubre los mejores suministros de oficina en Tiffany's, cosmeticos, productos orgánicos y mucho más" />
+
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ClientLayout>

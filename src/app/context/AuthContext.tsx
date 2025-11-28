@@ -128,15 +128,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+
+        // ❌ Usuario NO verificado → NO permitir login
+        if (!firebaseUser.emailVerified) {
+          console.log("Usuario sin verificar, cerrando sesión...");
+          await signOut(auth);
+          setUser(null);
+          setUserData(null);
+          localStorage.removeItem("user");
+          setLoading(false);
+          return;
+        }
+
+        // ✔ Usuario verificado → permitir acceso
         setUser(firebaseUser);
         await loadUserData(firebaseUser);
+
       } else {
         setUser(null);
         setUserData(null);
         localStorage.removeItem("user");
       }
+
       setLoading(false);
     });
+
 
     return () => unsubscribe();
   }, []);
@@ -161,18 +177,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
 
     if (result.user) {
-      await sendEmailVerification(result.user);
-
+      // Agregar nombre si existe
       if (name) {
         await updateProfile(result.user, { displayName: name });
-        setUser({ ...result.user, displayName: name });
       }
 
-      setJustRegistered(true); // ⚡ usuario recién registrado
+      // Enviar verificación
+      await sendEmailVerification(result.user);
+
+      // Cerrar sesión para evitar acceso sin verificar
+      await signOut(auth);
+
+      setJustRegistered(true);
     }
 
     return result;
   };
+
 
 
 

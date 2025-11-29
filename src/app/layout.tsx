@@ -132,13 +132,14 @@ export default function RootLayout({
         <meta name="description" content= "Descubre los mejores suministros de oficina en Tiffany's, cosmeticos, productos orgánicos y mucho más" />
 
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ClientLayout>
-          <NavbarComponent />
-          <PayPalProvider>
-            {children}
-          </PayPalProvider>
-        </ClientLayout>
+      <body  className={`${geistSans.variable} ${geistMono.variable}`}>
+          <ClientLayout>
+            <NavbarComponent />
+            <PayPalProvider>
+              {children}
+            </PayPalProvider>
+          </ClientLayout>
+
       </body>
     </html>
   );

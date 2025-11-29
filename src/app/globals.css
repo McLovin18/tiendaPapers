@@ -109,7 +109,6 @@ a:hover {
   border: none !important;
 }
 .btn:hover, .Button:hover, button:hover {
-  background: #2563eb !important;
   color: #fff !important;
 }
 .btn-outline-dark {
@@ -850,7 +849,6 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 }
 
 .activeBtn {
-  background: #007bff;
   color: #fff;
 }
 
@@ -899,7 +897,6 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 /* 🔥 Hace que el dropdown NO empuje otros elementos */
 .navbar .dropdown-menu {
   position: absolute !important;
-  left: 0;
   top: 100%;
   z-index: 9999;
   margin-top: 0.5rem;
@@ -916,3 +913,79 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 .navbar .dropdown-toggle {
   white-space: nowrap;
 }
+
+
+
+/* ======== NAVBAR CATEGORY STYLES ======== */
+
+.nav-category {
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  color: var(--cosmetic-tertiary);
+  transition: all 0.2s ease;
+}
+
+.nav-category:hover {
+  color: var(--cosmetic-accent) !important;
+}
+
+/* Subcategorías */
+
+.nav-subcategory {
+  display: block;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.8rem;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav-subcategory:hover {
+  color: var(--cosmetic-accent);
+  transform: translateX(3px);
+}
+
+
+
+
+/* Navbar siempre arriba */
+#main-navbar {
+  left: 0;
+  width: 100%;
+  z-index: 1030; /* mayor que topbar */
+}
+
+
+/* Topbar siempre debajo */
+#topbar-mobile {
+  top: var(--navbar-height, 76px);
+}
+
+/* El collapse NO debe ser fixed, sino relativo */
+.navbar-collapse {
+  position: relative !important;
+}
+
+
+/* Para que el select no exceda el ancho de su contenedor */
+select {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Opcional: para que el texto dentro no se corte abruptamente */
+select option {
+  white-space: normal; /* para que el texto de opciones pueda romper línea si se puede */
+}
+
+/* Forzar el ancho del dropdown (no garantizado en todos navegadores) */
+select::-ms-expand {
+  display: none; /* IE arrow hide */
+}
+
+
+

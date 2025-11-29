@@ -26,14 +26,11 @@ const TopbarMobile = () => {
     { name: 'Admin', path: '/admin/orders', icon: 'bi-shield-check' }
   ];
 
-  // ✅ Menú de administración - fila secundaria (herramientas avanzadas)
+  // ✅ Menú de administración - fila secundaria
   const adminAdvancedItems = [
     { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
-    // { name: 'Migración', path: '/admin/migration', icon: 'bi-database-fill-gear' },
     { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
-    { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-graph-up-arrow' }
-
-
+    { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-pencil-square' }
   ];
 
   // ✅ Construir menús según el rol del usuario
@@ -41,12 +38,9 @@ const TopbarMobile = () => {
   let secondaryMenuItems: typeof baseMenuItems = [];
 
   if (isAdmin) {
-    // Para admin: fila principal con menú base + admin principal
     mainMenuItems = [...baseMenuItems, ...adminMainItems];
-    // Fila secundaria con herramientas avanzadas
     secondaryMenuItems = adminAdvancedItems;
   } else if (isDelivery) {
-    // Para delivery: solo una fila
     mainMenuItems = [
       ...baseMenuItems,
       { name: 'Entregas', path: '/delivery/orders', icon: 'bi-truck' }
@@ -59,7 +53,6 @@ const TopbarMobile = () => {
       return pathname === '/';
     }
     
-    // Lógica específica para rutas de admin
     if (itemPath === '/admin/orders') {
       return pathname === '/admin/orders';
     }
@@ -76,12 +69,10 @@ const TopbarMobile = () => {
       return pathname === '/admin/delivery-stats' || pathname.startsWith('/admin/delivery-stats');
     }
     
-    // Lógica específica para rutas de delivery
     if (itemPath === '/delivery/orders') {
       return pathname.startsWith('/delivery');
     }
     
-    // Para otras rutas, verificación normal
     return pathname.startsWith(itemPath);
   };
 
@@ -122,7 +113,6 @@ const TopbarMobile = () => {
               {item.name}
             </span>
             
-            {/* Indicador visual para el item activo */}
             {isActiveLink(item.path) && (
               <div 
                 className="position-absolute rounded-circle bg-white"
@@ -142,12 +132,16 @@ const TopbarMobile = () => {
   );
 
   return (
-    <nav className="topbar-mobile d-lg-none bg-white shadow-sm border-bottom position-sticky" 
-         style={{ 
-           borderColor: 'var(--cosmetic-primary)', 
-           top: '76px', 
-           zIndex: 1020
-         }}>
+    <nav
+      id="topbar-mobile"
+      className="topbar-mobile d-lg-none bg-white shadow-sm border-bottom position-sticky"
+      style={{
+        borderColor: 'var(--cosmetic-primary)',
+        zIndex: 1020,
+        top: 'var(--navbar-height, 0px)', // 🔥 Usa la variable CSS
+        transition: 'top 0.1s ease-out' // 🔥 Transición suave
+      }}
+    >
       <div className="container-fluid px-2 py-2">
         {/* Fila principal de navegación */}
         {renderNavRow(mainMenuItems)}
@@ -160,7 +154,7 @@ const TopbarMobile = () => {
         )}
       </div>
       
-      {/* Estilos CSS específicos para el componente */}
+      {/* Estilos CSS específicos */}
       <style jsx>{`
         .topbar-mobile .nav-link:hover {
           background-color: var(--cosmetic-secondary) !important;
@@ -190,7 +184,6 @@ const TopbarMobile = () => {
           font-size: 0.65rem;
         }
 
-        /* Responsive para pantallas muy pequeñas */
         @media (max-width: 576px) {
           .topbar-mobile .nav-link {
             padding: 0.4rem 0.2rem !important;
@@ -220,7 +213,6 @@ const TopbarMobile = () => {
           }
         }
 
-        /* Para pantallas medianas */
         @media (min-width: 577px) and (max-width: 991px) {
           .topbar-mobile .nav-link {
             padding: 0.5rem !important;

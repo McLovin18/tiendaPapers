@@ -27,6 +27,8 @@ export default function Home() {
   const { user } = useAuth();
   const [favsUpdate, setFavsUpdate] = useState(0);
   const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
+
 
   const imagenes = [
     { 
@@ -69,6 +71,29 @@ export default function Home() {
   }, []);
 
 
+
+    useEffect(() => {
+      const updateNavbarHeight = () => {
+        const nav = document.getElementById("main-navbar");
+        if (!nav) return;
+  
+        const height = nav.getBoundingClientRect().height;
+        document.documentElement.style.setProperty("--navbar-height", `${height}px`);
+      };
+  
+      // calcular al inicio
+      updateNavbarHeight();
+  
+      // recalcular cada vez que se abre/cierra el menú
+      setTimeout(updateNavbarHeight, 20);
+  
+      window.addEventListener("resize", updateNavbarHeight);
+      return () => window.removeEventListener("resize", updateNavbarHeight);
+    }, [expanded]);
+  
+
+
+
   useEffect(() => {
   if (user) {
     const redirect = sessionStorage.getItem('redirectAfterLogin');
@@ -80,6 +105,7 @@ export default function Home() {
     }
   }
 }, [user]);
+
 
 
   // Página para usuarios no autenticados (similar a la imagen de referencia)
@@ -237,18 +263,26 @@ export default function Home() {
         
         <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-2 py-lg-5 py-md-2 py-sm-2">
-          <div className='flex flex-column justify-center'>
-              <h1 className="fw-bold text-center" style={{fontSize: "2em", color: "var(--cosmetic-tertiary)" }}>Bienvenido a</h1>
-              <div className='flex flex-row justify-center'>
-                <h1 className={`${drSugiyama.className} px-3 fw-bold text-center`} style={{fontSize: "4em", color: "var(--cosmetic-tertiary)", alignContent: "center",}}>  Tiffany's </h1>
-                <div style={{display: "flex", justifyContent: "center", alignItems: "center",}}>           
-                  <h1 className="fw-bold text-center " style={{fontSize: "2em", color: "var(--cosmetic-tertiary)" }}>suministros y variedades</h1>
-                </div>
+            <div className="flex flex-col items-center text-center">
+              <h1 className="font-bold text-cosmetic-tertiary text-2xl md:text-3xl">
+                Bienvenido a
+              </h1>
+
+              <div className="flex flex-col md:flex-row items-center justify-center">
+                <h1
+                  className={`${drSugiyama.className} font-bold text-cosmetic-tertiary
+                  text-5xl md:text-6xl lg:text-7xl leading-none px-2`}
+                >
+                  Tiffany's
+                </h1>
+
+                <h1 className="font-bold text-cosmetic-tertiary
+                  text-xl md:text-2xl lg:text-3xl leading-tight mt-2 md:mt-0">
+                  suministros y variedades
+                </h1>
               </div>
+            </div>
 
-
-
-          </div>
             <h3 className="fw-bold text-center mt-5" style={{fontSize:"2.8em", color: "var(--cosmetic-primary)" }}>Productos destacados</h3>
 
             {loadingProducts ? (

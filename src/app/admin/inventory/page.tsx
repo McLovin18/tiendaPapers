@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Form, Modal, Alert, InputGroup } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { useRole } from '../../context/adminContext';
@@ -10,6 +10,8 @@ import Sidebar from '../../components/Sidebar';
 import TopbarMobile from '../../components/TopbarMobile';
 import Footer from '../../components/Footer';
 import ProductFormModal from '../../components/ProductFormModal';
+import Select from 'react-select';
+
 
 // Componente simple de protección local
 const SimpleProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,6 +57,10 @@ export default function InventoryManagementPage() {
   const [stockChange, setStockChange] = useState<number>(0);
   const [actionType, setActionType] = useState<'add' | 'reduce'>('add');
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  
+  // 🔍 Estados para el buscador
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStock, setFilterStock] = useState<'all' | 'inStock' | 'lowStock' | 'outOfStock'>('all');
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -74,6 +80,36 @@ export default function InventoryManagementPage() {
       setLoading(false);
     }
   };
+
+  // 🔍 Filtrado de productos
+  const filteredProducts = useMemo(() => {
+    let filtered = [...products];
+
+    // Filtrar por término de búsqueda
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(term) ||
+        product.productId.toString().includes(term) ||
+        product.category?.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtrar por estado de stock
+    switch (filterStock) {
+      case 'inStock':
+        filtered = filtered.filter(p => p.stock > 5);
+        break;
+      case 'lowStock':
+        filtered = filtered.filter(p => p.stock > 0 && p.stock <= 5);
+        break;
+      case 'outOfStock':
+        filtered = filtered.filter(p => p.stock === 0);
+        break;
+    }
+
+    return filtered;
+  }, [products, searchTerm, filterStock]);
 
   const handleStockChange = async () => {
     if (!selectedProduct || stockChange === 0) return;
@@ -142,6 +178,12 @@ export default function InventoryManagementPage() {
     return 'success';
   };
 
+  // 🔍 Función para limpiar búsqueda
+  const clearSearch = () => {
+    setSearchTerm('');
+    setFilterStock('all');
+  };
+
   if (!user || !isAdmin) {
     return (
       <Container className="py-5 text-center">
@@ -164,7 +206,7 @@ export default function InventoryManagementPage() {
           <main className="flex-grow-1 w-100" style={{ paddingTop: '1rem' }}>
             <Container fluid className="px-2 px-md-4">
               {/* Header */}
-              <div className="d-flex justify-content-between align-items-center mb-4">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
                 <div>
                   <h1 className="fw-bold text-dark mb-1">
                     <i className="bi bi-boxes me-2"></i>
@@ -191,6 +233,70 @@ export default function InventoryManagementPage() {
                 </Alert>
               )}
 
+              {/* 🔍 Barra de búsqueda y filtros */}
+              <Card className="border-0 shadow-sm mb-4">
+                <Card.Body>
+
+                  <Row className="g-3">
+                    <Col xs={12} md={6}>
+                      <InputGroup>
+                        <InputGroup.Text>
+                          <i className="bi bi-search"></i>
+                        </InputGroup.Text>
+                        <Form.Control
+                          type="text"
+                          placeholder="Buscar por nombre, ID o categoría..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                          <Button 
+                            variant="outline-secondary" 
+                            onClick={() => setSearchTerm('')}
+                          >
+                            <i className="bi bi-x"></i>
+                          </Button>
+                        )}
+                      </InputGroup>
+                    </Col>
+
+                    <Col xs={12} md={4}>
+                      <Form.Select
+                        value={filterStock}
+                        onChange={(e) => setFilterStock(e.target.value as any)}
+                        style={{ maxWidth: '100%', minWidth: '100%' }}  // fuerza a usar todo el ancho del contenedor
+                      >
+                        <option value="all">📦 Todos los productos</option>
+                        <option value="inStock">✅ Con stock ({products.filter(p => p.stock > 5).length})</option>
+                        <option value="lowStock">⚠️ Stock bajo ({products.filter(p => p.stock > 0 && p.stock <= 5).length})</option>
+                        <option value="outOfStock">❌ Sin stock ({products.filter(p => p.stock === 0).length})</option>
+                      </Form.Select>
+                    </Col>
+
+                    <Col xs={12} md={2}>
+                      <Button 
+                        variant="outline-secondary" 
+                        className="w-100"
+                        onClick={clearSearch}
+                        disabled={!searchTerm && filterStock === 'all'}
+                      >
+                        <i className="bi bi-arrow-clockwise me-2"></i>
+                        Limpiar
+                      </Button>
+                    </Col>
+                  </Row>
+
+                  {(searchTerm || filterStock !== 'all') && (
+                    <div className="mt-3">
+                      <small className="text-muted">
+                        <i className="bi bi-funnel me-2"></i>
+                        Mostrando {filteredProducts.length} de {products.length} productos
+                      </small>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+
               {/* Estadísticas rápidas */}
               <Row className="mb-4">
                 <Col md={3}>
@@ -205,7 +311,7 @@ export default function InventoryManagementPage() {
                   <Card className="text-center border-0 shadow-sm">
                     <Card.Body>
                       <h3 className="fw-bold text-success">
-                        {products.filter(p => p.stock > 0).length}
+                        {products.filter(p => p.stock > 5).length}
                       </h3>
                       <p className="text-muted mb-0 small">Con Stock</p>
                     </Card.Body>
@@ -250,101 +356,107 @@ export default function InventoryManagementPage() {
                       <p className="mt-3 text-muted">Cargando inventario...</p>
                     </div>
                   ) : (
-                    <Table responsive striped hover className="mb-0">
-                      <thead className="table-dark">
-                        <tr>
-                          <th>ID</th>
-                          <th>Producto</th>
-                          <th>Precio</th>
-                          <th>Stock</th>
-                          <th>Última Act.</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {products.map((product) => (
-                          <tr key={product.productId}>
-                            <td className="fw-bold">{product.productId}</td>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                {product.images && product.images.length > 0 && (
-                                  <img 
-                                    src={product.images[0]} 
-                                    alt={product.name}
-                                    width="40" 
-                                    height="40" 
-                                    className="rounded me-2"
-                                    style={{ objectFit: 'cover' }}
-                                  />
-                                )}
-                                <div>
-                                  <div className="fw-bold">{product.name}</div>
-                                  {product.category && (
-                                    <small className="text-muted">{product.category}</small>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="fw-bold text-success">${product.price.toFixed(2)}</td>
-                            <td>
-                              <Badge bg={getStockBadgeVariant(product.stock)}>
-                                {product.stock} unidades
-                              </Badge>
-                            </td>
-
-                            <td>
-                              <small className="text-muted">
-                                {new Date(product.lastUpdated).toLocaleDateString()}
-                              </small>
-                            </td>
-                            <td>
-                              <div className="d-flex gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-success"
-                                  onClick={() => openStockModal(product, 'add')}
-                                  title="Agregar stock"
-                                >
-                                  <i className="bi bi-plus"></i>
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-warning"
-                                  onClick={() => openStockModal(product, 'reduce')}
-                                  title="Reducir stock"
-                                  disabled={product.stock === 0}
-                                >
-                                  <i className="bi bi-dash"></i>
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-primary"
-                                  onClick={() => openProductModal(product)}
-                                  title="Editar producto"
-                                >
-                                  <i className="bi bi-pencil"></i>
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-danger"
-                                  onClick={() => handleDeleteProduct(product.productId)}
-                                  title="Eliminar producto"
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {products.length === 0 && (
+                    <div className="table-responsive">
+                      <Table striped hover className="mb-0">
+                        <thead className="table-dark">
                           <tr>
-                            <td colSpan={6} className="text-center py-4 text-muted">
-                              No hay productos en el inventario
-                            </td>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Última Act.</th>
+                            <th>Acciones</th>
                           </tr>
-                        )}
-                      </tbody>
-                    </Table>
+                        </thead>
+                        <tbody>
+                          {filteredProducts.map((product) => (
+                            <tr key={product.productId}>
+                              <td className="fw-bold">{product.productId}</td>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  {product.images && product.images.length > 0 && (
+                                    <img 
+                                      src={product.images[0]} 
+                                      alt={product.name}
+                                      width="40" 
+                                      height="40" 
+                                      className="rounded me-2"
+                                      style={{ objectFit: 'cover' }}
+                                    />
+                                  )}
+                                  <div>
+                                    <div className="fw-bold">{product.name}</div>
+                                    {product.category && (
+                                      <small className="text-muted">{product.category}</small>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="fw-bold text-success">${product.price.toFixed(2)}</td>
+                              <td>
+                                <Badge bg={getStockBadgeVariant(product.stock)}>
+                                  {product.stock} unidades
+                                </Badge>
+                              </td>
+                              <td>
+                                <small className="text-muted">
+                                  {new Date(product.lastUpdated).toLocaleDateString()}
+                                </small>
+                              </td>
+                              <td>
+                                <div className="d-flex gap-1 flex-wrap">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-success"
+                                    onClick={() => openStockModal(product, 'add')}
+                                    title="Agregar stock"
+                                  >
+                                    <i className="bi bi-plus"></i>
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-warning"
+                                    onClick={() => openStockModal(product, 'reduce')}
+                                    title="Reducir stock"
+                                    disabled={product.stock === 0}
+                                  >
+                                    <i className="bi bi-dash"></i>
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-primary"
+                                    onClick={() => openProductModal(product)}
+                                    title="Editar producto"
+                                  >
+                                    <i className="bi bi-pencil"></i>
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-danger"
+                                    onClick={() => handleDeleteProduct(product.productId)}
+                                    title="Eliminar producto"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredProducts.length === 0 && (
+                            <tr>
+                              <td colSpan={6} className="text-center py-4">
+                                <i className="bi bi-inbox" style={{ fontSize: '3rem', color: 'var(--cosmetic-tertiary-light)' }}></i>
+                                <p className="text-muted mt-2 mb-0">
+                                  {searchTerm || filterStock !== 'all' 
+                                    ? 'No se encontraron productos con los filtros aplicados' 
+                                    : 'No hay productos en el inventario'}
+                                </p>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </div>
                   )}
                 </Card.Body>
               </Card>
@@ -429,6 +541,7 @@ export default function InventoryManagementPage() {
           onHide={() => setShowProductModal(false)}
           product={selectedProduct}
           onProductSaved={handleProductSaved}
+          existingProductIds={products.map(p => p.productId)}
         />
       </div>
     </SimpleProtectedRoute>

@@ -24,7 +24,7 @@
     "firebase": "^12.1.0",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.542.0",
-    "next": "15.4.3",
+    "next": "15.4.10",
     "nodemailer": "^7.0.10",
     "react": "19.1.0",
     "react-bootstrap": "^2.10.10",

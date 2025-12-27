@@ -16,9 +16,9 @@ const categories: Category[] = [
   { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/grapadoras" },
   { id: 2, title: "Cuidado de la Piel", image: "/cuidado-piel.jpeg", link: "/categories/cuidado-piel" },
   { id: 3, title: "Brochas", image: "/brochas.jpeg", link: "/categories/brochas" },
-  { id: 4, title: "Cuadernos", image: "/cuadernos.jpeg", link: "/categories/cuadernos" },
-  { id: 5, title: "Tijeras", image: "/tijeras.jpeg", link: "/categories/tijeras" },
-  { id: 6, title: "Carpetas", image: "/carpetas.jpeg", link: "/categories/carpetas" },
+  { id: 4, title: "Mandiles", image: "/mandiles.jpeg", link: "/categories/mandiles" },
+  { id: 5, title: "Cepillos", image: "/cepillos.jpeg", link: "/categories/cepillos" },
+  { id: 6, title: "Fragancias", image: "/fragancias.jpeg", link: "/categories/fragancias" },
 ];
 
 const FeaturedCategories = () => {

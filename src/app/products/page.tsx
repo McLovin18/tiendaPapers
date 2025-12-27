@@ -21,11 +21,10 @@ const ProductsPage = () => {
   const { user } = useAuth();
   const { products, loading: productsLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
-  const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
 
@@ -43,13 +42,11 @@ const ProductsPage = () => {
     const matchesBenefit = selectedBenefits.length === 0 || selectedBenefits.some(benefit => 
       product.details?.some(detail => detail.toLowerCase().includes(benefit.toLowerCase()))
     );
-    const matchesBrand = selectedBrand.length === 0 || selectedBrand.some(brand => 
-      product.name.toLowerCase().includes(brand.toLowerCase())
-    );
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category || '');
     // Usar directamente la propiedad inStock del producto para mejor rendimiento
     const isAvailable = product.inStock !== false;
     
-    return matchesSearch && matchesBenefit && matchesBrand && isAvailable;
+    return matchesSearch && matchesBenefit && matchesCategory && isAvailable;
   });
 
   // Calcular productos para la página actual después del filtrado
@@ -63,7 +60,7 @@ const ProductsPage = () => {
   // Resetear a página 1 cuando cambien los filtros
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedBenefits, selectedBrand]);
+  }, [searchTerm, selectedBenefits, selectedCategories]);
 
   // Detectar tamaño de pantalla para paginación responsiva
   React.useEffect(() => {
@@ -98,12 +95,11 @@ const ProductsPage = () => {
     )
   )].sort();
   
-  // Obtener marcas/tipos únicos disponibles (basado en palabras clave del nombre)
-  const availableBrands = [...new Set(
-    products.flatMap(product => {
-      const brands = ['premium', 'profesional', 'natural', 'orgánico', 'luxury'];
-      return brands.filter(brand => product.name.toLowerCase().includes(brand));
-    })
+  // Nuevo: categorías únicas reales desde los productos
+  const availableCategories = [...new Set(
+    products
+      .map(product => product.category)
+      .filter((cat): cat is string => !!cat)
   )].sort();
 
   // Manejar selección de beneficios
@@ -115,19 +111,19 @@ const ProductsPage = () => {
     );
   };
 
-  // Manejar selección de marcas/tipos
-  const handleBrandToggle = (brand: string) => {
-    setSelectedBrand(prev => 
-      prev.includes(brand) 
-        ? prev.filter(b => b !== brand)
-        : [...prev, brand]
+  // Manejar selección de categorías
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
     );
   };
 
   // Limpiar filtros
   const clearFilters = () => {
     setSelectedBenefits([]);
-    setSelectedBrand([]);
+    setSelectedCategories([]);
   };
 
   // Cambiar página
@@ -179,16 +175,16 @@ const ProductsPage = () => {
                   >
                     <i className="bi bi-funnel me-2"></i>
                     <span className="d-none d-sm-inline">Filtros</span>
-                    {(selectedBenefits.length > 0 || selectedBrand.length > 0) && (
+                    {(selectedBenefits.length > 0 || selectedCategories.length > 0) && (
                       <Badge className="ms-2 rounded-circle badge-cosmetic-accent" style={{ fontSize: '0.6rem' }}>
-                        {selectedBenefits.length + selectedBrand.length}
+                        {selectedBenefits.length + selectedCategories.length}
                       </Badge>
                     )}
                   </Button>
                 </div>
                 
                 {/* Filtros activos */}
-                {(selectedBenefits.length > 0 || selectedBrand.length > 0) && (
+                {(selectedBenefits.length > 0 || selectedCategories.length > 0) && (
                   <div className="mt-2 d-flex flex-wrap gap-1 align-items-center">
                     <small className="text-muted me-2">Filtros activos:</small>
                     {selectedBenefits.map(benefit => (
@@ -201,14 +197,14 @@ const ProductsPage = () => {
                         {benefit} <i className="bi bi-x ms-1"></i>
                       </Badge>
                     ))}
-                    {selectedBrand.map(brand => (
+                    {selectedCategories.map(category => (
                       <Badge 
-                        key={brand} 
+                        key={category} 
                         className="d-flex align-items-center badge-cosmetic-accent"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleBrandToggle(brand)}
+                        onClick={() => handleCategoryToggle(category)}
                       >
-                        Tipo: {brand} <i className="bi bi-x ms-1"></i>
+                        {category} <i className="bi bi-x ms-1"></i>
                       </Badge>
                     ))}
                     <Button
@@ -467,18 +463,18 @@ const ProductsPage = () => {
               )}
             </Col>
 
-            {/* Filtro por Tipo/Marca */}
+            {/* Filtro por Categoría (reemplaza “Tipos Premium”) */}
             <Col md={6} className="mb-4">
               <h6 className="fw-bold mb-3">
-                <i className="bi bi-star me-2 text-warning"></i>
-                Tipos Premium
+                <i className="bi bi-tags me-2 text-primary"></i>
+                Categorías
               </h6>
               <div className="d-flex flex-wrap gap-2">
-                {availableBrands.map(brand => (
+                {availableCategories.map(category => (
                   <div
-                    key={brand}
+                    key={category}
                     className={`badge ${
-                      selectedBrand.includes(brand) 
+                      selectedCategories.includes(category) 
                         ? 'badge-cosmetic-accent text-white' 
                         : 'bg-light text-dark border'
                     } p-2 fs-6`}
@@ -486,19 +482,20 @@ const ProductsPage = () => {
                       cursor: 'pointer',
                       borderRadius: '0.5rem',
                       transition: 'all 0.2s ease',
-                      maxWidth: '120px'
+                      maxWidth: '150px'
                     }}
-                    onClick={() => handleBrandToggle(brand)}
-                    title={brand}
+                    onClick={() => handleCategoryToggle(category)}
+                    title={category}
                   >
-                    <span className="text-truncate">{brand}</span>
+                    <span className="text-truncate">{category}</span>
                   </div>
                 ))}
               </div>
-              {selectedBrand.length > 0 && (
+              {selectedCategories.length > 0 && (
                 <div className="mt-2">
                   <small className="text-muted">
-                    {selectedBrand.length} tipo{selectedBrand.length !== 1 ? 's' : ''} seleccionado{selectedBrand.length !== 1 ? 's' : ''}
+                    {selectedCategories.length} categor{selectedCategories.length === 1 ? 'ía' : 'ías'} seleccionada
+                    {selectedCategories.length !== 1 ? 's' : ''}
                   </small>
                 </div>
               )}
@@ -514,11 +511,11 @@ const ProductsPage = () => {
                   Total de productos: {products.length}
                 </div>
               </div>
-              <Button className='btn-profile-secondary'
-
+              <Button
+                className='btn-profile-secondary'
                 size="sm"
                 onClick={clearFilters}
-                disabled={selectedBenefits.length === 0 && selectedBrand.length === 0}
+                disabled={selectedBenefits.length === 0 && selectedCategories.length === 0}
               >
                 <i className="bi bi-arrow-clockwise me-1"></i>
                 Limpiar Filtros

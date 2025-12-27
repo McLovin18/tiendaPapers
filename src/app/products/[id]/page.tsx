@@ -57,6 +57,35 @@ const convertInventoryToProduct = (inventory: ProductInventory): Product => {
   };
 };
 
+// 🔹 Fallback de recomendaciones cuando la IA no devuelve resultados
+const getFallbackRecommendations = (currentProduct: Product, count: number): Product[] => {
+  const allAvailableProducts = allProducts.filter(p => p.inStock && p.id !== currentProduct.id);
+  return allAvailableProducts.slice(0, count);
+};
+
+// 🔹 Helpers simples para similitud de nombres
+const STOP_WORDS = new Set([
+  'de','la','el','y','para','con','a','en','del','las','los','por','un','una'
+]);
+
+const tokenizeName = (text: string): string[] => {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+    .split(/[^a-z0-9]+/i)
+    .filter(t => t && !STOP_WORDS.has(t));
+};
+
+const getNameSimilarity = (a: Product, b: Product): number => {
+  const aTokens = new Set(tokenizeName(a.name));
+  const bTokens = new Set(tokenizeName(b.name));
+  if (!aTokens.size || !bTokens.size) return 0;
+
+  let common = 0;
+  aTokens.forEach(t => { if (bTokens.has(t)) common++; });
+  return common / Math.min(aTokens.size, bTokens.size); // 0–1
+};
+
 const ProductDetailPage = () => {
   // Control de comentarios y respuestas visibles
   //constantes y variables
@@ -237,32 +266,98 @@ const ProductDetailPage = () => {
   // Cargar recomendaciones inteligentes cuando cambie el producto
   useEffect(() => {
     const loadSmartRecommendations = async () => {
-      if (!product?.id) return;
-      
+      if (!product) return;
+
       setLoadingRecommendations(true);
-      
+      const RECOMMENDATION_COUNT = 3;
+
       try {
-        // Simular un pequeño delay para mostrar el loading (opcional)
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const recommendations = recommendationEngine.getSmartRecommendations(product.id, 3);
-        setSmartRecommendations(recommendations);
-        
+        // Pequeño delay opcional para ver el spinner
+        await new Promise(resolve => setTimeout(resolve, 400));
+
+        // 1) Unificar catálogo estático + inventario
+        const inventoryRaw = await inventoryService.getAllProducts();
+        const inventoryProducts: Product[] = inventoryRaw
+          .filter((p: ProductInventory) => p.isActive && p.stock > 0)
+          .map(convertInventoryToProduct);
+
+        const candidatesMap = new Map<string | number, Product>();
+        [...allProducts, ...inventoryProducts].forEach(p => {
+          if (!p) return;
+          candidatesMap.set(p.id, p);
+        });
+
+        let candidates = Array.from(candidatesMap.values())
+          .filter(p => p.id !== product.id && p.inStock);
+
+        if (!candidates.length) {
+          setSmartRecommendations([]);
+          return;
+        }
+
+        const currentCategory = (product.category || '').toLowerCase();
+
+        // 2) Intentar primero con el motor actual, pero filtrando por relevancia
+        let engineRecs: Product[] = [];
+        try {
+          const raw = recommendationEngine.getSmartRecommendations(product.id, RECOMMENDATION_COUNT) || [];
+          engineRecs = raw
+            .map(r => candidatesMap.get(r.id) || r) // usar versión unificada si existe
+            .filter(r =>
+              r.id !== product.id &&
+              r.inStock &&
+              (r.category || '').toLowerCase() === currentCategory // misma categoría
+            );
+        } catch {
+          engineRecs = [];
+        }
+
+        // 3) Pool por categoría (si existe al menos otro en la misma categoría)
+        const sameCategory = candidates.filter(
+          p => (p.category || '').toLowerCase() === currentCategory
+        );
+        const pool = sameCategory.length ? sameCategory : candidates;
+
+        // 4) Ordenar pool por similitud de nombre y luego por precio parecido
+        const sortedPool = [...pool].sort((a, b) => {
+          const simA = getNameSimilarity(product, a);
+          const simB = getNameSimilarity(product, b);
+          if (simB !== simA) return simB - simA;
+
+          const diffA = Math.abs(a.price - product.price);
+          const diffB = Math.abs(b.price - product.price);
+          return diffA - diffB;
+        });
+
+        // 5) Construir lista final: primero lo del engine filtrado, luego rellenar con pool
+        const final: Product[] = [];
+        const usedIds = new Set<string | number>();
+
+        for (const rec of engineRecs) {
+          if (final.length >= RECOMMENDATION_COUNT) break;
+          if (usedIds.has(rec.id)) continue;
+          final.push(rec);
+          usedIds.add(rec.id);
+        }
+
+        for (const cand of sortedPool) {
+          if (final.length >= RECOMMENDATION_COUNT) break;
+          if (usedIds.has(cand.id)) continue;
+          final.push(cand);
+          usedIds.add(cand.id);
+        }
+
+        setSmartRecommendations(final.slice(0, RECOMMENDATION_COUNT));
       } catch (error) {
         console.error('❌ Error al cargar recomendaciones:', error);
-        // En caso de error, mostrar productos aleatorios
-        const fallbackRecommendations = allProducts
-          .filter(p => p.id !== product.id && p.inStock)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3);
-        setSmartRecommendations(fallbackRecommendations);
+        setSmartRecommendations([]);
       } finally {
         setLoadingRecommendations(false);
       }
     };
 
     loadSmartRecommendations();
-  }, [product?.id]);
+  }, [product]);
 
   // Migrar carrito desde localStorage cuando el usuario esté autenticado
   useEffect(() => {
@@ -770,7 +865,7 @@ const ProductDetailPage = () => {
                   {errorMessage}
                 </div>
               )}
-              <div className="d-flex gap-2">
+              <div className="d-flex gap-2 align-items-stretch">
                 <Button 
                   className={stockAvailable ? "btn-cosmetic-primary w-100 rounded-1 mb-3" : "btn-cosmetic-secondary w-100 rounded-1 mb-3"} 
                   size="lg" 
@@ -796,7 +891,7 @@ const ProductDetailPage = () => {
                     </>
                   )}
                 </Button>
-                <FavouriteButton product={product} />
+                <FavouriteButton product={product} size="lg" fullHeight />
               </div>
             </Col>
           </Row>
@@ -846,176 +941,191 @@ const ProductDetailPage = () => {
           <h3 className="fw-bold mb-4">Comentarios</h3>
 
           {/* Formulario de nuevo comentario */}
-          <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-cosmetic-secondary">
-            <Row className="g-2 align-items-center">
-              <Col xs={12} className="d-flex align-items-start gap-2">
-                {/* Avatar del usuario */}
-                <div style={{ width: "40px", height: "40px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7", marginTop: 2 }}>
-                  <img src={user?.photoURL || "/new_user.png"} alt="avatar" width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-                <div className="flex-grow-1">
-                  <Form.Group className="w-100 mb-2">
-                    <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Calificación</Form.Label>
-                    <div style={{ fontSize: "1.3rem", color: "#e63946", marginBottom: 4 }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span
-                          key={star}
-                          style={{
-                            cursor: "pointer",
-                            filter: star > rating ? "grayscale(1)" : "none",
-                            transition: "filter 0.2s",
-                            fontSize: "1.3rem"
-                          }}
-                          onClick={() => setRating(star)}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </Form.Group>
-                  <Form.Group className="w-100 mb-0">
-                    <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Comentario</Form.Label>
-                    <div style={{
-                      background: "#fff",
-                      borderRadius: "0.7rem",
-                      boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)",
-                      border: "1px solid #eee",
-                      padding: "12px 18px 0 18px",
-                      position: "relative",
-                      minHeight: "70px"
-                    }}>
-                      <Form.Control
-                        as="textarea"
-                        rows={1}
-                        className="youtube-input"
-                        style={{
-                          resize: "vertical",
-                          minHeight: "38px",
-                          maxHeight: "120px",
-                          fontSize: "1rem",
-                          padding: "8px 36px 8px 0px",
-                          border: "none",
-                          borderRadius: "0px",
-                          borderBottom: "1px solid rgba(0,0,0,0.10)",
-                          boxShadow: "none",
-                          outline: "none",
-                          background: "#fff",
-                          transition: "border-color 0.2s"
-                        }}
-                        value={commentText}
-                        onChange={e => {
-                          setCommentText(e.target.value);
-                          if (!showCommentActions) setShowCommentActions(true);
-                        }}
-                        placeholder="Escribe un comentario..."
-                        maxLength={200}
-                        onFocus={e => {
-                          e.currentTarget.style.borderBottom = "1px solid rgba(230,57,70,0.18)";
-                          setShowCommentActions(true);
-                        }}
-                        onBlur={e => {
-                          e.currentTarget.style.borderBottom = "1px solid rgba(0,0,0,0.10)";
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            // Evita enviar el formulario con Enter
-                            e.preventDefault();
-                            setCommentText(prev => prev + '\n');
-                          }
-                        }}
-                      />
-                      {showEmojiPicker && (
-                        <div
-                          ref={emojiPickerRef}
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            top: "calc(100% + 6px)",
-                            zIndex: 99,
-                            background: "#fff",
-                            border: "1px solid #eee",
-                            boxShadow: "0 4px 16px 0 rgba(0,0,0,0.10)",
-                            borderRadius: "0.7rem",
-                            padding: "8px 10px 6px 10px",
-                            minWidth: "220px",
-                            maxWidth: "320px",
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "6px 8px",
-                            maxHeight: "180px",
-                            overflowY: "auto"
-                          }}
-                        >
-                          {emojiList.map((emoji) => (
-                            <span
-                              key={emoji}
-                              style={{ fontSize: "1.35rem", cursor: "pointer", transition: "transform 0.1s", borderRadius: "6px", padding: "2px 4px" }}
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => {
-                                setCommentText(prev => prev + emoji);
-                              }}
-                              onMouseOver={e => e.currentTarget.style.background = "#f7f7f7"}
-                              onMouseOut={e => e.currentTarget.style.background = "transparent"}
-                            >{emoji}</span>
-                          ))}
-                        </div>
-                      )}
-                      {showCommentActions && (
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", marginBottom: "8px" }}>
-                          <div>
-                            <button
-                              type="button"
-                              ref={emojiButtonRef}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                fontSize: "1.3rem",
-                                color: "#888"
-                              }}
-                              title="Agregar emoji"
-                              onClick={() => setShowEmojiPicker(prev => !prev)}
-                              tabIndex={0}
-                            >
-                              😊
-                            </button>
-                          </div>
-                          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                            <Button
-                              type="button"
-                              className="btn-cosmetic-primary"
-                              style={{ borderRadius: "1.5rem", fontWeight: 500, color: "#333", background: "#f7f7f7", border: "none", boxShadow: "none", padding: "4px 18px" }}
-                              onClick={() => {
-                                setCommentText("");
-                                setShowCommentActions(false);
-                                setShowEmojiPicker(false);
-                              }}
-                            >Cancelar</Button>
-                            <Button
-                              type="submit"
-                              className="btn-cosmetic-primary"
-                              style={{ borderRadius: "1.5rem", fontWeight: 500, border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
-                              disabled={!commentText.trim()}
-                            >
-                              <i className="bi bi-chat-left-text" style={{ fontSize: "1.1rem", marginRight: 4 }}></i>
-                              Comentar
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {/* Solo mostrar el error de calificación aquí debajo del comentario */}
-                    {errorMessage === 'Por favor selecciona una calificación antes de comentar' && (
-                      <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
-                        {errorMessage}
+          {user ? (
+            <Form onSubmit={handleAddComment} className="mb-4 p-3 rounded shadow-sm bg-cosmetic-secondary">
+              <Row className="g-2 align-items-center">
+                <Col xs={12} className="d-flex align-items-start gap-2">
+                  {/* Avatar del usuario */}
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", overflow: "hidden", border: "1px solid #eee", background: "#f7f7f7", marginTop: 2 }}>
+                    <img src={user?.photoURL || "/new_user.png"} alt="avatar" width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div className="flex-grow-1">
+                    <Form.Group className="w-100 mb-2">
+                      <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Calificación</Form.Label>
+                      <div style={{ fontSize: "1.3rem", color: "#e63946", marginBottom: 4 }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span
+                            key={star}
+                            style={{
+                              cursor: "pointer",
+                              filter: star > rating ? "grayscale(1)" : "none",
+                              transition: "filter 0.2s",
+                              fontSize: "1.3rem"
+                            }}
+                            onClick={() => setRating(star)}
+                          >
+                            ★
+                          </span>
+                        ))}
                       </div>
-                    )}
-                  </Form.Group>
-                </div>
-                {/* Botón de comentar eliminado, solo se usan los botones dentro de las acciones debajo del campo */}
-              </Col>
-            </Row>
-          </Form>
+                    </Form.Group>
+                    <Form.Group className="w-100 mb-0">
+                      <Form.Label className="mb-1" style={{ fontWeight: 500, fontSize: "0.98rem" }}>Comentario</Form.Label>
+                      <div style={{
+                        background: "#fff",
+                        borderRadius: "0.7rem",
+                        boxShadow: "0 2px 8px -4px rgba(0,0,0,0.07)",
+                        border: "1px solid #eee",
+                        padding: "12px 18px 0 18px",
+                        position: "relative",
+                        minHeight: "70px"
+                      }}>
+                        <Form.Control
+                          as="textarea"
+                          rows={1}
+                          className="youtube-input"
+                          style={{
+                            resize: "vertical",
+                            minHeight: "38px",
+                            maxHeight: "120px",
+                            fontSize: "1rem",
+                            padding: "8px 36px 8px 0px",
+                            border: "none",
+                            borderRadius: "0px",
+                            borderBottom: "1px solid rgba(0,0,0,0.10)",
+                            boxShadow: "none",
+                            outline: "none",
+                            background: "#fff",
+                            transition: "border-color 0.2s"
+                          }}
+                          value={commentText}
+                          onChange={e => {
+                            setCommentText(e.target.value);
+                            if (!showCommentActions) setShowCommentActions(true);
+                          }}
+                          placeholder="Escribe un comentario..."
+                          maxLength={200}
+                          onFocus={e => {
+                            e.currentTarget.style.borderBottom = "1px solid rgba(230,57,70,0.18)";
+                            setShowCommentActions(true);
+                          }}
+                          onBlur={e => {
+                            e.currentTarget.style.borderBottom = "1px solid rgba(0,0,0,0.10)";
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              // Evita enviar el formulario con Enter
+                              e.preventDefault();
+                              setCommentText(prev => prev + '\n');
+                            }
+                          }}
+                        />
+                        {showEmojiPicker && (
+                          <div
+                            ref={emojiPickerRef}
+                            style={{
+                              position: "absolute",
+                              left: 0,
+                              top: "calc(100% + 6px)",
+                              zIndex: 99,
+                              background: "#fff",
+                              border: "1px solid #eee",
+                              boxShadow: "0 4px 16px 0 rgba(0,0,0,0.10)",
+                              borderRadius: "0.7rem",
+                              padding: "8px 10px 6px 10px",
+                              minWidth: "220px",
+                              maxWidth: "320px",
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "6px 8px",
+                              maxHeight: "180px",
+                              overflowY: "auto"
+                            }}
+                          >
+                            {emojiList.map((emoji) => (
+                              <span
+                                key={emoji}
+                                style={{ fontSize: "1.35rem", cursor: "pointer", transition: "transform 0.1s", borderRadius: "6px", padding: "2px 4px" }}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setCommentText(prev => prev + emoji);
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = "#f7f7f7"}
+                                onMouseOut={e => e.currentTarget.style.background = "transparent"}
+                              >{emoji}</span>
+                            ))}
+                          </div>
+                        )}
+                        {showCommentActions && (
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", marginBottom: "8px" }}>
+                            <div>
+                              <button
+                                type="button"
+                                ref={emojiButtonRef}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontSize: "1.3rem",
+                                  color: "#888"
+                                }}
+                                title="Agregar emoji"
+                                onClick={() => setShowEmojiPicker(prev => !prev)}
+                                tabIndex={0}
+                              >
+                                😊
+                              </button>
+                            </div>
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                              <Button
+                                type="button"
+                                className="btn-cosmetic-primary"
+                                style={{ borderRadius: "1.5rem", fontWeight: 500, color: "#333", background: "#f7f7f7", border: "none", boxShadow: "none", padding: "4px 18px" }}
+                                onClick={() => {
+                                  setCommentText("");
+                                  setShowCommentActions(false);
+                                  setShowEmojiPicker(false);
+                                }}
+                              >Cancelar</Button>
+                              <Button
+                                type="submit"
+                                className="btn-cosmetic-primary"
+                                style={{ borderRadius: "1.5rem", fontWeight: 500, border: "none", boxShadow: "none", color: "#fff", padding: "4px 18px", display: "flex", alignItems: "center", gap: "6px" }}
+                                disabled={!commentText.trim()}
+                              >
+                                <i className="bi bi-chat-left-text" style={{ fontSize: "1.1rem", marginRight: 4 }}></i>
+                                Comentar
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Solo mostrar el error de calificación aquí debajo del comentario */}
+                      {errorMessage === 'Por favor selecciona una calificación antes de comentar' && (
+                        <div className="text-danger mt-2" style={{ fontSize: "0.95rem" }}>
+                          {errorMessage}
+                        </div>
+                      )}
+                    </Form.Group>
+                  </div>
+                  {/* Botón de comentar eliminado, solo se usan los botones dentro de las acciones debajo del campo */}
+                </Col>
+              </Row>
+            </Form>
+          ) : (
+            <div className="mb-4 p-3 rounded shadow-sm bg-cosmetic-secondary text-center">
+              <p className="mb-3">
+                Inicia sesión para dejar un comentario sobre este producto.
+              </p>
+              <Button
+                as={Link}
+                href="/auth/login"
+                className="btn-cosmetic-primary rounded-1"
+              >
+                Inicia sesión para comentar
+              </Button>
+            </div>
+          )}
 
           {/* Lista de comentarios */}
           {loadingComments ? (
@@ -1245,8 +1355,7 @@ const ProductDetailPage = () => {
 
 
 
-      {/* Tabs de información adicional */}
-      {/*}
+
       <div className="my-5">
         <Container>
           <Tabs
@@ -1272,36 +1381,16 @@ const ProductDetailPage = () => {
             <Tab eventKey="shipping" title="Envío y devoluciones">
               <div className="p-4 bg-light">
                 <h5 className="fw-bold mb-3">Información de envío</h5>
-                <p>Envío estándar: 3-5 días hábiles</p>
-                <p>Envío express: 1-2 días hábiles (costo adicional)</p>
+                <p>Envío 1-2: días hábiles</p>
                 
                 <h5 className="fw-bold mb-3 mt-4">Política de devoluciones</h5>
                 <p>Tienes 30 días para devolver tu compra. Los artículos deben estar en su estado original con las etiquetas intactas.</p>
-                <p>Las devoluciones son gratuitas para miembros de Fashion Store.</p>
-              </div>
-            </Tab>
-            <Tab eventKey="reviews" title="Opiniones">
-              <div className="p-4 bg-light">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h5 className="fw-bold mb-0">Opiniones de clientes</h5>
-                  <Button variant="outline-dark" className="rounded-1">
-                    Escribir una opinión
-                  </Button>
-                </div>
-                
-                <div className="text-center py-4">
-                  <i className="bi bi-chat-square-text" style={{ fontSize: '3rem' }}></i>
-                  <h5 className="mt-3">Aún no hay opiniones</h5>
-                  <p className="text-muted">Sé el primero en opinar sobre este producto.</p>
-                </div>
               </div>
             </Tab>
           </Tabs>
         </Container>
       </div>
 
-
-      {*/}
       
       {/* Productos recomendados inteligentes */}
       <div className="my-5">
@@ -1324,72 +1413,89 @@ const ProductDetailPage = () => {
           ) : (
             <Row>
               {smartRecommendations.length > 0 ? (
-                smartRecommendations.map((recommendedProduct) => (
-                  <Col key={recommendedProduct.id} md={4} className="mb-4">
-                    <Card className="h-100 shadow-sm border-0 product-recommendation-card">
-                      <div className="position-relative overflow-hidden" style={{ height: '350px' }}>
-                        <Image 
-                          src={recommendedProduct.images[0] || '/images/product1.svg'} 
-                          alt={recommendedProduct.name} 
-                          fill 
-                          style={{ objectFit: 'cover' }}
-                          className="product-image"
-                        />
-                        {/* Badge de recomendación */}
-                        <Badge 
-                          bg="primary" 
-                          className="position-absolute top-0 start-0 m-2 px-2 py-1"
-                          style={{ fontSize: '0.7rem' }}
-                        >
-                          <i className="bi bi-stars me-1"></i>
-                          Recomendado
-                        </Badge>
+                smartRecommendations
+                  .filter((recommendedProduct) => recommendedProduct && recommendedProduct.id !== undefined) // 🛡️ filtrar nulos
+                  .map((recommendedProduct) => (
+                    <Col key={recommendedProduct.id} md={4} className="mb-4">
+                      <Card className="h-100 shadow-sm border-0 product-recommendation-card">
+                        <div className="position-relative overflow-hidden" style={{ height: '350px' }}>
+                          <Image 
+                            src={recommendedProduct.images?.[0] ?? '/images/product1.svg'}  // 🛡️ proteger images[0]
+                            alt={recommendedProduct.name || 'Producto recomendado'} 
+                            fill 
+                            style={{ objectFit: 'cover' }}
+                            className="product-image"
+                          />
+                          {/* Badge de recomendación */}
+                          <Badge 
+                            bg="primary" 
+                            className="position-absolute top-0 start-0 m-2 px-2 py-1"
+                            style={{ fontSize: '0.7rem' }}
+                          >
+                            <i className="bi bi-stars me-1"></i>
+                            Recomendado
+                          </Badge>
+                          
+                          {/* Overlay con acciones */}
+                          <div className="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient" style={{ 
+                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' 
+                          }}>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <Button 
+                                as={Link} 
+                                href={`/products/${recommendedProduct.id}`} 
+                                variant="light" 
+                                className="rounded-pill px-3 py-1 fw-bold"
+                                size="sm"
+                              >
+                                Ver Detalles
+                              </Button>
+                              <FavouriteButton product={recommendedProduct} />
+                            </div>
+                          </div>
+                        </div>
                         
-                        {/* Overlay con acciones */}
-                        <div className="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient" style={{ 
-                          background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' 
-                        }}>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <Button 
-                              as={Link} 
-                              href={`/products/${recommendedProduct.id}`} 
-                              variant="light" 
-                              className="rounded-pill px-3 py-1 fw-bold"
-                              size="sm"
-                            >
-                              Ver Detalles
-                            </Button>
-                            <FavouriteButton product={recommendedProduct} />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Card.Body className="p-3">
-                        <h6 className="fw-bold mb-1 text-truncate">{recommendedProduct.name}</h6>
-                        <p className="text-muted small mb-2">{recommendedProduct.category}</p>
+                        <Card.Body className="p-3">
+                          <h6 className="fw-bold mb-1 text-truncate">
+                            {recommendedProduct.name || 'Producto'}
+                          </h6>
+                          {recommendedProduct.category && (
+                            <p className="text-muted small mb-2">
+                              {recommendedProduct.category}
+                            </p>
+                          )}
 
-                        {/* Indicadores de similitud para cosméticos */}
-                        <div className="mt-2">
-                          <div className="d-flex flex-wrap gap-1">
-                            {recommendedProduct.category.toLowerCase() === product?.category.toLowerCase() && (
-                              <Badge bg="success" className="small">Misma categoría</Badge>
-                            )}
-                            {recommendedProduct.details.some(detail => 
-                              product?.details.some(productDetail => 
-                                detail.toLowerCase().includes('hidratante') && productDetail.toLowerCase().includes('hidratante')
-                              )
-                            ) && (
-                              <Badge bg="info" className="small">Beneficios similares</Badge>
-                            )}
-                            {Math.abs(recommendedProduct.price - (product?.price || 0)) <= (product?.price || 0) * 0.3 && (
-                              <Badge bg="warning" className="small">Precio similar</Badge>
-                            )}
+                          {/* Indicadores de similitud para cosméticos */}
+                          <div className="mt-2">
+                            <div className="d-flex flex-wrap gap-1">
+                              {recommendedProduct.category &&
+                                product?.category &&
+                                recommendedProduct.category.toLowerCase() === product.category.toLowerCase() && (
+                                  <Badge bg="success" className="small">Misma categoría</Badge>
+                                )}
+
+                              {Array.isArray(recommendedProduct.details) &&
+                                Array.isArray(product?.details) &&
+                                recommendedProduct.details.some(detail => 
+                                  product.details!.some(productDetail => 
+                                    detail.toLowerCase().includes('hidratante') &&
+                                    productDetail.toLowerCase().includes('hidratante')
+                                  )
+                                ) && (
+                                  <Badge bg="info" className="small">Beneficios similares</Badge>
+                                )}
+
+                              {typeof recommendedProduct.price === 'number' &&
+                                typeof product?.price === 'number' &&
+                                Math.abs(recommendedProduct.price - product.price) <= product.price * 0.3 && (
+                                  <Badge bg="warning" className="small">Precio similar</Badge>
+                                )}
+                            </div>
                           </div>
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                ))
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))
               ) : (
                 <div className="text-center py-5">
                   <i className="bi bi-search" style={{ fontSize: '3rem', color: '#ccc' }}></i>

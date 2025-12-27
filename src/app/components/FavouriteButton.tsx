@@ -15,9 +15,11 @@ interface FavouriteButtonProps {
     images: string[];
     description?: string;
   };
+  size?: 'sm' | 'lg'; // tamaño opcional para ajustar altura
+  fullHeight?: boolean; // 🔹 estirar a la altura del contenedor
 }
 
-const FavouriteButton: React.FC<FavouriteButtonProps> = ({ product }) => {
+const FavouriteButton: React.FC<FavouriteButtonProps> = ({ product, size, fullHeight }) => {
   const { user } = useAuth();
   const router = useRouter();
   const [isFav, setIsFav] = useState(false);
@@ -70,14 +72,22 @@ const FavouriteButton: React.FC<FavouriteButtonProps> = ({ product }) => {
       overlay={!user ? <Tooltip>Inicia sesión para guardar en favoritos</Tooltip> : <div></div>}
     >
       <Button
-      
+        size={size}
         className={`rounded-1 ${isFav ? 'btn-cosmetic-accent' : 'btn-outline-cosmetic-primary'}`}
         onClick={toggleFavourite}
         aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
         style={{
           backgroundColor: isFav ? 'var(--cosmetic-accent)' : 'transparent',
           borderColor: isFav ? 'var(--cosmetic-accent)' : 'var(--cosmetic-primary)',
-          color: isFav ? 'white' : 'var(--cosmetic-primary)'
+          color: isFav ? 'white' : 'var(--cosmetic-primary)',
+          ...(fullHeight
+            ? {
+                height: '100%',               // 🔹 misma altura que el botón grande del lado
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }
+            : {}),
         }}
       >
         <i className={`bi ${isFav ? "bi-heart-fill" : "bi-heart"}`}></i>

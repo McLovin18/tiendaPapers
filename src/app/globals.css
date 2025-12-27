@@ -771,7 +771,8 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
 
 .dropdown-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  /* ⬇️ antes: minmax(140px, 1fr) */
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 0.5rem 1rem;
   padding: 0.75rem 1rem;
   max-width: 700px;
@@ -940,6 +941,9 @@ input:valid, textarea:valid, select:valid, .form-control:valid {
   color: #333;
   text-decoration: none;
   transition: all 0.2s ease;
+  /* ⬇️ asegura que toda la columna sea más ancha y el texto quepa sin solaparse */
+  min-width: 190px;
+  white-space: normal;
 }
 
 .nav-subcategory:hover {

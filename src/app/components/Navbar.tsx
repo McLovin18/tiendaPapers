@@ -40,7 +40,7 @@ const NavbarComponent = () => {
         // ✅ UMERAL: Distancia en píxeles desde el borde derecho para que se considere "cerca".
         // Si el botón está a menos de 400px del borde derecho, expandimos a la izquierda.
         // Puedes ajustar este valor (400) según el ancho de tu menú desplegable.
-        const threshold = 500; 
+        const threshold = 600; 
         
         let newAlignment: 'start' | 'end' = 'start'; // 'start' es el valor por defecto
 

@@ -178,7 +178,27 @@ export const savePurchase = async (
         orderNumber = ids.orderNumber;
         fullOrderId = ids.fullOrderId;
       } catch (e) {
-        console.warn('No se pudo generar ID amigable de pedido:', e);
+        console.warn('No se pudo generar ID amigable de pedido (contador central):', e);
+
+        // 🔄 Fallback determinístico basado en el UID/email para no depender de reglas extra
+        try {
+          const baseId = purchase.userId || userEmail;
+          if (baseId) {
+            let hash = 0;
+            for (let i = 0; i < baseId.length; i++) {
+              hash = (hash * 31 + baseId.charCodeAt(i)) >>> 0;
+            }
+
+            const numericCode = (hash % 9_999_999) + 1; // rango 1..9_999_999
+            customerCode = formatWithLeadingZeros(numericCode, 7);
+
+            const seq = (Date.now() % 100_000) || 1; // 00001..99999
+            orderNumber = formatWithLeadingZeros(seq, 5);
+            fullOrderId = `${customerCode}${orderNumber}`;
+          }
+        } catch (fallbackError) {
+          console.warn('Fallback de ID amigable también falló:', fallbackError);
+        }
       }
     }
 
@@ -198,16 +218,20 @@ export const savePurchase = async (
     const tempDocRef = doc(purchaseRef);
     const purchaseId = tempDocRef.id;
 
-    await setDoc(tempDocRef, {
+    const purchaseDocData: any = {
       ...purchase,
       userId: finalUserId,
       guestCheckout: isGuest,
       date: dateString,
       purchaseId,
-      customerCode,
-      orderNumber,
-      fullOrderId,
-    });
+    };
+
+    // Solo agregar estos campos si existen para evitar valores undefined en Firestore
+    if (customerCode) purchaseDocData.customerCode = customerCode;
+    if (orderNumber) purchaseDocData.orderNumber = orderNumber;
+    if (fullOrderId) purchaseDocData.fullOrderId = fullOrderId;
+
+    await setDoc(tempDocRef, purchaseDocData);
 
     // Guardar en dailyOrders solo si hay usuario autenticado
     if (!isGuest) {
@@ -227,9 +251,9 @@ export const savePurchase = async (
             hour: '2-digit',
             minute: '2-digit'
           }),
-          customerCode,
-          orderNumber,
-          fullOrderId,
+          ...(customerCode ? { customerCode } : {}),
+          ...(orderNumber ? { orderNumber } : {}),
+          ...(fullOrderId ? { fullOrderId } : {}),
         };
 
         await setDoc(

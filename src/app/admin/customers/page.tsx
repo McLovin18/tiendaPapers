@@ -325,9 +325,7 @@ export default function AdminCustomersPage() {
                           <Card.Subtitle className="text-muted small">
                             {selectedCustomer.userEmail || 'Sin email registrado'}
                           </Card.Subtitle>
-                          <div className="text-muted small mt-1">
-                            Usuario: {selectedCustomer.userId}
-                          </div>
+   
                           {selectedCustomer.customerCode && (
                             <div className="text-muted small">
                               Código cliente: {selectedCustomer.customerCode}

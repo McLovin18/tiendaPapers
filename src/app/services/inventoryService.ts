@@ -11,7 +11,8 @@ import {
   getDocs, 
   query, 
   where,
-  increment
+  increment,
+  runTransaction
 } from 'firebase/firestore';
 
 export interface ProductInventory {
@@ -21,6 +22,7 @@ export interface ProductInventory {
   price: number;
   images: string[]; // Array de URLs de imágenes
   category?: string;
+  subcategory?: string; // subcategoría interna (papeles, tijeras, etc.)
   isActive: boolean; // Controlado automáticamente por stock
   lastUpdated: string;
   description?: string;
@@ -141,6 +143,51 @@ class InventoryService {
     }
   }
 
+  // ✅ Actualizar producto permitiendo cambio de ID sin duplicar documento
+  async updateProductWithIdChange(
+    originalProductId: number,
+    productData: Omit<ProductInventory, 'lastUpdated' | 'isActive'>
+  ): Promise<boolean> {
+    try {
+      // Si el ID no cambió, usar la lógica estándar
+      if (originalProductId === productData.productId) {
+        return this.createOrUpdateProduct(productData);
+      }
+
+      await runTransaction(db, async (tx) => {
+        const oldRef = doc(db, this.collectionName, originalProductId.toString());
+        const newRef = doc(db, this.collectionName, productData.productId.toString());
+
+        const oldSnap = await tx.get(oldRef);
+        if (!oldSnap.exists()) {
+          throw new Error(`El producto con ID ${originalProductId} no existe en el inventario.`);
+        }
+
+        const newSnap = await tx.get(newRef);
+        if (newSnap.exists()) {
+          throw new Error(`Ya existe un producto con el ID ${productData.productId}. Elige otro ID dentro del rango.`);
+        }
+
+        const oldData = oldSnap.data() as ProductInventory;
+        const merged: ProductInventory = {
+          ...oldData,
+          ...productData,
+          isActive: productData.stock > 0,
+          lastUpdated: new Date().toISOString(),
+        };
+
+        tx.set(newRef, merged);
+        tx.delete(oldRef);
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error actualizando producto con cambio de ID:', error);
+      // Propagar mensaje específico para que la capa de UI pueda mostrarlo
+      throw error;
+    }
+  }
+
   // ✅ Obtener productos disponibles por categoría
   async getProductsByCategory(category: string): Promise<ProductInventory[]> {
     try {
@@ -228,6 +275,46 @@ class InventoryService {
     } catch (error) {
       console.error('Error obteniendo productos:', error);
       return [];
+    }
+  }
+
+  // ✅ Obtener el siguiente ID disponible dentro de un rango [minId, maxId]
+  async getNextProductIdInRange(minId: number, maxId: number): Promise<number> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('productId', '>=', minId),
+        where('productId', '<=', maxId)
+      );
+
+      const snapshot = await getDocs(q);
+      const usedIds = new Set<number>();
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as Partial<ProductInventory>;
+        if (typeof data.productId === 'number') {
+          usedIds.add(data.productId);
+        } else {
+          const numericId = parseInt(docSnap.id, 10);
+          if (!isNaN(numericId)) {
+            usedIds.add(numericId);
+          }
+        }
+      });
+
+      let candidate = minId;
+      while (usedIds.has(candidate) && candidate <= maxId) {
+        candidate++;
+      }
+
+      if (candidate > maxId) {
+        throw new Error(`No hay IDs disponibles en el rango ${minId}-${maxId}`);
+      }
+
+      return candidate;
+    } catch (error) {
+      console.error('Error calculando siguiente ID en rango:', error);
+      throw error;
     }
   }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Form, Button, Row, Col, Badge, Alert, Spinner, Image } from 'react-bootstrap';
 import { inventoryService, type ProductInventory } from '../services/inventoryService';
 import { useAuth } from '../context/AuthContext';
-import CATEGORIES from '../constants/categories'; // Importar categorías desde el archivo de constantes
+import CATEGORIES, { SUBCATEGORIES, getSubcategoryIdRange } from '../constants/categories'; // Categorías y subcategorías con rangos de ID
 
 // Función para cargar el servicio de imágenes de forma segura
 const getImageUploadService = async () => {
@@ -138,14 +138,13 @@ interface ProductFormModalProps {
 export default function ProductFormModal({ show, onHide, product, onProductSaved }: ProductFormModalProps) {
   const { user } = useAuth();
   
-
-  
   const [formData, setFormData] = useState({
     productId: 0,
     name: '',
     price: 0,
     stock: 0,
     category: '',
+    subcategory: '',
     description: '',
     details: [] as string[]
   });
@@ -156,6 +155,9 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [autoIdInfo, setAutoIdInfo] = useState<string>('');
+  const [autoIdLoading, setAutoIdLoading] = useState<boolean>(false);
+  const [originalProductId, setOriginalProductId] = useState<number | null>(null);
 
   const isEditing = !!product;
 
@@ -168,10 +170,12 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         price: product.price,
         stock: product.stock,
         category: product.category || '',
+        subcategory: product.subcategory || '',
         description: product.description || '',
         details: product.details || []
       });
       setImages(product.images || []);
+      setOriginalProductId(product.productId);
     } else {
       // Reset para nuevo producto
       setFormData({
@@ -180,16 +184,60 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         price: 0,
         stock: 0,
         category: '',
+        subcategory: '',
         description: '',
         details: []
       });
       setImages([]);
+      setOriginalProductId(null);
     }
     // Limpiar estados de archivos y errores
     setSelectedFiles([]);
     setError('');
     setUploadProgress(0);
+    setAutoIdInfo('');
+    setAutoIdLoading(false);
   }, [product]);
+
+  // 🔄 Cuando se elige categoría o subcategoría en modo creación, calcular ID automático
+  useEffect(() => {
+    if (isEditing) return; // no tocar IDs en edición
+    if (!formData.category || !formData.subcategory) {
+      setAutoIdInfo('');
+      return;
+    }
+
+    const range = getSubcategoryIdRange(formData.subcategory);
+    if (!range) {
+      setAutoIdInfo('Esta subcategoría aún no tiene rango de IDs definido. Ingresa el ID manualmente.');
+      return;
+    }
+
+    let cancelled = false;
+    const loadNextId = async () => {
+      try {
+        setAutoIdLoading(true);
+        const nextId = await inventoryService.getNextProductIdInRange(range.minId, range.maxId);
+        if (cancelled) return;
+        setFormData(prev => ({
+          ...prev,
+          productId: nextId,
+        }));
+        setAutoIdInfo(`ID sugerido automáticamente para "${formData.subcategory}": ${nextId} (rango ${range.minId}-${range.maxId})`);
+      } catch (err: any) {
+        if (cancelled) return;
+        setAutoIdInfo(err?.message || `No se pudo calcular un ID disponible en el rango ${range.minId}-${range.maxId}`);
+      } finally {
+        if (!cancelled) setAutoIdLoading(false);
+      }
+    };
+
+    loadNextId();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.category, formData.subcategory, isEditing]);
 
   // Función optimizada de validación de archivos
   const validateImageFile = useMemo(() => (file: File): { isValid: boolean; error?: string } => {
@@ -322,6 +370,18 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         throw new Error('Debes seleccionar una categoría para el producto');
       }
 
+      if (!formData.subcategory.trim()) {
+        throw new Error('Debes seleccionar una subcategoría para asignar correctamente el ID');
+      }
+
+      // Validar que el ID esté dentro del rango de la subcategoría (si existe rango configurado)
+      const range = getSubcategoryIdRange(formData.subcategory);
+      if (range) {
+        if (formData.productId < range.minId || formData.productId > range.maxId) {
+          throw new Error(`El ID del producto debe estar entre ${range.minId} y ${range.maxId} para la subcategoría seleccionada.`);
+        }
+      }
+
       let finalImages = [...images];
       
       // Subir las nuevas imágenes seleccionadas
@@ -389,11 +449,19 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         stock: formData.stock,
         images: finalImages,
         category: formData.category.trim(),
+        subcategory: formData.subcategory.trim(),
         description: formData.description.trim(),
         details: formData.details
       };
 
-      const success = await inventoryService.createOrUpdateProduct(productData);
+      let success: boolean;
+
+      // Si estamos editando y tenemos un ID original, usar la lógica que permite cambio de ID sin duplicar
+      if (isEditing && originalProductId !== null) {
+        success = await inventoryService.updateProductWithIdChange(originalProductId, productData);
+      } else {
+        success = await inventoryService.createOrUpdateProduct(productData);
+      }
       
       if (success) {
         setUploadProgress(100);
@@ -420,6 +488,7 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
       price: 0,
       stock: 0,
       category: '',
+      subcategory: '',
       description: '',
       details: []
     });
@@ -428,6 +497,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
     setNewDetail('');
     setError('');
     setUploadProgress(0);
+    setAutoIdInfo('');
+    setAutoIdLoading(false);
     onHide();
   };
 
@@ -470,9 +541,15 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
                   type="number"
                   value={formData.productId || ''}
                   onChange={(e) => handleInputChange('productId', parseInt(e.target.value) || 0)}
-                  disabled={isEditing}
+                  disabled={!isEditing} // en creación se calcula automáticamente
                   required
                 />
+                {!isEditing && autoIdInfo && (
+                  <Form.Text className="text-muted d-block mt-1">
+                    {autoIdLoading && <Spinner animation="border" size="sm" className="me-2" />} 
+                    {autoIdInfo}
+                  </Form.Text>
+                )}
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -517,17 +594,58 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
                 <Form.Label>Categoría *</Form.Label>
                 <Form.Select
                   value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // al cambiar categoría, limpiar subcategoría e ID
+                    setFormData(prev => ({
+                      ...prev,
+                      category: value,
+                      subcategory: '',
+                      productId: isEditing ? prev.productId : 0,
+                    }));
+                    setAutoIdInfo('');
+                  }}
                   required
                 >
                   {CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
+                    <option key={cat.id} value={cat.id}>
                       {cat.label}
                     </option>
                   ))}
                 </Form.Select>
                 <Form.Text className="text-muted">
                   Esta categoría determinará en qué sección aparecerá el producto en la tienda
+                </Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          {/* Subcategoría, dependiente de la categoría seleccionada */}
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Subcategoría *</Form.Label>
+                <Form.Select
+                  value={formData.subcategory}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      subcategory: value,
+                    }));
+                  }}
+                  disabled={!formData.category}
+                  required
+                >
+                  <option value="">Selecciona una subcategoría</option>
+                  {SUBCATEGORIES.filter((s) => s.id === formData.category).map((sub) => (
+                    <option key={sub.value} value={sub.value}>
+                      {sub.label}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Text className="text-muted">
+                  Define el rango de IDs y ayuda a organizar el inventario.
                 </Form.Text>
               </Form.Group>
             </Col>

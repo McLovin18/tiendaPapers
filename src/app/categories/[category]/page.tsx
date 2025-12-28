@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import CATEGORIES from "@/app/constants/categories";
+import { SUBCATEGORIES } from "@/app/constants/categories";
 import ProductsClient from "./ProductsClient";
 
-// ✅ genera rutas estáticas para cada categoría
+// ✅ genera rutas estáticas para cada subcategoría (papeles, grapadoras, etc.)
 export async function generateStaticParams() {
-  return CATEGORIES.map((cat) => ({
-    category: cat.value,
+  return SUBCATEGORIES.map((sub) => ({
+    category: sub.value,
   }));
 }
 
@@ -14,7 +14,8 @@ export default function ProductsByCategoryPage({
 }: {
   params: { category: string };
 }) {
-  const categoryInfo = CATEGORIES.find((c) => c.value === params.category);
+  // Buscar info en la lista de subcategorías por su "value" (slug)
+  const categoryInfo = SUBCATEGORIES.find((c) => c.value === params.category);
 
   // si no existe la categoría -> 404
   if (!categoryInfo) {

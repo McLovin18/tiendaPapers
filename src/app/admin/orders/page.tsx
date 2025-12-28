@@ -243,6 +243,16 @@ export default function AdminOrdersPage() {
     });
   };
 
+  const getReadableOrderId = (order: DailyOrder) => {
+    const anyOrder: any = order as any;
+    if (anyOrder.fullOrderId) return anyOrder.fullOrderId as string;
+    const customerCode = anyOrder.customerCode as string | undefined;
+    const orderNumber = anyOrder.orderNumber as string | undefined;
+    if (customerCode && orderNumber) return `${customerCode}${orderNumber}`;
+    if (orderNumber) return orderNumber;
+    return order.id;
+  };
+
   // Mostrar spinner mientras se verifica el rol de admin
   if (adminLoading) {
     return (
@@ -980,6 +990,9 @@ export default function AdminOrdersPage() {
                               ) : (
                                 <div className="small text-muted">ID: {order.userId.substring(0, 12)}...</div>
                               )}
+                              <div className="small text-muted">
+                                ID pedido: {getReadableOrderId(order)}
+                              </div>
                               {/* TODO: Agregar campo de teléfono a DailyOrder si es necesario */}
                               {/* {order.shipping?.phone && (
                                 <div className="small text-success fw-bold">
@@ -1079,6 +1092,9 @@ export default function AdminOrdersPage() {
                                   ) : (
                                     <div className="small text-muted">ID: {order.userId.substring(0, 12)}...</div>
                                   )}
+                                  <div className="small text-muted">
+                                    ID pedido: {getReadableOrderId(order)}
+                                  </div>
                                   {/* TODO: Agregar campo de teléfono a DailyOrder si es necesario */}
                                   {/* {order.shipping?.phone && (
                                     <div className="small text-success fw-bold">

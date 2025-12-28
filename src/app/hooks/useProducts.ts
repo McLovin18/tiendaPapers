@@ -21,6 +21,7 @@ export const useProducts = (categoryFilter?: string) => {
       price: inventoryProduct.price,
       images: inventoryProduct.images || ['/images/product1.svg'],
       category: inventoryProduct.category || 'general',
+      subcategory: inventoryProduct.subcategory || '',
       categoryLink: getCategoryLink(inventoryProduct.category),
       description: inventoryProduct.description || '',
       inStock: inventoryProduct.stock > 0 && inventoryProduct.isActive !== false,
@@ -57,8 +58,11 @@ export const useProducts = (categoryFilter?: string) => {
     // 🚀 MOSTRAR PRODUCTOS ESTÁTICOS INMEDIATAMENTE
     let initialProducts = allProducts;
     if (categoryFilter) {
+      const filterLc = categoryFilter.toLowerCase();
       initialProducts = allProducts.filter(
-        product => product.categoryLink === categoryFilter
+        product =>
+          product.categoryLink === categoryFilter ||
+          (product as any).subcategory?.toLowerCase() === filterLc
       );
     }
     
@@ -137,10 +141,16 @@ export const useProducts = (categoryFilter?: string) => {
         
         // 🔍 PASO 8: Aplicar filtro de categoría si se especifica
         if (categoryFilter) {
+          const filterLc = categoryFilter.toLowerCase();
           combinedProducts = combinedProducts.filter(product => {
-            // Para productos del inventario, verificar tanto categoryLink como category
+            // 1) Coincidencia directa por subcategoría (nuevo sistema de IDs)
+            if ((product as any).subcategory?.toLowerCase() === filterLc) return true;
+
+            // 2) Coincidencia por enlace de categoría clásico (/mujer, /hombre, etc.)
             if (product.categoryLink === categoryFilter) return true;
-            if (product.category?.toLowerCase() === categoryFilter) return true;
+
+            // 3) Coincidencia por nombre de categoría en minúsculas
+            if (product.category?.toLowerCase() === filterLc) return true;
             
             // Mapeo adicional para compatibilidad
             const categoryMap: { [key: string]: string[] } = {

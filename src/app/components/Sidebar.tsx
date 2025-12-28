@@ -27,6 +27,7 @@ const Sidebar = () => {
       { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
       // { name: 'Migración DB', path: '/admin/migration', icon: 'bi-database-fill-gear' },
       { name: 'Estadísticas Delivery', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
+      { name: 'Clientes', path: '/admin/customers', icon: 'bi-people' },
       { name: 'Crear Blogs', path: '/admin/crear-blogs', icon: 'bi-journal-plus' },
 
     );

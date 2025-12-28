@@ -30,6 +30,7 @@ const TopbarMobile = () => {
   const adminAdvancedItems = [
     { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
     { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
+    { name: 'Clientes', path: '/admin/customers', icon: 'bi-people' },
     { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-pencil-square' }
   ];
 
@@ -67,6 +68,10 @@ const TopbarMobile = () => {
     
     if (itemPath === '/admin/delivery-stats') {
       return pathname === '/admin/delivery-stats' || pathname.startsWith('/admin/delivery-stats');
+    }
+
+    if (itemPath === '/admin/customers') {
+      return pathname === '/admin/customers';
     }
     
     if (itemPath === '/delivery/orders') {

@@ -27,6 +27,20 @@ const MyOrdersPage = () => {
   const [ratedOrders, setRatedOrders] = useState<{[key: string]: boolean}>({});
   const [ratingSuccess, setRatingSuccess] = useState<string>('');
 
+  const getReadableOrderId = (purchase: any, index: number) => {
+    if (purchase.customerCode && purchase.orderNumber) {
+      return `${purchase.customerCode}${purchase.orderNumber}`;
+    }
+    if (purchase.orderNumber) {
+      return purchase.orderNumber;
+    }
+    if (purchase.fullOrderId) {
+      return purchase.fullOrderId;
+    }
+    // Fallback: índice local formateado a 5 dígitos
+    return String(index + 1).padStart(5, '0');
+  };
+
   // Función para formatear fecha de manera legible
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -206,7 +220,7 @@ const MyOrdersPage = () => {
                       <div>
                         <h6 className="fw-bold mb-1 text-primary">
                           <i className="bi bi-box me-2"></i>
-                          Pedido #{idx + 1}
+                          Pedido #{getReadableOrderId(purchase, idx)}
                         </h6>
                         <div className="small text-muted">
                           <i className="bi bi-clock me-1"></i>

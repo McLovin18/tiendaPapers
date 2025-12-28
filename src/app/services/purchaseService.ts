@@ -1,7 +1,7 @@
 'use client';
 
 import { db } from '../utils/firebase';
-import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, updateDoc, arrayUnion, increment, runTransaction } from 'firebase/firestore';
 import { auth } from '../utils/firebase';
 import { SecureLogger } from '../utils/security';
 import { inventoryService } from './inventoryService';
@@ -22,6 +22,9 @@ export interface Purchase {
   date: string;
   items: PurchaseItem[];
   total: number;
+  customerCode?: string; // ID de cliente de 7 dígitos
+  orderNumber?: string;  // ID de pedido por cliente (5 dígitos)
+  fullOrderId?: string;  // ID global: customerCode + orderNumber
 }
 
 export interface DailyOrder {
@@ -34,6 +37,9 @@ export interface DailyOrder {
   items: PurchaseItem[];
   total: number;
   orderTime: string;
+  customerCode?: string;
+  orderNumber?: string;
+  fullOrderId?: string;
 }
 
 export interface DailyOrdersDocument {
@@ -48,6 +54,75 @@ export interface DailyOrdersDocument {
 
 // Colección de compras en Firestore (ahora como subcolección por usuario)
 // const PURCHASES_COLLECTION = 'purchases';
+
+// Formatea un número con ceros a la izquierda
+const formatWithLeadingZeros = (num: number, length: number) => {
+  return num.toString().padStart(length, '0');
+};
+
+interface CustomerOrderIds {
+  customerCode: string;
+  orderNumber: string;
+  fullOrderId: string;
+}
+
+// Obtiene (o crea) el ID de cliente y el siguiente número de pedido para ese cliente
+const getOrCreateCustomerOrderIds = async (userEmail: string): Promise<CustomerOrderIds> => {
+  const normalizedEmail = userEmail.toLowerCase();
+  const countersRef = doc(db, 'system', 'counters');
+  const userRef = doc(db, 'users', normalizedEmail);
+
+  return runTransaction(db, async (tx) => {
+    const userSnap = await tx.get(userRef);
+    let customerCode: string;
+    let lastOrderSeq = 0;
+
+    if (userSnap.exists()) {
+      const data = userSnap.data() as any;
+
+      if (data.customerCode) {
+        customerCode = data.customerCode as string;
+      } else {
+        const countersSnap = await tx.get(countersRef);
+        const countersData = (countersSnap.exists() ? countersSnap.data() : {}) as any;
+        const lastCustomer = typeof countersData.lastCustomerCode === 'number' ? countersData.lastCustomerCode : 0;
+        const nextCustomer = lastCustomer + 1;
+        customerCode = formatWithLeadingZeros(nextCustomer, 7);
+        tx.set(countersRef, { lastCustomerCode: nextCustomer }, { merge: true });
+      }
+
+      if (typeof data.lastOrderSeq === 'number') {
+        lastOrderSeq = data.lastOrderSeq;
+      }
+    } else {
+      const countersSnap = await tx.get(countersRef);
+      const countersData = (countersSnap.exists() ? countersSnap.data() : {}) as any;
+      const lastCustomer = typeof countersData.lastCustomerCode === 'number' ? countersData.lastCustomerCode : 0;
+      const nextCustomer = lastCustomer + 1;
+      customerCode = formatWithLeadingZeros(nextCustomer, 7);
+      tx.set(countersRef, { lastCustomerCode: nextCustomer }, { merge: true });
+    }
+
+    const nextOrderSeq = (lastOrderSeq || 0) + 1;
+    if (nextOrderSeq > 1000) {
+      throw new Error('Este cliente ha alcanzado el máximo de 1000 pedidos permitidos.');
+    }
+
+    const orderNumber = formatWithLeadingZeros(nextOrderSeq, 5);
+    const fullOrderId = `${customerCode}${orderNumber}`;
+
+    tx.set(
+      userRef,
+      {
+        customerCode,
+        lastOrderSeq: nextOrderSeq,
+      },
+      { merge: true }
+    );
+
+    return { customerCode, orderNumber, fullOrderId };
+  });
+};
 
 /**
  * Valida los datos de una compra antes de guardarla
@@ -91,6 +166,22 @@ export const savePurchase = async (
     const isGuest = !currentUser;
     const finalUserId = isGuest ? 'guest' : purchase.userId;
 
+    // Generar IDs legibles de cliente/pedido (solo para usuarios autenticados con email)
+    let customerCode: string | undefined;
+    let orderNumber: string | undefined;
+    let fullOrderId: string | undefined;
+
+    if (!isGuest && userEmail) {
+      try {
+        const ids = await getOrCreateCustomerOrderIds(userEmail);
+        customerCode = ids.customerCode;
+        orderNumber = ids.orderNumber;
+        fullOrderId = ids.fullOrderId;
+      } catch (e) {
+        console.warn('No se pudo generar ID amigable de pedido:', e);
+      }
+    }
+
     // Reducir inventario
     await inventoryService.processOrder(
       purchase.items.map(item => ({
@@ -112,7 +203,10 @@ export const savePurchase = async (
       userId: finalUserId,
       guestCheckout: isGuest,
       date: dateString,
-      purchaseId
+      purchaseId,
+      customerCode,
+      orderNumber,
+      fullOrderId,
     });
 
     // Guardar en dailyOrders solo si hay usuario autenticado
@@ -132,7 +226,10 @@ export const savePurchase = async (
           orderTime: currentDate.toLocaleTimeString('es-ES', {
             hour: '2-digit',
             minute: '2-digit'
-          })
+          }),
+          customerCode,
+          orderNumber,
+          fullOrderId,
         };
 
         await setDoc(

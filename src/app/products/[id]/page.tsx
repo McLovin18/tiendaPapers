@@ -17,6 +17,7 @@ import { recommendationEngine, type Product } from '../../services/recommendatio
 import { cartService } from '../../services/cartService';
 import { inventoryService, type ProductInventory } from '../../services/inventoryService';
 import ProductStockIndicator from '../../components/ProductStockIndicator';
+import { getSeasonalDiscountConfig, type SeasonalDiscountConfig, getProductSeasonalDiscountPercent } from '../../services/seasonalDiscountService';
 
 // Función para convertir ProductInventory a Product
 const convertInventoryToProduct = (inventory: ProductInventory): Product => {
@@ -120,6 +121,8 @@ const ProductDetailPage = () => {
   const [stockAmount, setStockAmount] = useState<number>(0);
   const [product, setProduct] = useState<Product | undefined>(undefined);
   const [loadingProduct, setLoadingProduct] = useState(true);
+  const [seasonalConfig, setSeasonalConfig] = useState<SeasonalDiscountConfig | null>(null);
+  const [loadingSeasonal, setLoadingSeasonal] = useState(false);
 
   const [replyEmojiState, setReplyEmojiState] = useState<{ [key: number]: { button?: boolean; picker?: boolean } }>({});
   const replyEmojiButtonRefs = React.useRef<{ [key: number]: HTMLButtonElement | null }>({});
@@ -139,29 +142,30 @@ const ProductDetailPage = () => {
   };
 
   
-  // ✅ Buscar producto tanto en productos estáticos como en inventario
+  // ✅ Buscar producto priorizando inventario (precio y datos actualizados) con fallback a productos estáticos
   useEffect(() => {
     const findProduct = async () => {
       setLoadingProduct(true);
-      
-      // Primero buscar en productos estáticos
-      let foundProduct = allProducts.find(p => p.id === productId);
-      
-      if (!foundProduct) {
-        // Si no se encuentra, buscar en inventario
-        try {
-          const inventoryProducts = await inventoryService.getAllProducts();
-          const inventoryProduct = inventoryProducts.find((p: ProductInventory) => p.productId === productId);
-          
-          if (inventoryProduct) {
-            // Convertir ProductInventory a Product
-            foundProduct = convertInventoryToProduct(inventoryProduct);
-          }
-        } catch (error) {
-          console.error('Error buscando en inventario:', error);
+
+      let foundProduct: Product | undefined;
+
+      try {
+        // Primero intentar obtenerlo desde el inventario (fuente de verdad para precio/stock)
+        const inventoryProducts = await inventoryService.getAllProducts();
+        const inventoryProduct = inventoryProducts.find((p: ProductInventory) => p.productId === productId);
+
+        if (inventoryProduct) {
+          foundProduct = convertInventoryToProduct(inventoryProduct);
+        } else {
+          // Si no existe en inventario, usar definición estática
+          foundProduct = allProducts.find(p => p.id === productId);
         }
+      } catch (error) {
+        console.error('Error buscando producto:', error);
+        // En caso de error con inventario, al menos intentar con la lista estática
+        foundProduct = allProducts.find(p => p.id === productId);
       }
-      
+
       setProduct(foundProduct);
       setLoadingProduct(false);
     };
@@ -262,6 +266,23 @@ const ProductDetailPage = () => {
   useEffect(() => {
     updateFavouriteState();
   }, [updateFavouriteState]);
+
+  // Cargar configuración pública de descuentos de temporada
+  useEffect(() => {
+    const loadSeasonal = async () => {
+      try {
+        setLoadingSeasonal(true);
+        const config = await getSeasonalDiscountConfig();
+        setSeasonalConfig(config);
+      } catch (err) {
+        console.error('Error cargando configuración de descuentos de temporada en detalle de producto:', err);
+      } finally {
+        setLoadingSeasonal(false);
+      }
+    };
+
+    loadSeasonal();
+  }, []);
 
   // Cargar recomendaciones inteligentes cuando cambie el producto
   useEffect(() => {
@@ -373,6 +394,16 @@ const ProductDetailPage = () => {
 
     migrateCartIfNeeded();
   }, [user?.uid]);
+
+  const discountInfo = React.useMemo(() => {
+    if (!product || loadingSeasonal || !seasonalConfig) return null;
+
+    const percent = getProductSeasonalDiscountPercent(seasonalConfig, product.id);
+    if (!percent || percent <= 0) return null;
+
+    const discountedPrice = Math.max(0, product.price * (1 - percent / 100));
+    return { discountPercent: percent, discountedPrice };
+  }, [product, seasonalConfig, loadingSeasonal]);
 
 
 
@@ -584,10 +615,12 @@ const ProductDetailPage = () => {
       return;
     }
 
+    const effectivePrice = discountInfo?.discountedPrice ?? product.price;
+
     const cartItem = {
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: effectivePrice,
       image: product.images?.[0] || "/images/product1.svg",
       quantity,
     };
@@ -763,6 +796,45 @@ const ProductDetailPage = () => {
             <Col xs={12} md={6} style={{ width: '40%' }}>
               <Card className="border-0 shadow-sm bg-cosmetic-secondary">
                 <div className="position-relative bg-cosmetic-secondary" style={{ width: '300px', height: '450px', margin: '0 auto', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '1rem 1rem 0 0', overflow: 'hidden' }}>
+                  {discountInfo && (
+                    <div
+                      className="position-absolute"
+                      style={{
+                        top: '0.8rem',
+                        right: '0.8rem',
+                        transform: 'rotate(8deg)',
+                        backgroundColor: '#e53935',
+                        color: '#fff',
+                        padding: '0.55rem 1.9rem',
+                        borderRadius: '0.8rem',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '1.6rem',
+                          fontWeight: 800,
+                          lineHeight: 1
+                        }}
+                      >
+                        -{discountInfo.discountPercent}%
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.85rem',
+                          letterSpacing: '0.14em',
+                          fontWeight: 600
+                        }}
+                      >
+                        OFF
+                      </span>
+                    </div>
+                  )}
                   {product.images && product.images.length > 0 && (
                     <>
                       <Image
@@ -829,7 +901,27 @@ const ProductDetailPage = () => {
             <Col xs={12} md={6}>
               <h2 className="fw-bold mb-3">{product.name}</h2>
               <div className="d-flex align-items-center gap-3 mb-3">
-                <div className="fw-bold fs-3 mb-3" style={{ color: "var(--cosmetic-primary)" }}>${product.price.toFixed(2)}</div>
+                <div className="fw-bold fs-3 mb-0" style={{ color: "var(--cosmetic-primary)" }}>
+                  {discountInfo ? (
+                    <>
+                      <span
+                        style={{
+                          textDecoration: 'line-through',
+                          color: '#888',
+                          fontSize: '1.05rem',
+                          marginRight: '0.75rem'
+                        }}
+                      >
+                        ${product.price.toFixed(2)}
+                      </span>
+                      <span>
+                        ${discountInfo.discountedPrice.toFixed(2)}
+                      </span>
+                    </>
+                  ) : (
+                    <>${product.price.toFixed(2)}</>
+                  )}
+                </div>
                 <ProductStockIndicator productId={product.id} />
               </div>
               <div className="mb-4">{product.description}</div>

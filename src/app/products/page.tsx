@@ -10,6 +10,7 @@ import TopbarMobile from '../components/TopbarMobile';
 import Footer from "../components/Footer";
 import { useProducts } from '../hooks/useProducts';
 import { Dr_Sugiyama } from 'next/font/google';
+import { getSeasonalDiscountConfig, type SeasonalDiscountConfig, isSeasonalConfigActiveNow } from '../services/seasonalDiscountService';
 
 const drSugiyama = Dr_Sugiyama({
   weight: '400', // Dr Sugiyama solo tiene un peso disponible
@@ -26,6 +27,8 @@ const ProductsPage = () => {
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [seasonalConfig, setSeasonalConfig] = useState<SeasonalDiscountConfig | null>(null);
+  const [loadingSeasonal, setLoadingSeasonal] = useState(false);
   const router = useRouter();
 
   // Función para manejar click en tarjeta de producto
@@ -85,6 +88,23 @@ const ProductsPage = () => {
     setCurrentPage(1);
   }, [isMobile]);
 
+  // Cargar configuración pública de descuentos de temporada
+  useEffect(() => {
+    const loadSeasonal = async () => {
+      try {
+        setLoadingSeasonal(true);
+        const config = await getSeasonalDiscountConfig();
+        setSeasonalConfig(config);
+      } catch (err) {
+        console.error('Error cargando configuración de descuentos de temporada en catálogo:', err);
+      } finally {
+        setLoadingSeasonal(false);
+      }
+    };
+
+    loadSeasonal();
+  }, []);
+
   // Obtener todos los beneficios únicos disponibles de los detalles de productos
   const availableBenefits = [...new Set(
     products.flatMap(product => 
@@ -101,6 +121,37 @@ const ProductsPage = () => {
       .map(product => product.category)
       .filter((cat): cat is string => !!cat)
   )].sort();
+
+  // Mapa de descuentos por producto activo para la campaña actual
+  const discountMap = React.useMemo(() => {
+    const map = new Map<number, { discountPercent: number; discountedPrice: number }>();
+
+    if (loadingSeasonal || !seasonalConfig || !seasonalConfig.products || seasonalConfig.products.length === 0) {
+      return map;
+    }
+
+    if (!isSeasonalConfigActiveNow(seasonalConfig)) {
+      return map;
+    }
+
+    const productById = new Map<number, (typeof products)[number]>();
+    products.forEach((p) => {
+      productById.set(p.id, p);
+    });
+
+    seasonalConfig.products.forEach((item) => {
+      const base = productById.get(item.productId);
+      if (!base) return;
+
+      const discountPercent = item.discountPercent;
+      if (!discountPercent || discountPercent <= 0) return;
+
+      const discountedPrice = Math.max(0, base.price * (1 - discountPercent / 100));
+      map.set(item.productId, { discountPercent, discountedPrice });
+    });
+
+    return map;
+  }, [loadingSeasonal, seasonalConfig, products]);
 
   // Manejar selección de beneficios
   const handleBenefitToggle = (benefit: string) => {
@@ -233,7 +284,10 @@ const ProductsPage = () => {
                   <p className="text-muted">Intenta ajustar los filtros de búsqueda</p>
                 </Col>
               ) : (
-                currentProducts.map((product) => (
+                currentProducts.map((product) => {
+                  const discountInfo = discountMap.get(product.id);
+
+                  return (
                   <Col key={product.id} xs={12} sm={6} lg={3}>
                     <Card 
                       className="h-100 border-0 shadow-sm"
@@ -266,6 +320,45 @@ const ProductsPage = () => {
                           overflow: 'hidden'
                         }}
                       >
+                        {discountInfo && (
+                          <div
+                            className="position-absolute"
+                            style={{
+                              top: '0.5rem',
+                              right: '0.5rem',
+                              transform: 'rotate(8deg)',
+                              backgroundColor: '#e53935',
+                              color: '#fff',
+                              padding: '0.45rem 1.7rem',
+                              borderRadius: '0.7rem',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              zIndex: 2
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '1.3rem',
+                                fontWeight: 800,
+                                lineHeight: 1
+                              }}
+                            >
+                              -{discountInfo.discountPercent}%
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.8rem',
+                                letterSpacing: '0.12em',
+                                fontWeight: 600
+                              }}
+                            >
+                              OFF
+                            </span>
+                          </div>
+                        )}
                         {product.images && product.images[0] && (
                           <Image
                             src={product.images[0]}
@@ -283,15 +376,35 @@ const ProductsPage = () => {
                       </div>
                       <Card.Body className="d-flex flex-column justify-content-between">
                         <div>
-                          <Card.Title className="fw-bold">{product.name}</Card.Title>
-                          <Card.Text className="fw-bold fs-5 mb-2" style={{ color: "var(--cosmetic-primary)" }}>
-                            ${product.price.toFixed(2)}
+                          <Card.Title className="fw-bold mb-2" style={{ color: "var(--cosmetic-tertiary)" }}>{product.name}</Card.Title>
+
+                          <Card.Text className="fw-bold fs-5 mb-0" style={{ color: "var(--cosmetic-primary)" }}>
+                            {discountInfo ? (
+                              <>
+                                <span
+                                  style={{
+                                    textDecoration: 'line-through',
+                                    color: '#888',
+                                    fontSize: '0.9rem',
+                                    marginRight: '0.5rem'
+                                  }}
+                                >
+                                  ${product.price.toFixed(2)}
+                                </span>
+                                <span style={{ fontSize: '1.15rem' }}>
+                                  ${discountInfo.discountedPrice.toFixed(2)}
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: '1.1rem' }}>${product.price.toFixed(2)}</span>
+                            )}
                           </Card.Text>
                         </div>
                       </Card.Body>
                     </Card>
                   </Col>
-                ))
+                );
+                })
               )}
             </Row>
 

@@ -426,10 +426,18 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ✅ CONFIGURACIÓN DEL SISTEMA
+    // ✅ CONFIGURACIÓN DEL SISTEMA (solo admin o autenticados)
     match /systemConfig/{configId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    // 🛍️ CONFIGURACIÓN PÚBLICA (descuentos, banners, etc.)
+    // Se usa para mostrar campañas como los descuentos de temporada en la página principal
+    match /publicConfig/{configId} {
+      allow read: if true;           // Cualquier visitante puede leer
+      allow write: if isAdmin();     // Solo admin puede crear/actualizar
+      allow delete: if isAdmin();
     }
 
     // ✅ PRUEBAS DE CONEXIÓN (TEMPORAL)

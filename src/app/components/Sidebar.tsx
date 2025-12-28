@@ -29,6 +29,7 @@ const Sidebar = () => {
       { name: 'Estadísticas Delivery', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
       { name: 'Clientes', path: '/admin/customers', icon: 'bi-people' },
       { name: 'Crear Blogs', path: '/admin/crear-blogs', icon: 'bi-journal-plus' },
+      { name: 'Beneficios', path: '/admin/beneficios', icon: 'bi-gift' },
 
     );
   }

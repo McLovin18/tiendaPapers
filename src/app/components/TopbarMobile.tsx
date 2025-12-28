@@ -31,7 +31,8 @@ const TopbarMobile = () => {
     { name: 'Inventario', path: '/admin/inventory', icon: 'bi-boxes' },
     { name: 'Estadísticas', path: '/admin/delivery-stats', icon: 'bi-graph-up-arrow' },
     { name: 'Clientes', path: '/admin/customers', icon: 'bi-people' },
-    { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-pencil-square' }
+    { name: 'Crear blogs', path: '/admin/crear-blogs', icon: 'bi-pencil-square' },
+    { name: 'Beneficios', path: '/admin/beneficios', icon: 'bi-gift' }
   ];
 
   // ✅ Construir menús según el rol del usuario
@@ -72,6 +73,10 @@ const TopbarMobile = () => {
 
     if (itemPath === '/admin/customers') {
       return pathname === '/admin/customers';
+    }
+
+    if (itemPath === '/admin/beneficios') {
+      return pathname === '/admin/beneficios';
     }
     
     if (itemPath === '/delivery/orders') {

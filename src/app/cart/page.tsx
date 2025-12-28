@@ -17,11 +17,14 @@ import { createDeliveryOrder } from '../services/deliveryService';
 import { cartService, type CartItem } from '../services/cartService';
 import { guestPurchaseService } from "../services/guestPurchaseService";
 import { inventoryService } from '../services/inventoryService';
+import { getSeasonalDiscountConfig, type SeasonalDiscountConfig, getProductSeasonalDiscountPercent } from '../services/seasonalDiscountService';
 
 const CartPage = () => {
   const { user, loading, anonymousId } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [seasonalConfig, setSeasonalConfig] = useState<SeasonalDiscountConfig | null>(null);
+  const [loadingSeasonal, setLoadingSeasonal] = useState(false);
 
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -32,6 +35,23 @@ const CartPage = () => {
   const calculateTotal = () => cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   useEffect(() => setIsClient(true), []);
+
+  // Cargar configuración pública de descuentos de temporada (solo para mostrar info en el carrito)
+  useEffect(() => {
+    const loadSeasonal = async () => {
+      try {
+        setLoadingSeasonal(true);
+        const config = await getSeasonalDiscountConfig();
+        setSeasonalConfig(config);
+      } catch (err) {
+        console.error('Error cargando configuración de descuentos de temporada en carrito:', err);
+      } finally {
+        setLoadingSeasonal(false);
+      }
+    };
+
+    loadSeasonal();
+  }, []);
 
   // Suscripción al carrito
   useEffect(() => {
@@ -292,7 +312,48 @@ const CartPage = () => {
                               <span className="mx-2">{item.quantity}</span>
                               <Button size="sm" className="btn-cosmetic-primary px-2 py-0" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
                             </div>
-                            <div className="fw-bold text-primary fs-5">${(item.price * item.quantity).toFixed(2)}</div>
+                            <div className="d-flex flex-column align-items-start">
+                              {/* Monto actual (el que realmente se cobra) */}
+                              <div className="fw-bold text-primary" style={{ fontSize: '1.25rem' }}>
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </div>
+
+                              {/* Info de descuento si aplica y podemos inferir precio original */}
+                              {!loadingSeasonal && seasonalConfig && (
+                                (() => {
+                                  const percent = getProductSeasonalDiscountPercent(seasonalConfig, item.id);
+                                  if (!percent || percent <= 0) return null;
+
+                                  // Si el item ya viene con precio rebajado, estimamos precio original
+                                  const originalUnitPrice = item.price / (1 - percent / 100);
+
+                                  // Evitar mostrar datos raros si algo no cuadra
+                                  if (!isFinite(originalUnitPrice) || originalUnitPrice <= 0) return null;
+
+                                  return (
+                                    <div className="mt-1 text-muted" style={{ fontSize: '0.9rem' }}>
+                                      <span
+                                        className="badge bg-danger text-white me-2"
+                                        style={{
+                                          borderRadius: '999px',
+                                          fontSize: '0.8rem',
+                                          fontWeight: 700,
+                                          padding: '0.25rem 0.8rem'
+                                        }}
+                                      >
+                                        -{percent}%
+                                      </span>
+                                      <span>
+                                        Antes:{' '}
+                                        <span style={{ textDecoration: 'line-through' }}>
+                                          ${(originalUnitPrice * item.quantity).toFixed(2)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  );
+                                })()
+                              )}
+                            </div>
                           </Col>
                         </Row>
                       </Card>

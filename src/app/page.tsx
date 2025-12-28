@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import FavouriteButton from "./components/FavouriteButton";
 import Footer from "./components/Footer";
 import FeaturedCategories from "./components/categoriasDestacadas";
+import { getSeasonalDiscountConfig, type SeasonalDiscountConfig } from './services/seasonalDiscountService';
 
 
 import { Dr_Sugiyama } from 'next/font/google';
@@ -28,6 +29,8 @@ export default function Home() {
   const [favsUpdate, setFavsUpdate] = useState(0);
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [seasonalConfig, setSeasonalConfig] = useState<SeasonalDiscountConfig | null>(null);
+  const [loadingSeasonal, setLoadingSeasonal] = useState(false);
 
 
   const imagenes = [
@@ -63,6 +66,41 @@ export default function Home() {
   // 🌟 FILTRAR PRODUCTOS DESTACADOS que tienen stock
   const featuredProducts = allProductsWithStock.filter(p => p.featured && p.inStock);
 
+  // Productos con descuento de temporada (ordenados por mayor descuento)
+  const discountedProducts = React.useMemo(() => {
+    if (loadingSeasonal) return [] as any[];
+    if (!seasonalConfig || !seasonalConfig.products || seasonalConfig.products.length === 0) return [] as any[];
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isActiveNow =
+      seasonalConfig.isActive &&
+      (!seasonalConfig.startDate || seasonalConfig.startDate <= todayStr) &&
+      (!seasonalConfig.endDate || seasonalConfig.endDate >= todayStr);
+
+    if (!isActiveNow) return [] as any[];
+
+    // Mapear por ID para encontrar datos de producto
+    const productMap = new Map<number, any>();
+    allProductsWithStock.forEach((p) => {
+      productMap.set(p.id, p);
+    });
+
+    const detailed = seasonalConfig.products
+      .map((item) => {
+        const base = productMap.get(item.productId);
+        if (!base) return null;
+        const discountPercent = item.discountPercent;
+        const discountedPrice = Math.max(0, base.price * (1 - discountPercent / 100));
+        return { ...base, discountPercent, discountedPrice };
+      })
+      .filter(Boolean) as any[];
+
+    // Ordenar por mayor descuento
+    detailed.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
+
+    return detailed.slice(0, 4);
+  }, [seasonalConfig, allProductsWithStock, loadingSeasonal]);
+
   useEffect(() => {
     const handleFavUpdate = () => setFavsUpdate(prev => prev + 1);
     window.addEventListener("favourites-updated", handleFavUpdate);
@@ -90,6 +128,23 @@ export default function Home() {
       window.addEventListener("resize", updateNavbarHeight);
       return () => window.removeEventListener("resize", updateNavbarHeight);
     }, [expanded]);
+
+  // Cargar configuración pública de descuentos de temporada
+  useEffect(() => {
+    const loadSeasonal = async () => {
+      try {
+        setLoadingSeasonal(true);
+        const config = await getSeasonalDiscountConfig();
+        setSeasonalConfig(config);
+      } catch (err) {
+        console.error('Error cargando configuración de descuentos de temporada:', err);
+      } finally {
+        setLoadingSeasonal(false);
+      }
+    };
+
+    loadSeasonal();
+  }, []);
   
 
 
@@ -160,6 +215,148 @@ export default function Home() {
         <FeaturedCategories/>
 
       </Container>
+
+      {/* Sección de descuentos de temporada (solo si hay campaña activa) */}
+      {discountedProducts.length > 0 && (
+        <Container className="py-4" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
+          <div
+            className="shadow-sm mx-auto"
+            style={{
+              borderRadius: '1.5rem',
+              background: 'linear-gradient(135deg, #ffe9e0 0%, #fff 60%, #ffe9e0 100%)',
+              border: '1px solid rgba(0,0,0,0.04)',
+              padding: '1.6rem 1.8rem',
+              maxWidth: '1120px'
+            }}
+          >
+            <Row className="mb-4 justify-content-center">
+              <Col xs={12} md={10} lg={9} className="text-center">
+                <h2
+                  className="fw-bold mb-0"
+                  style={{
+                    color: 'var(--cosmetic-primary)',
+                    fontSize: '1.9rem',
+                    letterSpacing: '0.03em'
+                  }}
+                >
+                  Disfruta de increíbles descuentos por {seasonalConfig?.reasonLabel || 'nuestra campaña especial'}
+                </h2>
+              </Col>
+            </Row>
+
+            <Row>
+              {discountedProducts.map((product) => (
+                <Col key={product.id} md={3} sm={6} className="mb-4">
+                  <Card
+                    className="h-100 border-0 shadow-sm card-cosmetic hover-scale bg-cosmetic-secondary"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleCardClick(product.id)}
+                  >
+                    <div
+                      className="position-relative bg-cosmetic-secondary"
+                      style={{
+                        width: 'auto',
+                        height: '260px',
+                        margin: '0 auto',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '1rem 1rem 0 0',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {product.discountPercent && (
+                        <div
+                          className="position-absolute"
+                          style={{
+                            top: '0.5rem',
+                            right: '0.5rem',
+                            transform: 'rotate(8deg)',
+                            backgroundColor: '#e53935',
+                            color: '#fff',
+                            padding: '0.45rem 1.7rem',
+                            borderRadius: '0.7rem',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.25)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 2
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '1.3rem',
+                              fontWeight: 800,
+                              lineHeight: 1
+                            }}
+                          >
+                            -{product.discountPercent}%
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.8rem',
+                              letterSpacing: '0.12em',
+                              fontWeight: 600
+                            }}
+                          >
+                            OFF
+                          </span>
+                        </div>
+                      )}
+                      {product.images && product.images[0] && (
+                        <Image
+                          src={product.images[0]}
+                          alt={product.name}
+                          width={200}
+                          height={260}
+                          style={{
+                            objectFit: 'contain',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            margin: '0 auto'
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <Card.Body className="text-center">
+                      <Card.Title className="h6 mb-2" style={{ color: "var(--cosmetic-tertiary)" }}>
+                        {product.name}
+                      </Card.Title>
+                      {product.discountedPrice !== undefined && product.discountPercent ? (
+                        <>
+                          <Card.Text className="mb-1" style={{ textDecoration: 'line-through', color: '#888' }}>
+                            ${product.price.toFixed(2)}
+                          </Card.Text>
+                          <Card.Text className="fw-bold mb-2" style={{ color: "var(--cosmetic-primary)", fontSize: '1.2rem' }}>
+                            ${product.discountedPrice.toFixed(2)}
+                          </Card.Text>
+                        </>
+                      ) : (
+                        <Card.Text className="fw-bold mb-2" style={{ color: "var(--cosmetic-primary)", fontSize: '1.2rem' }}>
+                          ${product.price.toFixed(2)}
+                        </Card.Text>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+
+            <div className="text-center mt-1 mt-md-2">
+              <Button
+                onClick={() => router.push('/products')}
+                className="rounded-1 px-4"
+                style={{ backgroundColor: "var(--cosmetic-primary)" }}
+              >
+                Ver productos
+              </Button>
+            </div>
+          </div>
+        </Container>
+      )}
 
       {/* Sección de productos destacados */}
       <Container id='productosDestacados' className="py-5" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>

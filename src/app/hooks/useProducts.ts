@@ -101,13 +101,25 @@ export const useProducts = (categoryFilter?: string) => {
           const firebaseData = stockMap.get(staticProduct.id);
           
           if (firebaseData) {
-            // Producto existe en Firebase: usar stock de Firebase
+            // Producto existe en Firebase: usar precio y stock desde inventario
             if (firebaseData.stock > 0) {
               optimizedStaticProducts.push({
                 ...staticProduct,
-                inStock: true,
+                // Datos que vienen del inventario (fuente de verdad)
+                name: firebaseData.name ?? staticProduct.name,
+                price: typeof firebaseData.price === 'number' ? firebaseData.price : staticProduct.price,
+                images: Array.isArray(firebaseData.images) && firebaseData.images.length > 0
+                  ? firebaseData.images
+                  : staticProduct.images,
+                category: firebaseData.category || staticProduct.category,
+                subcategory: firebaseData.subcategory || (staticProduct as any).subcategory,
+                description: firebaseData.description || staticProduct.description,
+                details: Array.isArray(firebaseData.details) && firebaseData.details.length > 0
+                  ? firebaseData.details
+                  : staticProduct.details,
+                inStock: firebaseData.stock > 0 && firebaseData.isActive !== false,
                 stockQuantity: firebaseData.stock,
-                isFromFirebase: false // Es producto estático con datos de Firebase
+                isFromFirebase: false // Es producto estático enriquecido con datos de Firebase
               });
             }
           } else {

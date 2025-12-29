@@ -14,6 +14,7 @@ import {
 import { InputValidator, DataSanitizer } from '../utils/security';
 import { VALIDATION_RULES } from '../utils/securityConfig';
 import { notificationService } from './notificationService';
+import { userNotificationService } from './userNotificationService';
 
 export interface DeliveryOrder {
   id?: string;
@@ -299,6 +300,7 @@ export const updateOrderStatus = async (
       const deliveryOrderData = currentData;
       const originalOrderId = deliveryOrderData.orderId;
       const userId = deliveryOrderData.userId;
+      const userEmail = deliveryOrderData.userEmail;
       
       console.log(`🔍 [DEBUG] Buscando compra original: userId=${userId}, purchaseId=${originalOrderId}`);
       
@@ -319,6 +321,21 @@ export const updateOrderStatus = async (
         
         await updateDoc(originalPurchaseRef, originalUpdateData);
         console.log(`✅ Compra original actualizada: ${originalOrderId} -> ${originalUpdateData.status}`);
+
+        // 📢 Crear notificación para el cliente sobre el estado del pedido
+        if (status === 'in_transit' || status === 'delivered') {
+          try {
+            await userNotificationService.createOrderStatusNotification({
+              userId,
+              userEmail,
+              orderId,
+              status,
+            });
+            console.log(`🔔 Notificación de estado creada para pedido ${orderId}: ${status}`);
+          } catch (notifyError) {
+            console.error('❌ Error creando notificación de estado para el cliente:', notifyError);
+          }
+        }
       } else {
         console.log(`⚠️ Compra original no encontrada: users/${userId}/purchases/${originalOrderId}`);
       }

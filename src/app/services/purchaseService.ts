@@ -5,6 +5,8 @@ import { collection, addDoc, getDoc, getDocs, query, orderBy, deleteDoc, doc, se
 import { auth } from '../utils/firebase';
 import { SecureLogger } from '../utils/security';
 import { inventoryService } from './inventoryService';
+import { couponService } from './couponService';
+import { userNotificationService } from './userNotificationService';
 
 // Definición de tipos
 export interface PurchaseItem {
@@ -268,6 +270,46 @@ export const savePurchase = async (
         );
       } catch (dailyError) {
         console.warn('No se pudo guardar en dailyOrders:', dailyError);
+      }
+
+      // 🎁 Generar cupones automáticos para clientes frecuentes (si está activo)
+      try {
+        const autoConfig = await couponService.getAutoConfig();
+        if (autoConfig && autoConfig.isActive && autoConfig.orderMultiple > 0) {
+          const userPurchases = await getUserPurchases(finalUserId);
+          const totalOrdersForUser = userPurchases.length;
+          const multiple = autoConfig.orderMultiple;
+
+          if (totalOrdersForUser >= multiple) {
+            const earnedCoupons = Math.floor(totalOrdersForUser / multiple);
+
+            const existingCoupons = await couponService.listUserCoupons(finalUserId);
+            const existingAutoForMultiple = existingCoupons.filter((c) => c.source === 'auto' && c.autoMultiple === multiple).length;
+
+            const missingCoupons = earnedCoupons - existingAutoForMultiple;
+
+            if (missingCoupons > 0) {
+              for (let i = 0; i < missingCoupons; i++) {
+                const coupon = await couponService.createCouponForUser({
+                  userId: finalUserId,
+                  discountPercent: autoConfig.discountPercent,
+                  source: 'auto',
+                  autoMultiple: multiple,
+                });
+
+                await userNotificationService.createCouponNotification({
+                  userId: finalUserId,
+                  userEmail,
+                  couponCode: coupon.code,
+                  discountPercent: coupon.discountPercent,
+                  source: 'auto',
+                });
+              }
+            }
+          }
+        }
+      } catch (couponError) {
+        console.warn('No se pudo generar cupón automático para el usuario:', couponError);
       }
     }
 

@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { cartService } from '../services/cartService';
 import { SUBCATEGORIES, CATEGORIES } from '../constants/categories';
+import UserNotificationBell from './UserNotificationBell';
 
 const NavbarComponent = () => {
   const { user, logout } = useAuth();
@@ -151,16 +152,34 @@ const NavbarComponent = () => {
         style={{ zIndex: 1030 }}
       >
         <Container className="navbar-container">
-          {/* fila 1 (sin cambios) */}
-          <div className="first-row d-flex justify-content-between align-items-center w-100 px-3 py-1">
-            <Navbar.Brand as={Link} href="/" className="me-auto">
-              <img className='logo_img' style={{ maxWidth: "280px", height: "auto" }} src="/logo.png" alt="Logo" />
-            </Navbar.Brand>
+          {/* fila 1 - logo arriba, menú alineado y acciones móviles debajo */}
+          <div className="first-row d-flex flex-column flex-lg-row w-100 px-3 py-1">
+            {/* Subfila superior: logo + botón de menú (móvil) */}
+            <div className="d-flex justify-content-between align-items-center w-100">
+              <Navbar.Brand as={Link} href="/" className="me-auto">
+                <img className='logo_img' style={{ maxWidth: "280px", height: "auto" }} src="/logo.png" alt="Logo" />
+              </Navbar.Brand>
 
-            <div className="d-flex align-items-center">
+              <Navbar.Toggle
+                className="btn btn-primary d-lg-none ms-3"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setExpanded(prev => !prev);
+                }}
+              />
+            </div>
+
+            {/* Subfila inferior en móvil: campana y carrito; en desktop se alinea a la derecha */}
+            <div className="d-flex align-items-center justify-content-end mt-2 mt-lg-0 w-100 ms-lg-3">
               <Nav className="d-none d-lg-flex me-4">
                 <Nav.Link as={Link} href="/blogs" className="fw-medium">Blog</Nav.Link>
               </Nav>
+
+              {/* Campanita de notificaciones para el cliente */}
+              <div className="d-flex align-items-center me-1">
+                <UserNotificationBell />
+              </div>
 
               <Nav.Link as={Link} href="/cart" className="me-4 position-relative" aria-label="Carrito">
                 <i className="bi bi-cart" style={{ fontSize: "1.5rem", color: "var(--cosmetic-accent)" }}></i>
@@ -181,15 +200,6 @@ const NavbarComponent = () => {
                   </>
                 )}
               </div>
-
-              <Navbar.Toggle
-                className="btn btn-primary d-lg-none ms-3"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setExpanded(prev => !prev);
-                }}
-              />
             </div>
           </div>
 

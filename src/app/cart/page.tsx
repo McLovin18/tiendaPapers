@@ -17,6 +17,7 @@ import { createDeliveryOrder } from '../services/deliveryService';
 import { cartService, type CartItem } from '../services/cartService';
 import { guestPurchaseService } from "../services/guestPurchaseService";
 import { inventoryService } from '../services/inventoryService';
+import { couponService, type Coupon } from '../services/couponService';
 import { getSeasonalDiscountConfig, type SeasonalDiscountConfig, getProductSeasonalDiscountPercent } from '../services/seasonalDiscountService';
 
 const CartPage = () => {
@@ -32,7 +33,17 @@ const CartPage = () => {
   const [deliveryLocation, setDeliveryLocation] = useState<{city: string; zone: string; address?: string; phone?: string} | null>(null);
   const [guestEmail, setGuestEmail] = useState('');
 
+  // Estado para código de descuento (cupones por usuario)
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
   const calculateTotal = () => cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const subtotal = calculateTotal();
+  const discountAmount = appliedCoupon ? subtotal * (appliedCoupon.discountPercent / 100) : 0;
+  const finalTotal = Math.max(0, subtotal - discountAmount);
 
   useEffect(() => setIsClient(true), []);
 
@@ -103,6 +114,56 @@ const CartPage = () => {
     }
   };
 
+  // Aplicar código de descuento
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user?.uid) {
+      setCouponError('Debes iniciar sesión para usar un cupón de descuento.');
+      return;
+    }
+
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      setCouponError('Ingresa un código de descuento.');
+      return;
+    }
+
+    setValidatingCoupon(true);
+    setCouponError('');
+
+    try {
+      const coupon = await couponService.getCouponByCode(code);
+
+      if (!coupon) {
+        setAppliedCoupon(null);
+        setCouponError('No encontramos este cupón. Revisa el código.');
+        return;
+      }
+
+      if (coupon.userId !== user.uid) {
+        setAppliedCoupon(null);
+        setCouponError('Este cupón no pertenece a tu cuenta.');
+        return;
+      }
+
+      if (!coupon.isActive || coupon.used) {
+        setAppliedCoupon(null);
+        setCouponError('Este cupón ya fue usado o está inactivo.');
+        return;
+      }
+
+      setAppliedCoupon(coupon);
+      setCouponError('');
+    } catch (err) {
+      console.error('Error al validar el cupón:', err);
+      setAppliedCoupon(null);
+      setCouponError('No se pudo validar el cupón. Inténtalo nuevamente.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
 
   // Pago exitoso
   const handlePaymentSuccess = async (details: any) => {
@@ -139,7 +200,7 @@ const CartPage = () => {
           contact: { name: deliveryLocation?.name || "Invitado", phone: deliveryLocation?.phone || "", email: guestEmail },
           deliveryLocation,
           items: cartItems.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity, image: item.image })),
-          total: calculateTotal(),
+          total: finalTotal,
           date: new Date().toISOString(),
           status: "paid"
         };
@@ -181,11 +242,22 @@ const CartPage = () => {
 
       // Pago usuario autenticado
       const userInfo = getUserDisplayInfo(user);
+
+      // Si hay cupón aplicado, intentamos marcarlo como usado en Firestore
+      let usedCoupon: Coupon | null = null;
+      if (appliedCoupon) {
+        try {
+          usedCoupon = await couponService.redeemCouponOnce(appliedCoupon.code, user.uid);
+        } catch (couponErr) {
+          console.error('Error al marcar cupón como usado:', couponErr);
+        }
+      }
+
       const purchaseData = {
         userId: user.uid,
         date: new Date().toISOString(),
         items: cartItems.map(item => ({ id: item.id.toString(), name: item.name, price: item.price, quantity: item.quantity, image: item.image })),
-        total: calculateTotal(),
+        total: finalTotal,
         paypalDetails: {
           transactionId: details.id,
           status: details.status,
@@ -365,16 +437,61 @@ const CartPage = () => {
                       <h4 className="fw-bold mb-4">Resumen</h4>
                       <div className="d-flex justify-content-between mb-2">
                         <span>Subtotal</span>
-                        <span>${calculateTotal().toFixed(2)}</span>
+                        <span>${subtotal.toFixed(2)}</span>
                       </div>
                       <div className="d-flex justify-content-between mb-2">
                         <span>Envío</span>
                         <span className="text-success">Gratis</span>
                       </div>
+
+                      {user?.uid && (
+                        <Form onSubmit={handleApplyCoupon} className="my-3">
+                          <Form.Label className="small fw-semibold">Código de descuento</Form.Label>
+                          <div className="d-flex gap-2">
+                            <Form.Control
+                              type="text"
+                              placeholder="Ingresa tu código"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value)}
+                              disabled={processing || validatingCoupon}
+                            />
+                            <Button
+                              type="submit"
+                              className="btn-cosmetic-primary"
+                              disabled={processing || validatingCoupon || !couponCode.trim()}
+                            >
+                              {validatingCoupon ? 'Validando...' : 'Aplicar'}
+                            </Button>
+                          </div>
+                          {couponError && (
+                            <div className="text-danger small mt-1">{couponError}</div>
+                          )}
+                          {appliedCoupon && !couponError && (
+                            <div className="text-success small mt-1">
+                              Cupón aplicado: <strong>{appliedCoupon.code}</strong> (-{appliedCoupon.discountPercent}%)
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 ms-2 text-danger"
+                                onClick={() => setAppliedCoupon(null)}
+                              >
+                                Quitar
+                              </Button>
+                            </div>
+                          )}
+                        </Form>
+                      )}
+
+                      {appliedCoupon && (
+                        <div className="d-flex justify-content-between mb-2 text-success">
+                          <span>Descuento ({appliedCoupon.discountPercent}%)</span>
+                          <span>- ${discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
                       <hr />
                       <div className="d-flex justify-content-between mb-4">
                         <strong>Total</strong>
-                        <strong>${calculateTotal().toFixed(2)}</strong>
+                        <strong>${finalTotal.toFixed(2)}</strong>
                       </div>
 
                       {saveError && <Alert variant="danger" className="mb-3">{saveError}</Alert>}
@@ -382,7 +499,7 @@ const CartPage = () => {
 
                       <DeliveryLocationSelector onLocationChange={setDeliveryLocation} disabled={cartItems.length === 0 || processing} />
 
-                      <WhatsAppButton cartItems={cartItems} total={calculateTotal()} deliveryLocation={deliveryLocation} disabled={cartItems.length === 0 || processing || !deliveryLocation} />
+                      <WhatsAppButton cartItems={cartItems} total={finalTotal} deliveryLocation={deliveryLocation} disabled={cartItems.length === 0 || processing || !deliveryLocation} />
 
                       <div className="text-center my-3">
                         <div className="d-flex align-items-center">
@@ -400,7 +517,7 @@ const CartPage = () => {
                       )}
 
                       <PayPalButton
-                        amount={calculateTotal()}
+                        amount={finalTotal}
                         onSuccess={handlePaymentSuccess}
                         onError={handlePayPalError}
                         disabled={cartItems.length === 0 || processing || !deliveryLocation || (!user?.uid && !guestEmail)}

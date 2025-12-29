@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Table, Alert, Spinner, Badge, ButtonGroup } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { useRole } from '../../context/adminContext';
 import Sidebar from '../../components/Sidebar';
@@ -14,6 +14,9 @@ import {
   SEASONAL_DISCOUNT_REASONS,
   type SeasonalDiscountConfig,
 } from '../../services/seasonalDiscountService';
+import { couponService, type AutoCouponConfig, type Coupon } from '../../services/couponService';
+import { userNotificationService } from '../../services/userNotificationService';
+import { DailyOrder, DailyOrdersDocument, getAllOrderDays } from '../../services/purchaseService';
 
 interface ProductWithDiscount extends ProductInventory {
   discountPercent?: number;
@@ -30,6 +33,8 @@ const BeneficiosPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState<'seasonal' | 'coupons'>('seasonal');
+
   const [isActive, setIsActive] = useState(false);
   const [reason, setReason] = useState(SEASONAL_DISCOUNT_REASONS[0].value);
   const [startDate, setStartDate] = useState<string>('');
@@ -38,9 +43,24 @@ const BeneficiosPage: React.FC = () => {
   const [productDiscounts, setProductDiscounts] = useState<Record<number, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Estado para cupones
+  const [autoCouponConfig, setAutoCouponConfig] = useState<AutoCouponConfig | null>(null);
+  const [loadingAutoConfig, setLoadingAutoConfig] = useState(false);
+  const [savingAutoConfig, setSavingAutoConfig] = useState(false);
+  const [customers, setCustomers] = useState<{
+    userId: string;
+    userName?: string;
+    userEmail?: string;
+    totalOrders: number;
+    totalAmount: number;
+  }[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [manualCouponPercent, setManualCouponPercent] = useState(25);
+
   useEffect(() => {
     if (user && isAdmin) {
       loadInitialData();
+      loadCouponsData();
     }
   }, [user, isAdmin]);
 
@@ -86,6 +106,60 @@ const BeneficiosPage: React.FC = () => {
       setError('Error al cargar la configuración de descuentos.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCouponsData = async () => {
+    try {
+      setLoadingAutoConfig(true);
+      setLoadingCustomers(true);
+      setError(null);
+
+      const [config, days] = await Promise.all([
+        couponService.getAutoConfig(),
+        getAllOrderDays(),
+      ]);
+
+      setAutoCouponConfig(config);
+
+      const customerMap = new Map<string, {
+        userId: string;
+        userName?: string;
+        userEmail?: string;
+        totalOrders: number;
+        totalAmount: number;
+      }>();
+
+      (days || []).forEach((day: DailyOrdersDocument) => {
+        (day.orders || []).forEach((order: DailyOrder) => {
+          if (!order.userId) return;
+
+          const key = order.userId;
+          const existing = customerMap.get(key) || {
+            userId: key,
+            userName: order.userName,
+            userEmail: order.userEmail,
+            totalOrders: 0,
+            totalAmount: 0,
+          };
+
+          existing.totalOrders += 1;
+          existing.totalAmount += order.total;
+          if (!existing.userName && order.userName) existing.userName = order.userName;
+          if (!existing.userEmail && order.userEmail) existing.userEmail = order.userEmail;
+
+          customerMap.set(key, existing);
+        });
+      });
+
+      const list = Array.from(customerMap.values()).sort((a, b) => b.totalOrders - a.totalOrders);
+      setCustomers(list);
+    } catch (err: any) {
+      console.error('Error cargando datos de cupones:', err);
+      setError((prev) => prev || 'Error al cargar datos de cupones y clientes.');
+    } finally {
+      setLoadingAutoConfig(false);
+      setLoadingCustomers(false);
     }
   };
 
@@ -200,9 +274,25 @@ const BeneficiosPage: React.FC = () => {
             <Row className="mb-4">
               <Col>
                 <h2 className="mb-1">Beneficios</h2>
-                <p className="text-muted mb-0">
-                  Configura campañas de descuentos por temporada para productos específicos.
+                <p className="text-muted mb-2">
+                  Administra descuentos de temporada y cupones especiales para clientes frecuentes.
                 </p>
+                <ButtonGroup>
+                  <Button
+                    variant={activeTab === 'seasonal' ? 'primary' : 'outline-primary'}
+                    size="sm"
+                    onClick={() => setActiveTab('seasonal')}
+                  >
+                    Descuentos de temporada
+                  </Button>
+                  <Button
+                    variant={activeTab === 'coupons' ? 'primary' : 'outline-primary'}
+                    size="sm"
+                    onClick={() => setActiveTab('coupons')}
+                  >
+                    Cupones
+                  </Button>
+                </ButtonGroup>
               </Col>
             </Row>
 
@@ -222,6 +312,7 @@ const BeneficiosPage: React.FC = () => {
               </Row>
             )}
 
+            {activeTab === 'seasonal' && (
             <Row className="mb-4">
               <Col lg={6} className="mb-3">
                 <Card className="shadow-sm">
@@ -257,7 +348,7 @@ const BeneficiosPage: React.FC = () => {
                         </Form.Select>
                       </Col>
                       <Col md={3}>
-                        <Form.Label>Fecha de inicio</Form.Label>
+                        <Form.Label>Fecha inicio</Form.Label>
                         <Form.Control
                           type="date"
                           value={startDate}
@@ -319,6 +410,212 @@ const BeneficiosPage: React.FC = () => {
                 </Card>
               </Col>
             </Row>
+            )}
+
+            {activeTab === 'coupons' && (
+              <Row className="mb-4">
+                <Col lg={5} className="mb-3">
+                  <Card className="shadow-sm h-100">
+                    <Card.Header>
+                      <strong>Configuración de cupones automáticos</strong>
+                    </Card.Header>
+                    <Card.Body>
+                      {loadingAutoConfig ? (
+                        <div className="text-center py-3">
+                          <Spinner animation="border" size="sm" />
+                          <p className="mt-2 mb-0 text-muted">Cargando configuración...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <Form.Group className="mb-3" controlId="autoCouponsActive">
+                            <Form.Check
+                              type="switch"
+                              label="Activar cupones automáticos por número de pedidos"
+                              checked={!!autoCouponConfig?.isActive}
+                              onChange={async (e) => {
+                                if (!autoCouponConfig) {
+                                  setAutoCouponConfig({
+                                    isActive: e.target.checked,
+                                    orderMultiple: 10,
+                                    discountPercent: 10,
+                                    updatedAt: new Date().toISOString(),
+                                  });
+                                  return;
+                                }
+                                setAutoCouponConfig({ ...autoCouponConfig, isActive: e.target.checked });
+                              }}
+                            />
+                            <Form.Text muted>
+                              Configura aquí cada cuántos pedidos se generará un cupón automático. Si está desactivado, no se generarán cupones automáticos.
+                            </Form.Text>
+                          </Form.Group>
+
+                          <Row className="mb-3">
+                            <Col md={6} className="mb-3 mb-md-0">
+                              <Form.Label>Múltiplo de pedidos</Form.Label>
+                              <Form.Control
+                                type="number"
+                                min={1}
+                                value={autoCouponConfig?.orderMultiple ?? 10}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value, 10) || 1;
+                                  setAutoCouponConfig((prev) => prev ? {
+                                    ...prev,
+                                    orderMultiple: value,
+                                  } : {
+                                    isActive: true,
+                                    orderMultiple: value,
+                                    discountPercent: 25,
+                                    updatedAt: new Date().toISOString(),
+                                  });
+                                }}
+                              />
+                              <Form.Text muted>
+                                Ejemplo: 10 para clientes muy frecuentes.
+                              </Form.Text>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Label>% descuento automático</Form.Label>
+                              <Form.Control
+                                type="number"
+                                min={1}
+                                max={90}
+                                value={autoCouponConfig?.discountPercent ?? 25}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 1;
+                                  setAutoCouponConfig((prev) => prev ? {
+                                    ...prev,
+                                    discountPercent: Math.min(90, Math.max(1, value)),
+                                  } : {
+                                    isActive: true,
+                                    orderMultiple: 10,
+                                    discountPercent: Math.min(90, Math.max(1, value)),
+                                    updatedAt: new Date().toISOString(),
+                                  });
+                                }}
+                              />
+                            </Col>
+                          </Row>
+
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={!autoCouponConfig || savingAutoConfig}
+                            onClick={async () => {
+                              if (!autoCouponConfig) return;
+                              try {
+                                setSavingAutoConfig(true);
+                                await couponService.saveAutoConfig(autoCouponConfig);
+                                setSuccess('Configuración de cupones automáticos guardada correctamente.');
+                              } catch (err) {
+                                console.error('Error guardando configuración de cupones:', err);
+                                setError('Error al guardar la configuración de cupones automáticos.');
+                              } finally {
+                                setSavingAutoConfig(false);
+                              }
+                            }}
+                          >
+                            {savingAutoConfig ? 'Guardando...' : 'Guardar configuración'}
+                          </Button>
+                        </>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+
+                <Col lg={7} className="mb-3">
+                  <Card className="shadow-sm h-100">
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                      <span>Clientes con pedidos</span>
+                      <div className="d-flex align-items-center gap-2">
+                        <Form.Label className="mb-0 small">% cupón manual:</Form.Label>
+                        <Form.Control
+                          type="number"
+                          size="sm"
+                          style={{ width: '80px' }}
+                          min={1}
+                          max={90}
+                          value={manualCouponPercent}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 1;
+                            setManualCouponPercent(Math.min(90, Math.max(1, value)));
+                          }}
+                        />
+                      </div>
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                      {loadingCustomers ? (
+                        <div className="text-center py-3">
+                          <Spinner animation="border" size="sm" />
+                          <p className="mt-2 mb-0 text-muted">Cargando clientes...</p>
+                        </div>
+                      ) : customers.length === 0 ? (
+                        <div className="text-center py-3">
+                          <p className="mb-0 text-muted">No se encontraron clientes con pedidos registrados.</p>
+                        </div>
+                      ) : (
+                        <div className="table-responsive">
+                          <Table hover size="sm" className="mb-0">
+                            <thead>
+                              <tr>
+                                <th>Cliente</th>
+                                <th>Email</th>
+                                <th className="text-center">Pedidos</th>
+                                <th className="text-end">Total</th>
+                                <th className="text-center">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {customers.map((c) => (
+                                <tr key={c.userId}>
+                                  <td>{c.userName || c.userId}</td>
+                                  <td>{c.userEmail || '-'}</td>
+                                  <td className="text-center">
+                                    <Badge bg="danger">{c.totalOrders}</Badge>
+                                  </td>
+                                  <td className="text-end">{formatCurrency(c.totalAmount)}</td>
+                                  <td className="text-center">
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          setSaving(true);
+                                          const coupon = await couponService.createCouponForUser({
+                                            userId: c.userId,
+                                            discountPercent: manualCouponPercent,
+                                            source: 'manual',
+                                          });
+                                          setSuccess(`Cupón ${coupon.code} creado para ${c.userName || c.userEmail || c.userId}.`);
+                                          await userNotificationService.createCouponNotification({
+                                            userId: c.userId,
+                                            userEmail: c.userEmail,
+                                            couponCode: coupon.code,
+                                            discountPercent: coupon.discountPercent,
+                                            source: 'manual',
+                                          });
+                                        } catch (err) {
+                                          console.error('Error creando cupón manual:', err);
+                                          setError('Error al crear el cupón para este cliente.');
+                                        } finally {
+                                          setSaving(false);
+                                        }
+                                      }}
+                                    >
+                                      Enviar código
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+            )}
 
             <Row>
               <Col>

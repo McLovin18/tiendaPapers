@@ -1,8 +1,6 @@
 export const CATEGORIES = [
   { id: "suministrosOficina", label: "Suministros de Oficina" }, // 1-1999
   { id: "suministrosBelleza", label: "Suministros de Belleza" }, // 2000-3999
-  { id: "suministrosMedicos", label: "Suministros Médicos" },    // 4000-4999
-  { id: "suministrosLimpieza", label: "Suministros de Limpieza" }, // 5000-5999
   { id: "productosCosmeticos", label: "Cosméticos" },            // 6000-6999
   { id: "productosOrganicos", label: "Productos Orgánicos" },    // 7000-7999
 ];
@@ -38,21 +36,6 @@ export const SUBCATEGORIES = [
   { id: "suministrosBelleza", value: "extensiones-cabello", label: "Extensiones Cabello", minId: 3700, maxId: 3869 },
   { id: "suministrosBelleza", value: "uñas-postizas", label: "Uñas Postizas", minId: 3870, maxId: 3999 },
 
-  // Categoría 3: Suministros médicos (4000-4999)
-  { id: "suministrosMedicos", value: "gorros", label: "Gorros", minId: 4000, maxId: 4149 },
-  { id: "suministrosMedicos", value: "guantes", label: "Guantes", minId: 4150, maxId: 4299 },
-  { id: "suministrosMedicos", value: "mandiles", label: "Mandiles", minId: 4300, maxId: 4449 },
-  { id: "suministrosMedicos", value: "mascarillas", label: "Mascarillas", minId: 4450, maxId: 4599 },
-  { id: "suministrosMedicos", value: "zapatones", label: "Zapatones", minId: 4600, maxId: 4749 },
-  { id: "suministrosMedicos", value: "algodon", label: "Algodón", minId: 4750, maxId: 4899 },
-  { id: "suministrosMedicos", value: "varios", label: "Varios", minId: 4900, maxId: 4999 },
-
-  // Categoría 4: Suministros de limpieza (5000-5999)
-  { id: "suministrosLimpieza", value: "escobas", label: "Escobas", minId: 5000, maxId: 5199 },
-  { id: "suministrosLimpieza", value: "recogedores", label: "Recogedores", minId: 5200, maxId: 5399 },
-  { id: "suministrosLimpieza", value: "cepillos", label: "Cepillos", minId: 5400, maxId: 5599 },
-  { id: "suministrosLimpieza", value: "fundas", label: "Fundas", minId: 5600, maxId: 5799 },
-  { id: "suministrosLimpieza", value: "toallas", label: "Toallas", minId: 5800, maxId: 5999 },
 
   // Categoría 5: Cosméticos (6000-6999)
   { id: "productosCosmeticos", value: "cuidado-capilar", label: "Cuidado Capilar", minId: 6000, maxId: 6129 },

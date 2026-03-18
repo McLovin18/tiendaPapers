@@ -1,7 +1,9 @@
 export const CATEGORIES = [
 
-  { id: "productosCosmeticos", label: "Cosméticos" },            // 6000-6999
-  { id: "productosOrganicos", label: "Productos Orgánicos" },    // 7000-7999
+  { id: "productosCosmeticos", label: "Belleza" },            // 6000-6999
+  { id: "productosOrganicos", label: "Suplementos" },    // 7000-7999
+  { id: "varios", label: "variedades" },    // 7000-7999
+
 ];
 
 export const SUBCATEGORIES = [
@@ -16,10 +18,14 @@ export const SUBCATEGORIES = [
   // gel-dental sin rango explícito por ahora
   { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar", minId: 3501, maxId: 4000 },
 
+
+
+
+  { id: "varios", value: "varios", label: "variedades", minId: 4000, maxId: 5000 },
+
+
   // Categoría 6: Productos orgánicos (7000-7999)
-  { id: "productosOrganicos", value: "cuidado-piel", label: "Cuidado de la Piel", minId: 7000, maxId: 7159 },
   { id: "productosOrganicos", value: "bebidas-aloe", label: "Bebidas Aloe", minId: 7160, maxId: 7319 },
-  { id: "productosOrganicos", value: "cuidado-personal", label: "Cuidado Personal", minId: 7320, maxId: 7479 },
   { id: "productosOrganicos", value: "productos-de-la-colmena", label: "Productos de la Colmena", minId: 7480, maxId: 7639 },
   { id: "productosOrganicos", value: "nutricion", label: "Nutrición", minId: 7640, maxId: 7799 },
   { id: "productosOrganicos", value: "control-peso", label: "Control de Peso", minId: 7800, maxId: 7999 },

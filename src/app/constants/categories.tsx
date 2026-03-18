@@ -1,52 +1,20 @@
 export const CATEGORIES = [
-  { id: "suministrosOficina", label: "Suministros de Oficina" }, // 1-1999
-  { id: "suministrosBelleza", label: "Suministros de Belleza" }, // 2000-3999
+
   { id: "productosCosmeticos", label: "Cosméticos" },            // 6000-6999
   { id: "productosOrganicos", label: "Productos Orgánicos" },    // 7000-7999
 ];
 
 export const SUBCATEGORIES = [
-  // Categoría 1: Suministros de oficina (1-1999)
-  { id: "suministrosOficina", value: "papeles", label: "Papeles", minId: 1, maxId: 139 },
-  { id: "suministrosOficina", value: "boligrafos", label: "Bolígrafos", minId: 140, maxId: 279 },
-  { id: "suministrosOficina", value: "lapices", label: "Lápices", minId: 280, maxId: 419 },
-  { id: "suministrosOficina", value: "marcadores", label: "Marcadores", minId: 420, maxId: 559 },
-  { id: "suministrosOficina", value: "pinturas", label: "Pinturas", minId: 560, maxId: 699 },
-  { id: "suministrosOficina", value: "foami", label: "Foami", minId: 700, maxId: 839 },
-  { id: "suministrosOficina", value: "grapadoras", label: "Grapadoras", minId: 840, maxId: 979 },
-  { id: "suministrosOficina", value: "perforadoras", label: "Perforadoras", minId: 980, maxId: 1119 },
-  { id: "suministrosOficina", value: "organizadores-de-escritorio", label: "Organizadores de Escritorio", minId: 1120, maxId: 1259 },
-  { id: "suministrosOficina", value: "articulos-generales", label: "Artículos Generales", minId: 1260, maxId: 1359 },
-  { id: "suministrosOficina", value: "calculadora", label: "Calculadora", minId: 1400, maxId: 1539 },
-  { id: "suministrosOficina", value: "cuadernos", label: "Cuadernos", minId: 1540, maxId: 1679 },
-  { id: "suministrosOficina", value: "material-didactico", label: "Material didáctico", minId: 1680, maxId: 1819 },
-  { id: "suministrosOficina", value: "sobres", label: "Sobres", minId: 1820, maxId: 1999 },
-
-  // Categoría 2: Suministros de belleza (2000-3999)
-  { id: "suministrosBelleza", value: "tijeras", label: "Tijeras", minId: 2000, maxId: 2169 },
-  { id: "suministrosBelleza", value: "alicates", label: "Alicates", minId: 2170, maxId: 2339 },
-  { id: "suministrosBelleza", value: "peinillas", label: "Peinillas", minId: 2340, maxId: 2509 },
-  { id: "suministrosBelleza", value: "cepillosCabello", label: "Cepillos de Cabello", minId: 2510, maxId: 2679 },
-  { id: "suministrosBelleza", value: "brochas", label: "Brochas", minId: 2680, maxId: 2849 },
-  { id: "suministrosBelleza", value: "pinzas", label: "Pinzas", minId: 2850, maxId: 3019 },
-  { id: "suministrosBelleza", value: "moños", label: "Moños", minId: 3020, maxId: 3189 },
-  { id: "suministrosBelleza", value: "binchas", label: "Binchas", minId: 3190, maxId: 3359 },
-  { id: "suministrosBelleza", value: "limas", label: "Limas", minId: 3360, maxId: 3529 },
-  { id: "suministrosBelleza", value: "rulos", label: "Rulos", minId: 3530, maxId: 3699 },
-  { id: "suministrosBelleza", value: "extensiones-cabello", label: "Extensiones Cabello", minId: 3700, maxId: 3869 },
-  { id: "suministrosBelleza", value: "uñas-postizas", label: "Uñas Postizas", minId: 3870, maxId: 3999 },
-
-
   // Categoría 5: Cosméticos (6000-6999)
-  { id: "productosCosmeticos", value: "cuidado-capilar", label: "Cuidado Capilar", minId: 6000, maxId: 6129 },
-  { id: "productosCosmeticos", value: "cuidado-facial", label: "Cuidado Facial", minId: 6130, maxId: 6259 },
-  { id: "productosCosmeticos", value: "cuidado-manos-pies", label: "Cuidado de manos y pies", minId: 6260, maxId: 6389 },
-  { id: "productosCosmeticos", value: "cuidado-corporal", label: "Cuidado Corporal", minId: 6390, maxId: 6519 },
-  { id: "productosCosmeticos", value: "fragancias", label: "Fragancias", minId: 6520, maxId: 6649 },
-  { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje", minId: 6650, maxId: 6779 },
-  { id: "productosCosmeticos", value: "jabones", label: "Jabones", minId: 6780, maxId: 6909 },
+  { id: "productosCosmeticos", value: "cuidado-capilar", label: "Cuidado Capilar", minId: 0, maxId: 500 },
+  { id: "productosCosmeticos", value: "cuidado-facial", label: "Cuidado Facial", minId: 501, maxId: 1000 },
+  { id: "productosCosmeticos", value: "cuidado-manos-pies", label: "Cuidado de manos y pies", minId: 1001, maxId: 1500 },
+  { id: "productosCosmeticos", value: "cuidado-corporal", label: "Cuidado Corporal", minId: 1501, maxId: 2000 },
+  { id: "productosCosmeticos", value: "fragancias", label: "Fragancias", minId: 2001, maxId: 2500 },
+  { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje", minId: 2501, maxId: 3000 },
+  { id: "productosCosmeticos", value: "jabones", label: "Jabones", minId: 3001, maxId: 3500 },
   // gel-dental sin rango explícito por ahora
-  { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar", minId: 6910, maxId: 6999 },
+  { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar", minId: 3501, maxId: 4000 },
 
   // Categoría 6: Productos orgánicos (7000-7999)
   { id: "productosOrganicos", value: "cuidado-piel", label: "Cuidado de la Piel", minId: 7000, maxId: 7159 },

@@ -1,8 +1,8 @@
 export const CATEGORIES = [
 
-  { id: "productosCosmeticos", label: "Belleza" },            // 6000-6999
-  { id: "productosOrganicos", label: "Suplementos" },    // 7000-7999
-  { id: "varios", label: "variedades" },    // 7000-7999
+  { id: "productosCosmeticos", label: "BELLEZA" },     // 6000-6999
+  { id: "productosOrganicos", label: "SUPLEMENTOS" },      // 7000-7999
+  { id: "varios", label: "VARIEDADES" },    // 7000-7999
 
 ];
 
@@ -19,9 +19,9 @@ export const SUBCATEGORIES = [
   { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar", minId: 3501, maxId: 4000 },
 
 
-
-
-  { id: "varios", value: "varios", label: "variedades", minId: 4000, maxId: 5000 },
+  { id: "varios", value: "escolares", label: "Escolares", minId: 6000, maxId: 7000 },
+  { id: "varios", value: "oficina", label: "Oficina", minId: 6000, maxId: 7000 },
+  { id: "varios", value: "varios", label: "Varios", minId: 6000, maxId: 7000 },
 
 
   // Categoría 6: Productos orgánicos (7000-7999)

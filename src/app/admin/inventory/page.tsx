@@ -143,10 +143,10 @@ export default function InventoryManagementPage() {
 
     try {
       const success = await inventoryService.deleteProduct(productId);
-      
       if (success) {
         setMessage({type: 'success', text: 'Producto eliminado exitosamente'});
-        await loadProducts();
+        // Eliminar el producto del estado local para que desaparezca de la vista inmediatamente
+        setProducts((prev) => prev.filter((p) => p.productId !== productId));
       } else {
         setMessage({type: 'error', text: 'Error al eliminar producto'});
       }

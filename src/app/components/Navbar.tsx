@@ -257,19 +257,18 @@ const NavbarComponent = () => {
                   maxHeight: '25vh', 
                   overflowY: 'auto',
                   overflowX: 'hidden',
-                  paddingBottom: '0.5rem'
                 }}
               >
                 <Nav className="flex-column text-start px-3 py-3">
                   {CATEGORIES.map(cat => {
                     const isOpen = activeDropdown === cat.id;
                     return (
-                      <div key={cat.id} className="mb-3 w-100">
+                      <div key={cat.id} className="w-100">
                         {/* título categoría */}
                         <button
                           type="button"
                           onClick={() => toggleCategory(cat.id)}
-                          className="w-100 bg-transparent border-0 d-flex justify-content-between align-items-center nav-category py-2"
+                          className="w-100 bg-transparent border-0 d-flex justify-content-between align-items-center nav-category"
                           aria-expanded={isOpen}
                           aria-controls={`mobile-cat-${cat.id}`}
                           style={{ 
@@ -450,9 +449,23 @@ const NavbarComponent = () => {
         
         /* Aseguramos que el menú de Bootstrap no tenga un ancho fijo que cause problemas */
         .dropdown-menu {
-          min-width: 250px; 
-          max-width: max-content; 
+          min-width: 250px;
+          max-width: max-content;
           width: auto;
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+        }
+
+        /* Eliminar espacio vertical entre el botón y el menú */
+        .navbar .dropdown-menu {
+          margin-top: 0 !important;
+          top: 100% !important;
+        }
+
+        /* Opcional: reducir padding del grid de subcategorías si existe */
+        .dropdown-grid {
+          padding-top: 0 !important;
+          margin-top: 0 !important;
         }
       `}</style>
     </>

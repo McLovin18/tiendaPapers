@@ -14,19 +14,20 @@ export const SUBCATEGORIES = [
   { id: "productosCosmeticos", value: "cuidado-corporal", label: "Cuidado Corporal", minId: 1501, maxId: 2000 },
   { id: "productosCosmeticos", value: "fragancias", label: "Fragancias", minId: 2001, maxId: 2500 },
   { id: "productosCosmeticos", value: "maquillaje", label: "Maquillaje", minId: 2501, maxId: 3000 },
-  { id: "productosCosmeticos", value: "jabones", label: "Jabones", minId: 3001, maxId: 3500 },
+  { id: "productosCosmeticos", value: "jabones", label: "Jabónes", minId: 3001, maxId: 3500 },
   // gel-dental sin rango explícito por ahora
   { id: "productosCosmeticos", value: "protector-solar", label: "Protector Solar", minId: 3501, maxId: 4000 },
 
 
-  { id: "varios", value: "escolares", label: "Escolares", minId: 6000, maxId: 7000 },
-  { id: "varios", value: "oficina", label: "Oficina", minId: 6000, maxId: 7000 },
-  { id: "varios", value: "varios", label: "Varios", minId: 6000, maxId: 7000 },
+  { id: "varios", value: "escolares", label: "Escolares", minId: 4001, maxId: 4800 },
+  { id: "varios", value: "oficina", label: "De oficina", minId: 4801, maxId: 5600 },
+    { id: "varios", value: "papeleria", label: "Papelería", minId: 5601, maxId: 6300 },
+  { id: "varios", value: "varios", label: "Varios", minId: 6301, maxId: 7000 },
 
 
   // Categoría 6: Productos orgánicos (7000-7999)
-  { id: "productosOrganicos", value: "bebidas-aloe", label: "Bebidas Aloe", minId: 7160, maxId: 7319 },
-  { id: "productosOrganicos", value: "productos-de-la-colmena", label: "Productos de la Colmena", minId: 7480, maxId: 7639 },
+  { id: "productosOrganicos", value: "de-aloe-vera", label: "De aloe vera", minId: 7160, maxId: 7319 },
+  { id: "productosOrganicos", value: "productos-de-la-colmena", label: "De la Colmena", minId: 7480, maxId: 7639 },
   { id: "productosOrganicos", value: "nutricion", label: "Nutrición", minId: 7640, maxId: 7799 },
   { id: "productosOrganicos", value: "control-peso", label: "Control de Peso", minId: 7800, maxId: 7999 },
 ];

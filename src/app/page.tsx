@@ -35,10 +35,10 @@ export default function Home() {
 
   const imagenes = [
     { 
-      src: "/banner.jpg",
+      src: "/portada1.jpeg",
       alt: "Engrapadora y útiles de oficina",
-      titulo: "Útiles de oficina esenciales",
-      descripcion: "Cuadernos, hojas, libretas y todo lo que necesitas en tu día a día.",
+      titulo: "Los mejores productos orgánicos",
+      descripcion: "Todo lo que necesitas en cuanto al cuidado personal y nutricional, lo encuentras aqui, en Tiffanys.",
       botonTexto: "Explorar ahora",
       botonLink: "#productosDestacados"
     },
@@ -47,7 +47,7 @@ export default function Home() {
       alt: "Ofertas en suministros de oficina",
       titulo: "Compra lo que necesites de suministro y más aquí",
       descripcion: "Artículos a muy buen precio, que necesitas para la escuela o trabajo.",
-      botonTexto: "Comprar ya",
+      botonTexto: "Comprar ahora",
       botonLink: "/products"
 
     },

@@ -13,11 +13,11 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/grapadoras" },
-  { id: 2, title: "Cuidado de la Piel", image: "/cuidado-piel.jpeg", link: "/categories/cuidado-piel" },
-  { id: 3, title: "Brochas", image: "/brochas.jpeg", link: "/categories/brochas" },
-  { id: 4, title: "Mandiles", image: "/mandiles.jpeg", link: "/categories/mandiles" },
-  { id: 5, title: "Cepillos", image: "/cepillos.jpeg", link: "/categories/cepillos" },
+  { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/escolares" },
+  { id: 2, title: "Cuidado de la Piel", image: "/cuidado-piel.jpeg", link: "/categories/cuidado-corporal" },
+  { id: 3, title: "Brochas", image: "/brochas.jpeg", link: "/categories/varios" },
+  { id: 4, title: "Mandiles", image: "/mandiles.jpeg", link: "/categories/escolares" },
+  { id: 5, title: "Cepillos", image: "/cepillos.jpeg", link: "/categories/varios" },
   { id: 6, title: "Fragancias", image: "/fragancias.jpeg", link: "/categories/fragancias" },
 ];
 

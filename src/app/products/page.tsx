@@ -196,7 +196,7 @@ const ProductsPage = () => {
         
         <main className="flex-grow-1 w-100" style={{ backgroundColor: "var(--cosmetic-secondary)" }}>
           <Container className="py-5 py-lg-5 py-md-2 py-sm-2">
-            <h1 className={`${drSugiyama.className} fw-bold text-center mb-5`} style={{fontSize: "2.5rem", color: "var(--cosmetic-tertiary)" }}>Catálogo de Productos</h1>
+            <h1 className=" fw-bold text-center mb-5" style={{fontSize: "2.5rem", color: "var(--cosmetic-tertiary)" }}>Catálogo de Productos</h1>
 
             {/* Barra de búsqueda con filtros */}
             <div className="d-flex justify-content-center mb-4">

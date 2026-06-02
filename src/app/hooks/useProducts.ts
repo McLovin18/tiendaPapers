@@ -29,7 +29,7 @@ export const useProducts = (categoryFilter?: string) => {
       sizes: inventoryProduct.sizes || ['ÚNICA'],
       colors: inventoryProduct.colors || ['Sin especificar'],
       details: inventoryProduct.details || [],
-      featured: false, // Los productos del inventario no son featured por defecto
+      featured: inventoryProduct.featured === true,
       isFromFirebase: true // Marcar que viene de Firebase
     };
   };

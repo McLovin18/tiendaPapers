@@ -54,7 +54,7 @@ const convertInventoryToProduct = (inventory: ProductInventory): Product => {
     description: inventory.description || '',
     inStock: inventory.stock > 0 && inventory.isActive,
     details: inventory.details || [],
-    featured: false
+    featured: inventory.featured === true
   };
 };
 

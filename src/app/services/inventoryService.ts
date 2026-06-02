@@ -24,6 +24,7 @@ export interface ProductInventory {
   category?: string;
   subcategory?: string; // subcategoría interna (papeles, tijeras, etc.)
   isActive: boolean; // Controlado automáticamente por stock
+  featured?: boolean; // Control manual para mostrar en productos destacados
   lastUpdated: string;
   description?: string;
   details?: string[]; // Detalles del producto
@@ -133,6 +134,7 @@ class InventoryService {
       await setDoc(docRef, {
         ...productData,
         isActive: productData.stock > 0, // Activar automáticamente basado en stock
+        featured: productData.featured ?? false,
         lastUpdated: new Date().toISOString()
       }, { merge: true });
       
@@ -173,6 +175,7 @@ class InventoryService {
           ...oldData,
           ...productData,
           isActive: productData.stock > 0,
+          featured: productData.featured ?? oldData.featured ?? false,
           lastUpdated: new Date().toISOString(),
         };
 
@@ -185,6 +188,22 @@ class InventoryService {
       console.error('Error actualizando producto con cambio de ID:', error);
       // Propagar mensaje específico para que la capa de UI pueda mostrarlo
       throw error;
+    }
+  }
+
+  // ✅ Actualizar el estado de destacado de un producto
+  async setProductFeatured(productId: number, featured: boolean): Promise<boolean> {
+    try {
+      const docRef = doc(db, this.collectionName, productId.toString());
+      await updateDoc(docRef, {
+        featured,
+        lastUpdated: new Date().toISOString()
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error actualizando producto destacado:', error);
+      return false;
     }
   }
 

@@ -57,6 +57,7 @@ export default function InventoryManagementPage() {
   const [stockChange, setStockChange] = useState<number>(0);
   const [actionType, setActionType] = useState<'add' | 'reduce'>('add');
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [updatingFeaturedId, setUpdatingFeaturedId] = useState<number | null>(null);
   
   // 🔍 Estados para el buscador
   const [searchTerm, setSearchTerm] = useState('');
@@ -152,6 +153,33 @@ export default function InventoryManagementPage() {
       }
     } catch (error) {
       setMessage({type: 'error', text: 'Error al procesar la acción'});
+    }
+  };
+
+  const handleFeaturedChange = async (product: ProductInventory, featured: boolean) => {
+    try {
+      setUpdatingFeaturedId(product.productId);
+      const success = await inventoryService.setProductFeatured(product.productId, featured);
+
+      if (success) {
+        setProducts((prev) =>
+          prev.map((item) =>
+            item.productId === product.productId
+              ? { ...item, featured }
+              : item
+          )
+        );
+        setMessage({
+          type: 'success',
+          text: featured ? 'Producto marcado como destacado' : 'Producto quitado de destacados'
+        });
+      } else {
+        setMessage({type: 'error', text: 'Error al actualizar producto destacado'});
+      }
+    } catch (error) {
+      setMessage({type: 'error', text: 'Error al actualizar producto destacado'});
+    } finally {
+      setUpdatingFeaturedId(null);
     }
   };
 
@@ -362,6 +390,7 @@ export default function InventoryManagementPage() {
                           <tr>
                             <th>ID</th>
                             <th>Producto</th>
+                            <th>Destacar</th>
                             <th>Precio</th>
                             <th>Stock</th>
                             <th>Última Act.</th>
@@ -391,6 +420,15 @@ export default function InventoryManagementPage() {
                                     )}
                                   </div>
                                 </div>
+                              </td>
+                              <td className="text-center align-middle">
+                                <Form.Check
+                                  type="checkbox"
+                                  checked={product.featured === true}
+                                  disabled={updatingFeaturedId === product.productId}
+                                  onChange={(e) => handleFeaturedChange(product, e.target.checked)}
+                                  aria-label={`Destacar ${product.name}`}
+                                />
                               </td>
                               <td className="fw-bold text-success">${product.price.toFixed(2)}</td>
                               <td>
@@ -444,7 +482,7 @@ export default function InventoryManagementPage() {
                           ))}
                           {filteredProducts.length === 0 && (
                             <tr>
-                              <td colSpan={6} className="text-center py-4">
+                              <td colSpan={7} className="text-center py-4">
                                 <i className="bi bi-inbox" style={{ fontSize: '3rem', color: 'var(--cosmetic-tertiary-light)' }}></i>
                                 <p className="text-muted mt-2 mb-0">
                                   {searchTerm || filterStock !== 'all' 

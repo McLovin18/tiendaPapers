@@ -16,9 +16,8 @@ const categories: Category[] = [
   { id: 1, title: "Engrapadoras", image: "/engrapadora.jpeg", link: "/categories/escolares" },
   { id: 2, title: "Cuidado de la Piel", image: "/cuidado-piel.jpeg", link: "/categories/cuidado-corporal" },
   { id: 3, title: "Brochas", image: "/brochas.jpeg", link: "/categories/varios" },
-  { id: 4, title: "Mandiles", image: "/mandiles.jpeg", link: "/categories/escolares" },
-  { id: 5, title: "Cepillos", image: "/cepillos.jpeg", link: "/categories/varios" },
-  { id: 6, title: "Fragancias", image: "/fragancias.jpeg", link: "/categories/fragancias" },
+  { id: 4, title: "Bebidas Aloe", image: "/bebidasAloe.jpeg", link: "/categories/de-aloe-vera" },
+  { id: 5, title: "Papel Bond", image: "/papelB.jpeg", link: "/categories/papeleria" },
 ];
 
 const FeaturedCategories = () => {
@@ -45,12 +44,20 @@ const FeaturedCategories = () => {
   const scroll = (direction: "left" | "right") => {
     const container = containerRef.current;
     if (!container) return;
-    const cardWidth = container.firstElementChild?.clientWidth || 0;
-    const scrollAmount = cardWidth + 16; // un poco de espacio entre tarjetas
-    container.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
+    const items = Array.from(container.children) as HTMLElement[];
+    if (items.length === 0) return;
+
+    const currentScrollLeft = container.scrollLeft;
+
+    if (direction === "right") {
+      const nextItem = items.find((item) => item.offsetLeft > currentScrollLeft + 1) ?? items[items.length - 1];
+      container.scrollTo({ left: nextItem.offsetLeft, behavior: "smooth" });
+      return;
+    }
+
+    const previousItems = items.filter((item) => item.offsetLeft < currentScrollLeft - 1);
+    const targetItem = previousItems[previousItems.length - 1] ?? items[0];
+    container.scrollTo({ left: targetItem.offsetLeft, behavior: "smooth" });
   };
 
   return (
@@ -65,6 +72,7 @@ const FeaturedCategories = () => {
       <div className="relative max-w-6xl mx-auto px-4">
         {/* Flecha Izquierda */}
         <button
+          type="button"
           onClick={() => scroll("left")}
           disabled={!canScrollLeft}
           className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition ${
@@ -109,6 +117,7 @@ const FeaturedCategories = () => {
 
         {/* Flecha Derecha */}
         <button
+          type="button"
           onClick={() => scroll("right")}
           disabled={!canScrollRight}
           className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition ${

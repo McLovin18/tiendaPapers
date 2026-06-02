@@ -133,6 +133,7 @@ interface ProductFormModalProps {
   onHide: () => void;
   product?: ProductInventory | null;
   onProductSaved: () => void;
+  existingProductIds?: number[];
 }
 
 export default function ProductFormModal({ show, onHide, product, onProductSaved }: ProductFormModalProps) {
@@ -146,7 +147,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
     category: '',
     subcategory: '',
     description: '',
-    details: [] as string[]
+    details: [] as string[],
+    featured: false
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -172,7 +174,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         category: product.category || '',
         subcategory: product.subcategory || '',
         description: product.description || '',
-        details: product.details || []
+        details: product.details || [],
+        featured: product.featured ?? false
       });
       setImages(product.images || []);
       setOriginalProductId(product.productId);
@@ -186,7 +189,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         category: '',
         subcategory: '',
         description: '',
-        details: []
+        details: [],
+        featured: false
       });
       setImages([]);
       setOriginalProductId(null);
@@ -451,7 +455,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
         category: formData.category.trim(),
         subcategory: formData.subcategory.trim(),
         description: formData.description.trim(),
-        details: formData.details
+        details: formData.details,
+        featured: formData.featured
       };
 
       let success: boolean;
@@ -490,7 +495,8 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
       category: '',
       subcategory: '',
       description: '',
-      details: []
+      details: [],
+      featured: false
     });
     setImages([]);
     setSelectedFiles([]);
@@ -564,6 +570,19 @@ export default function ProductFormModal({ show, onHide, product, onProductSaved
               </Form.Group>
             </Col>
           </Row>
+
+          <Form.Group className="mb-3">
+            <Form.Check
+              type="checkbox"
+              id="featured-product-check"
+              label="Destacar este producto en la página principal"
+              checked={formData.featured}
+              onChange={(e) => handleInputChange('featured', e.target.checked)}
+            />
+            <Form.Text className="text-muted">
+              Si activas esta opción, el producto aparecerá en la sección de productos destacados de la portada.
+            </Form.Text>
+          </Form.Group>
 
           <Row>
             <Col md={4}>

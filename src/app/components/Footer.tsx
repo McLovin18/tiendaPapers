@@ -6,6 +6,9 @@ import Link from "next/link";
 import { CATEGORIES, SUBCATEGORIES } from "../constants/categories"; 
 import { Facebook, Instagram, Twitter, Linkedin, Github } from "lucide-react";
 
+const trackLinkClick = async () => {
+  return Promise.resolve();
+};
 
 const Footer = () => (
   <footer 
@@ -80,6 +83,23 @@ const Footer = () => (
         <p className="small" style={{ color: "var(--cosmetic-tertiary)" }}>
           &copy; {new Date().getFullYear()} Tiffany's Variedades. Todos los derechos reservados.
         </p>
+      </div>
+
+      <div className="d-flex flex-column flex-md-row align-items-center justify-content-center gap-2 mt-3 pt-3 border-top" style={{ borderColor: "var(--cosmetic-accent)" }}>
+        <div className="d-flex align-items-center gap-2 px-3 py-2 rounded-pill" style={{ backgroundColor: "rgba(255,255,255,0.35)", color: "var(--cosmetic-tertiary)" }}>
+          <div style={{ width: 10, height: 10, borderRadius: "999px", backgroundColor: "var(--cosmetic-primary)" }} />
+          Hecho en Ecuador
+        </div>
+        <a
+          href="https://www.instagram.com/hector.cobena/"
+          target="_blank"
+          rel="noreferrer"
+          className="fw-semibold text-decoration-none"
+          style={{ color: "var(--cosmetic-primary)" }}
+          onClick={() => trackLinkClick().catch(console.error)}
+        >
+          Desarrollado por Héctor Cobeña
+        </a>
       </div>
     </Container>
 
